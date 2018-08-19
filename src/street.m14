@@ -1,0 +1,212 @@
+with io
+with io      use File
+with io      use string
+with io      use fileWatcher
+with math
+with core    use Sleep
+with core    use common
+with sys
+with sys	 use time
+with ocr     use tesseract
+
+link "tesseract"
+link "lept"
+
+
+readPlates (args string; -> result int;);
+processPlates (args string; -> result int;);
+searchFor (args string; -> result string;);
+
+main (args string; -> result int;)
+{	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~ region level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	init nodist bool = false;
+	Distributed.checkTicks = 1000;
+	file File;
+	file.open("config.txt");
+
+	Line nodist global string = file.readLine();
+	Counter nodist int = 1;
+	Adress	nodist	string;
+	Port	nodist	int = 1500;
+	Command	nodist	global string;
+	while [str_size(Line)]
+	~~while [true]
+	{
+		if [ str_at(Line, 0) != '~' ]
+		{
+			if [!init]
+			{
+				args = Line;
+				init = true;
+				Line = file.readLine();
+				Sleep(2);
+				continue;
+				~~break;
+			}
+			spill("launching : ");
+			~~Port = Random()%10000;
+			Port += 1;
+			Adress = "127.0.0.1:" + numberToStr(Port);
+			Command = "urxvt -e ./street.m14.bin -N 1 -P 127.0.0.1:1234 -S " + Adress;
+			
+			spill(Command); nspill(Line);
+			~~thread System(Command, Line);
+			thread System(Command,  Line);
+			Sleep(Counter);
+			Counter += 1;
+		}
+		Line = file.readLine();
+	}
+	Distributed.checkTicks = 1000000;
+	nspill("done launching System cameras");
+	Distributed.nodeNumber = 1;
+	reset 1;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~ street level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+distribute;
+	
+	Distributed.checkTicks = 1000;
+	
+	if [  tokenCount(args,';') != 6 ]
+	{
+		displayWarning("error, expcted more arguments "); nspill( tokenCount(args,';') );
+		~~Exit(1);
+		return;
+	}
+	else
+	{
+		spill(" Args : "); nspill(args);
+	}	
+
+	~~ specific geographical data
+	regionName		nodist global string = getToken(args, ';', 0);
+	cityName		nodist global string = getToken(args, ';', 1);
+	streetName		nodist global string = getToken(args, ';', 2);
+	streetPosition	nodist global int = strToNumber(getToken(args, ';', 3));
+	streetSide		nodist global string = getToken(args, ';', 4);
+	
+	~~ more cinfiguration
+	watchDirectory	nodist global string = getToken(args, ';', 5);
+	cameraWindow	nodist global int = 10;
+	
+	~~extra
+	Detected noblock channel global string;
+	detectedHistory			nodist global string[1000];
+	Timer	 nodist	 global	 Time;
+	~~PreviousCameras		node[];	~~ cameras before this node , only in case of two ways street !
+	~~NextCameras  			node[];	~~ cameras after this node
+	plates 					string[]; ~~ acquired plates, should be strucy with more information like car image, type, bla bla
+	
+	~*
+	~~ code to monitor and if something happens, it should notify
+	*~
+	
+	detectedPlatesNumber nodist global int = 0;
+	
+	thread readPlates(watchDirectory);
+	
+	readDetected nodist global string;
+	
+	while [true]
+	{
+		readDetected = Detected;
+		if [str_size(readDetected)]
+		{
+			thread processPlates(readDetected);
+		}
+	}
+	
+	Distributed.checkTicks = 1000000;
+}
+
+readPlates (args string; -> result int;)
+{
+	displayInfo("watching :" + args);
+	
+	scanner nodist Tesseract;
+	scanner.setLanguage("eng");
+	
+	watcher fileWatcher;
+	watcher.addWatch(args);
+	
+	Timer.useLocalTime(true);
+	
+	while [true]
+	{
+		watchedfile string = watcher.getNext();
+		if [ watchedfile != "" ]
+		{
+			scanned string = regionName + ";";
+			scanned += cityName + ";";
+			scanned += streetName + ";";
+			scanned += numberToStr(streetPosition) + ";";
+			scanned += streetSide + ";";
+			scanned += getToken(scanner.readImage(args + "/" + watchedfile), '\n', 1) + ";";
+			scanned += numberToStr(Timer.getSecondsSinceEpoch()) + ";";
+			scanned += searchFor(scanned);
+			
+			displayInfo("Captured : " + scanned);
+			Detected = scanned;
+		}
+	}
+	result = 0;
+}
+
+
+processPlates (args string; -> result int;)
+{		
+	remoteRegionName		nodist string = getToken(args, ';', 0);
+	remoteCityName			nodist string = getToken(args, ';', 1);
+	remoteStreetName		nodist string = getToken(args, ';', 2);
+	remoteStreetPosition	nodist int = strToNumber(getToken(args, ';', 3));
+	remoteStreetSide		nodist string = getToken(args, ';', 4);
+	remotePlateNumber 		nodist string = getToken(args, ';', 5);
+	detectionTime	 		nodist Time = Time(strToNumber(getToken(args, ';', 6)));
+	
+	if [remoteRegionName == regionName && remoteCityName == cityName &&
+		remoteStreetName == streetName && remoteStreetSide == streetSide &&
+		remoteStreetPosition < streetPosition]
+	{
+		detectedHistory[detectedPlatesNumber] = remotePlateNumber +";" + getToken(args, ';', 6) +";" + numberToStr(remoteStreetPosition) + ";" + getToken(args, ';', 7) + ";" + getToken(args, ';', 8);
+		detectedPlatesNumber++;
+	}
+}
+
+searchFor (args string; -> result string;)
+{
+	for [ i int = detectedPlatesNumber-1; i >= 0; i--;]
+	{
+		if [getToken(detectedHistory[i], ';', 0) == getToken(args, ';', 5)]
+		{
+			from nodist int = strToNumber(getToken(detectedHistory[i], ';', 1));
+			to   nodist int = strToNumber(getToken(args, ';', 6));
+			timeDifference nodist int = to - from;
+			displayInfo( "difference in time : " + numberToStr(timeDifference) + " seconds");
+			
+			distanceDifference  nodist int = streetPosition - strToNumber(getToken(detectedHistory[i], ';', 2));
+			Speed nodist int = (distanceDifference*(60*60))/timeDifference;
+			Speed = Speed/1000; ~~ in Kilo Meters
+			
+			if [ Speed > 100 ]
+			{
+				Speed -= 5;
+			}
+			else
+			{
+				Speed -= (5*Speed)/100;
+			}
+			
+			allSpeed nodist int = strToNumber(getToken(detectedHistory[i], ';', 3))+Speed;
+			allNodes nodist int = strToNumber(getToken(detectedHistory[i], ';', 4))+1;
+			averageSpeed nodist int = allSpeed/allNodes;
+			
+			displayInfo( "speed at this camera : " + numberToStr(Speed) + " Km/H");
+			displayInfo( "average speed at all cameras : " + numberToStr(averageSpeed) + " Km/H");
+			
+			return numberToStr(allSpeed)+";" + numberToStr(allNodes) + ";";
+		}
+	}
+	return "0;1;";
+}

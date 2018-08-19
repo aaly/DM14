@@ -1,0 +1,184 @@
+~~ all variables outside main must be nodist by default ! or we get error at compiling
+~~ Fix [ ! expr ]
+~~detect double need  like in this :
+~~									Equation;
+~~									Response = processEquation(Equation);
+
+with io
+with io      use File
+with io      use string
+with math
+with core    use Sleep
+with core    use common
+with sys
+with sys	 use time
+
+
+isNumber (args string; -> result bool;);
+isOperator (args string; -> result bool;);
+validateCommand (args string; -> result bool;);
+processEquation (command string; nodeID string; ->);
+
+
+main (args string; -> result int;)
+{	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~ Server level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	Equation backprop global string;
+	Response channel global string;
+	
+	Distributed.checkTicks = 1000;
+	file File;
+	file.open("rpn.txt");
+
+	Line nodist global string = file.readLine();
+	Counter nodist int = 1;
+	Adress	nodist	string;
+	Port	nodist	int = 1235;
+	Command	nodist	global string;
+	~*while [str_size(Line)]
+	{
+		if [ str_at(Line, 0) != '~' ]
+		{
+			Port += 1;
+			Adress = "127.0.0.1:" + numberToStr(Port);
+			Command = "xterm -e ./amazon.m14.bin -N 1 -P 127.0.0.1:1234 -S " + Adress;
+			
+			nspill("launching : " + Command + Line);
+			thread System(Command,  Line);
+			Sleep(Counter);
+			Counter += 1;
+		}
+		Line = file.readLine();
+	}*~
+	
+	Distributed.checkTicks = 1000;
+	nspill("done launching RPN tests");
+	
+	while [true]
+	{
+		thread processEquation(Equation, @Equation);
+	}
+	
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~ Client level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+distribute;
+	
+	Distributed.checkTicks = 1000;
+	
+	if [ args == "" ]
+	{
+		displayWarning("error, expcted more arguments ");
+		nspill(tokenCount(args,';'));
+		~~Exit(1);
+		return;
+	}
+	
+	nspill(" Args : " + args);
+	
+	if [ validateCommand(args) == false ]
+	{
+		nspill("error parsing input !");
+		Distributed.Exit();
+		Exit(1);
+	}
+	
+	Sleep(5);
+	
+	Equation = args;
+	nspill("Wrote Variable");
+	nspill("Solution is : " + Response);
+	Distributed.Exit();
+	Exit(0);
+}
+
+
+isOperator (command string; -> result bool;)
+{
+	if [ command == "+" || command == "-" || command == "*" || command == "/" ]
+	{
+		result = true;
+	}
+	else
+	{
+		result = false;
+	}
+}
+
+isNumber (command string; -> result bool;)
+{
+	result = true;
+	size nodist int = str_size(command);
+	i nodist int = 0;
+	
+	while [ i < size ]
+	{
+		c nodist char = str_at(command, i);
+		if [ c < '0' || c > '9' ]
+		{
+			result = false;
+			break;
+		}
+		i++;
+	}
+}
+
+validateCommand (command string; -> result bool;)
+{
+	displayInfo("Validating : " + command);
+	
+	i nodist int = tokenCount(command,' ');
+	
+	while [ i > 0 ]
+	{
+		if [(isNumber(getToken(command, ' ', i)) == false) && (isOperator(getToken(command, ' ', i)) == false) ]
+		{
+			displayError("Error in token : " + getToken(command, ' ', i));
+			result = false;
+			return;
+		}
+		i--;
+	}
+	
+	if[isOperator(getToken(command, ' ', tokenCount(command, ' '))) == false]
+	{
+		displayError("Command does not terminate with an operator : " + getToken(command, ' ', i));
+		result = false;
+		return;
+	}
+	
+	displayInfo("Perfect !");
+	
+	result = true;
+}
+
+processEquation (command string; nodeID string; ->)
+{
+	displayInfo("Calculating : " + command);
+	
+	i nodist int = tokenCount(command,' ');
+	
+	while [ i > 0 ]
+	{
+		if [isNumber(getToken(command, ' ', i)) == false]
+		{
+			displayError("NUMBER");
+		}
+		
+		if [isOperator(getToken(command, ' ', i)) == false]
+		{
+			displayError("OPERATOR");
+		}
+		i--;
+	}
+	
+	~~values nodist string[];
+	~~operators nodist string[];
+	
+	Response@nodeID = "result";
+	
+	~~return "command";
+}
+
+
