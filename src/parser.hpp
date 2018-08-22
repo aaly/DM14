@@ -1,6 +1,16 @@
 #ifndef	PARSER_H
 #define	PARSER_H
 
+/**
+@file             parser.hpp
+@brief            parser
+@details          parser, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2018
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
+
 #include <regex> // for grammar_token_type::REGEX_TOKEN
 #include "types.hpp"
 #include <iostream>
