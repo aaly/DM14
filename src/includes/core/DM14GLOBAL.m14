@@ -1,0 +1,5 @@
+with core use Node
+with core use Array
+
+Distributed nodist global Node;
+

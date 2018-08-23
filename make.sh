@@ -4,4 +4,4 @@ cd build
 cmake ..
 make
 cd ../examples
-../build/DMC --sources distarray.m14
+../build/DMC --sources distarray.m14 -I ../src/includes/

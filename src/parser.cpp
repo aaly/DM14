@@ -353,7 +353,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					advance_EBNFindex();
 				}
 				
-				if(ebnf_token.callback)
+				if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback)
 				{
 					for(unsigned int i =0; i < working_tokens->size(); i++)
 					{
@@ -465,12 +465,6 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				cerr << string(EBNF_level, ' ') << " ERROR : unknown grammar rule type" << endl;
 			}
 		}
-		
-		if(result.first == 0 && continue_searching_rules == true)
-		{
-			ebnf_verification_list.push_back(start_map_index);
-			//ebnf_verification_list.push_back(EBNF[start_map_index].at(i));
-		}
 	}
 	EBNF_level--;
 	
@@ -513,6 +507,8 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	dvList				=	new Array<distributingVariablesStatement*>;
 	libs				=	new Array<statement*>();
+
+	this->insider = insider;
 	
 	distModifiedGlobal	= new Array<idInfo>;
 	diststatementTemp	= new distStatement();
@@ -521,12 +517,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	distributedScope = 0;
 	functionStatementsCount = 0;
 	
-	
-	if (!insider)
-	{
-		parseIncludesInsider("DM14GLOBAL.m14", "file", true);
-	}
-
 	EBNF["program"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"statement",EXPANSION_TOKEN},
 											    {".*",REGEX_TOKEN, &parser::empty_file}}}};
 	
@@ -817,6 +807,11 @@ parser::~parser()
 
 int	parser::parse()
 {
+	if (!insider)
+	{
+		parseIncludesInsider("core/DM14GLOBAL.m14", "file", true);
+	}
+
 	cerr << ">>>>>>>>>> START " << endl << flush;
 	while(index < tokens->size()-1)
 	{
@@ -831,6 +826,11 @@ int	parser::parse()
 	}
 	cerr << "<<<<<<<<<< END " << endl << flush;
 	
+	for (unsigned int i =0; i < working_tokens->size(); i++)
+	{
+		cerr << "Token:" << working_tokens->at(i).value << endl;
+	}
+
 	// check for the main function // errr no need for file include , the compiler is the one that should that
 	if (!Header)
 	{
@@ -932,33 +932,48 @@ statement* parser::parseIncludes()
 	return NULL;
 };
 
+int parser::addIncludePath(string path)
+{
+	includePaths.push_back(path);
+	return includePaths.size();
+}
 int parser::parseIncludesInsider(const string& package, const string& library, const bool fileInclude)
 {
 	cerr << "PARSE INCLUDES 11 " << endl << flush;
 	includes.push_back(pair<string,string>(package,library));
 	if (fileInclude)
 	{
+		string fullPath;
+		for(unsigned int i = 0; i < includePaths.size(); i++)
+		{
+			ifstream ifs;			
+			ifs.open(includePaths.at(i)+"/"+package);
+			displayInfo(" searching   ... [" + includePaths.at(i)+"/"+package + "]");
+			if(ifs.is_open())
+			{
+				
+				fullPath = includePaths.at(i)+"/"+package;
+				ifs.close();
+				break;
+			}
+		}
+
 		displayInfo(" Scanning   ... [" + package + "/" + library + "]");
-		scanner Scanner(package); /** we should add the includ prefix from compiler
-								   add the file name and the numbers 
-								   from and to in all the next Arrays
-								   so that the compiler can divide them into the right files later ;D
-								   also the includes :) */
+		scanner Scanner(fullPath);
 		Scanner.setShortComment("~~");
 		Scanner.setLongComment("~*", "*~");
 		Scanner.scan();
 		Scanner.printTokens();
 		
 		displayInfo(" Parsing   ... [" + package + "/" + library + "]");
-		//parser* Parser = new parser(Scanner.getTokens(),package);
 		parser Parser(Scanner.getTokens(),package);
+		for(unsigned int i = 0; i < includePaths.size(); i++)
+		{
+			Parser.addIncludePath(includePaths.at(i));
+		}
 		Parser.Header = true;
 		Parser.parse();
-		//mapcode mapCode(package, Parser->getFunctions(), Parser->getIncludes(), true, Parser->distributedNodesCount, Parser->distributedVariablesCount);
 		
-		//mapCode.ExtemapCodernCodes = Parser->ExternCodes;
-		//mapCode.libs = Parser->libs;
-		//mapCodes->push_back(mapCode);
 		for(unsigned int i =0; i < Parser.getMapCodes()->size(); i++)
 		{
 			Parser.getMapCodes()->at(i).setHeader(true);
@@ -4392,17 +4407,30 @@ bool parser::RequireValue(string value, string error, bool addtoken) // add and 
 int parser::mapFunctions(const string& package, const string& library)
 {
 	// get the includes folder full path from the compiler strings
-	//string lib;
+
 	string fullLibraryName;
-	if ( library == package )
+	for(unsigned int i = 0; i < includePaths.size(); i++)
 	{
-		fullLibraryName = "includes/" + package + "/" + package + ".hpp";
+		ifstream ifs;			
+		
+		if ( library == package )
+		{
+			fullLibraryName = includePaths.at(i) + "/" + package + "/" + package + ".hpp";
+		}
+		else
+		{
+			fullLibraryName = includePaths.at(i) + "/" + package + "/" + library + ".hpp";
+		}	
+
+		ifs.open(fullLibraryName);
+
+		if(ifs.is_open())
+		{
+			ifs.close();
+			break;
+		}
 	}
-	else
-	{
-		fullLibraryName = "includes/" + package + "/" + library + ".hpp";
-	}
-	
+
 	//displayInfo(" Scanning  ... [" + fullLibraryName + "]");
 	scanner* scner = new scanner(fullLibraryName);
 	

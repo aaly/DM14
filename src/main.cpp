@@ -12,28 +12,36 @@ class InputParser
 		{
             for (int i=1; i < argc; ++i)
 			{
-                this->tokens.push_back(std::string(argv[i]));
+                this->parameters.push_back(std::string(argv[i]));
 			}
         }
 
-        const std::string& getCmdOption(const std::string &option) const
+        std::string geOptionValue(const std::string &option)
 		{
-            std::vector<std::string>::const_iterator itr;
-            itr =  std::find(this->tokens.begin(), this->tokens.end(), option);
-            if (itr != this->tokens.end() && ++itr != this->tokens.end())
+			std::string result("");
+
+			for(unsigned int i =0; i < parameters.size(); i++)
 			{
-                return *itr;
-            }
-            static const std::string empty_string("");
-            return empty_string;
+				if(parameters.at(i) == option)
+				{
+					if(i+1 < parameters.size())
+					{
+						result = parameters.at(i+1);
+						parameters.erase(parameters.begin()+i+1);
+						parameters.erase(parameters.begin()+i);
+						break;
+					}
+				}
+			}
+            return result;
         }
 
-        bool cmdOptionExists(const std::string &option) const
+        bool hasParameterOption(const std::string &option) const
 		{
-            return std::find(this->tokens.begin(), this->tokens.end(), option) != this->tokens.end();
+            return std::find(this->parameters.begin(), this->parameters.end(), option) != this->parameters.end();
         }
     private:
-        std::vector <std::string> tokens;
+        std::vector <std::string> parameters;
 };
 
 
@@ -52,9 +60,9 @@ int main(int argc, char** argv)
 	string fname;
 	
 
-	if(input.cmdOptionExists("--sources"))
+	if(input.hasParameterOption("--sources"))
 	{
-        fname = input.getCmdOption("--sources");
+        fname = input.geOptionValue("--sources");
     	if (fname.empty())
 		{
         	fname = "testsrc.m14";
@@ -71,11 +79,22 @@ int main(int argc, char** argv)
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
-	scner->printTokens();
+	//scner->printTokens();
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
 	parser* prser = new parser(scner->getTokens(), fname, false);
+
+	while(input.hasParameterOption("-I") == true)
+	{		
+        const std::string &includePath = input.geOptionValue("-I");
+
+    	if (!includePath.empty())
+		{
+			displayInfo(" adding   ... [" + includePath + "]");
+        	prser->addIncludePath(includePath);
+    	}
+    }	
 	//prser->printEBNF();
 	prser->parse();
 	
@@ -84,14 +103,6 @@ int main(int argc, char** argv)
 	displayInfo(" Compiling  ... [" + fname + "]");
 	compiler* Compiler = new compiler(prser->getMapCodes());
 	
-	if(input.cmdOptionExists("-I"))
-	{
-        const std::string &includePath = input.getCmdOption("-I");
-    	if (!includePath.empty())
-		{
-        	//Compiler->addIncludePath(includePath);
-    	}
-    }
 
 	Compiler->setVersion(0.01);
 	Compiler->setIncludesDir("includes");

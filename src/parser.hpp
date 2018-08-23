@@ -235,6 +235,8 @@ class parser
 		};*/
 		
 		int printEBNF();
+
+		int addIncludePath(string path);
 		private:
 		
 			Array<string> ebnf_verification_list;
@@ -280,7 +282,8 @@ class parser
 			
 			Array<string>*				ExternCodes;
 
-			Array<pair<string,string> >		includes;
+			Array<pair<string,string>>		includes;
+			Array<string>			includePaths;
 			string						package;
 			string						library;
 			
@@ -294,6 +297,7 @@ class parser
 			ast_function						currentFunction;
 			
 			bool							tmpScope;
+			bool							insider;
 			
 			statement*						currentStatement;
 			statement*						parentStatement;
