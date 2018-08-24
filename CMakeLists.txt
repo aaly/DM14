@@ -17,11 +17,12 @@ include_directories(src/ src/includes/core)
 ######### doxygen
 
 # first we can indicate the documentation build as an option and set it to ON by default
-option(BUILD_DOC "Build documentation" ON)
+#option(BUILD_DOC "Build documentation" ON)
 
 # check if Doxygen is installed
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
+#find_package(Doxygen)
+#if (DOXYGEN_FOUND)
+if (false)
     # set input and output files
     set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen.conf)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/generated_docs)
@@ -38,4 +39,4 @@ if (DOXYGEN_FOUND)
         VERBATIM )
 else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+endif (DOXYGEN_FOUND)   
