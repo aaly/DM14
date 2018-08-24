@@ -6,36 +6,36 @@
 @date			  2010-2018
 @version          1.1a
 @copyright        See file "license" for bsd license
+
+
+TODO: report grammar error using the longest trace and quite.
+
 */
 
 
 #include "parser.hpp"
 
-
+#define PARSER_EBNF_SHOW_TRACE 0
 
 int parser::pushToken(token tok)
 {
 	if(tok.value.size())
 	{
 		working_tokens->push_back(tok);
-		*working_tokens_index++;
 	}
 	return working_tokens->size();
 }
 
 token parser::popToken()
 {
-	/*if(working_tokens->size() > 0 && 
-	   *working_tokens_index > -1)*/
 	if(working_tokens->size() > 0)
 	{
-		*working_tokens_index--;
 		current_token = working_tokens->at(0);
 		working_tokens->erase(working_tokens->begin());
 	}
 	else
 	{
-		cerr << "POP EMPTY \n" << endl;
+		displayError("Empty pop !!!");
 		current_token = token();
 	}
 	
@@ -59,7 +59,15 @@ token parser::getToken(const unsigned int index)
 
 int parser::removeToken()
 {
-	working_tokens->erase(working_tokens->end());
+	if(working_tokens->size() > 0)
+	{
+		working_tokens->erase(working_tokens->end());
+	}
+	else
+	{
+		cerr << "error removign token from the working tokens vector" << endl;
+	}
+	
 	return 0;
 }
 
@@ -212,7 +220,9 @@ int parser::printEBNF()
 }
 
 
-
+/**
+ * @details This function takes a set of input tokens, and a start map key, and a pointer to the output tokens vector
+ */
 ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens)
 {
 	if(!EBNF[start_map_index].size())
@@ -231,15 +241,19 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 	ebnfResult result(0, NULL);
 	bool continue_searching_rules = true;
 	
-	cerr << endl << std::string(EBNF_level, ' ') << ".LOOPING KEY : " << start_map_index << endl << flush;
+	#if PARSER_EBNF_SHOW_TRACE == 1
+	cerr << endl << std::string(EBNF_level*2, ' ') << ".LOOPING KEY : " << start_map_index << endl << flush;
+	#endif
 	
 	// loop over std::vector<grammar_token_array_t>
 	for (unsigned int i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
 		result.first = 0;
 		
-		cerr << string(EBNF_level, ' ')  << "..LOOPING RULE : " << i << endl << flush;
-		
+		#if PARSER_EBNF_SHOW_TRACE == 1
+		cerr << string(EBNF_level*3, ' ')  << "..LOOPING RULE : " << i << endl << flush;
+		#endif
+
 		// loop over std::vector<EBNF_entity_t>
 		grammar_rule_t current_rule = EBNF[start_map_index].at(i);
 		
@@ -347,7 +361,10 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			
 			if(result.first == 0)
 			{
-				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => success " << endl << flush;
+				#if PARSER_EBNF_SHOW_TRACE == 1
+				cerr << string(EBNF_level*4, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => success " << endl << flush;
+				#endif
+
 				if(ebnf_token.tokenType != EXPANSION_TOKEN) // only terminals
 				{
 					advance_EBNFindex();
@@ -387,7 +404,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else
 			{
-				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
+				////cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
 			}
 			
 			/** process the current grammar rule type*/
@@ -397,6 +414,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				{
 					for(unsigned int i =0; i < *input_tokens_index - old_index; i++)
 					{
+						cerr << "DEADVANCE" << endl << flush;	
 						deadvance_EBNFindex();
 					}
 				}
@@ -409,7 +427,10 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				if(result.first != 0)
 				{
-					cerr << string(EBNF_level, ' ') << " ERROR : tokens do not (follow order/exist)" << endl;
+					#if PARSER_EBNF_SHOW_TRACE == 1
+					cerr << string(EBNF_level*4, ' ') << " ERROR : tokens do not (follow order/exist)" << endl;
+					#endif 
+
 					for(unsigned int i =0; i < *input_tokens_index - old_index; i++)
 					{
 						deadvance_EBNFindex();
@@ -456,13 +477,14 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 						deadvance_EBNFindex();
 					}
 					result.first = 0;
-					//continue_searching_rules=false;
 					break;
 				}
 			}
 			else
 			{
-				cerr << string(EBNF_level, ' ') << " ERROR : unknown grammar rule type" << endl;
+				#if PARSER_EBNF_SHOW_TRACE == 1
+				cerr << string(EBNF_level*4, ' ') << " ERROR : unknown grammar rule type" << endl;
+				#endif
 			}
 		}
 	}
@@ -501,7 +523,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	globalNoDist = false;
 	
 	working_tokens = &tokens_stack;
-	working_tokens_index = &token_index;
+	//working_tokens_index = &token_index;
 	input_tokens_index = &index;
 	input_tokens = tokens;
 	
@@ -541,8 +563,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"return-list",EXPANSION_TOKEN},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
 												  {"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement},
-												  {";",TERMINAL_TOKEN, &parser::parseNOPStatement}
-												  //{";",TERMINAL_TOKEN},
+												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement}
 												  }}};
 	
 	/** the with statement */
@@ -616,7 +637,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 																  {";",TERMINAL_TOKEN}}}};
 	EBNF["logical-expression"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN},
 															 {".*",BINARY_OP_TOKEN},
-															 {"logical-expression-term",EXPANSION_TOKEN}}},
+																 {"logical-expression-term",EXPANSION_TOKEN}}},
 								  {GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN}}}};
 															 
 	EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
@@ -748,8 +769,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"IMMEDIATE",IMMEDIATE_TOKEN},
 													{"BIN_OP",BINARY_OP_TOKEN},
 													{"expression",EXPANSION_TOKEN}}},
-						   {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN}}},
-						   {GRAMMAR_TOKEN_AND_ARRAY,{{"",IMMEDIATE_TYPE_TOKEN}}}};
+						   {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN}}}};
 	/** the thread statement */
 	EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread",TERMINAL_TOKEN},
 													 {"function-call",EXPANSION_TOKEN}}}};
@@ -789,6 +809,8 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													{"expression-statement",EXPANSION_TOKEN}}},
 						   {GRAMMAR_TOKEN_AND_ARRAY,{{"return",TERMINAL_TOKEN},
 													{";",TERMINAL_TOKEN}}}};
+	/* nop statement */
+	EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{";",TERMINAL_TOKEN}}}};
 }
 
 
@@ -1086,20 +1108,6 @@ statement* parser::parseStatement()
 	statement* retStmt = NULL;
 	increaseScope(retStmt);
 	
-	/*int *temp_input_tokens_index_ptr = input_tokens_index;
-	int temp_input_tokens_index = 0;
-	input_tokens_index = &temp_input_tokens_index;
-	Array<token>* working_tokens2 = new Array<token>();
-	retStmt = parseEBNF(working_tokens, "program", working_tokens2).second;
-	delete working_tokens2;
-	input_tokens_index = temp_input_tokens_index_ptr;*/
-	
-	/*int *temp_input_tokens_index_ptr = input_tokens_index;
-	int temp_input_tokens_index = *input_tokens_index-working_tokens->size();
-	input_tokens_index = &temp_input_tokens_index;
-	retStmt = parseEBNF(tokens, "program", working_tokens).second;
-	input_tokens_index = temp_input_tokens_index_ptr;*/
-	
 	bool pushStatements = false;
 	
 	int *temp_input_tokens_index_ptr = input_tokens_index;
@@ -1229,410 +1237,6 @@ statement* parser::parseTempDeclaration()
 	}
 	return result;
 }*/
-
-statement* parser::parseDeclaration()
-{
-		cerr << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE3" << getToken().value << endl;
-		cerr << token_index << ":" << working_tokens->size() << endl;
-		for(unsigned int i =0; i< working_tokens->size(); i++)
-		{
-			cerr << "::" << working_tokens->at(i).value << endl;
-		}
-
-	popToken();
-	statement* result = parseDeclarationInternal(";");
-	return result;
-}
-
-statement* parser::parseDeclarationInternal(const string& terminal)
-{
-	cerr << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE1" << getToken().value << endl;
-	declareStatement* decStatement = new declareStatement;
-	decStatement->line = getToken().lineNumber;
-	decStatement->scope = scope;
-	
-	if(scope == 0)
-	{
-		decStatement->global = true;
-	}
-	else
-	{
-		decStatement->global = false;
-	}
-
-	decStatement->tmpScope = tmpScope;
-
-	Array<idInfo>* tempIdentifiers = new Array<idInfo>;
-
-	while (true)
-	{
-		checkToken(Function, "this is a function name ! :  ", true);
-		RequireType("identifier", "Expected \"Identifier\" and not ", true);
-		
-		if (findIDInfo(idInfo(getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
-		{
-			if (findIDInfo(idInfo(getToken().value, 0, "", NULL),TMPSCOPE))
-			{
-				displayWarning(fName, getToken().lineNumber,getToken().columnNumber,"Pre-defined variable in different scope :  " + getToken().value);
-			}
-			else if(!tmpScope)
-			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defineddd variable :  " + getToken().value);
-			}
-		}
-		else if (findIDInfo(idInfo(getToken().value, 0, "", NULL),GLOBAL))
-		{
-			displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defined Global variable :  " + getToken().value);
-		}
-		
-		tempIdentifiers->push_back(idInfo(getToken().value, 0, "", NULL));	
-		decStatement->identifiers->push_back(idInfo(getToken().value, 0, "", NULL)) ;
-		if(!decStatement->tmpScope)
-		{
-			distributedVariablesCount++;
-		}
-		
-		popToken();
-		
-		if(getToken().value != "," )
-		{
-			break;
-		}
-		
-		popToken();
-	}
-	
-	bool distributed = true;
-	
-	while(true)
-	{
-				cerr << "EEEEEEEEEEEEEEEEEEEEEEE 2" << getToken().value << endl;
-
-		if (getToken().value == "noblock" )
-		{
-			decStatement->noblock = true;
-		}
-		else if (getToken().value == "recurrent" )
-		{
-			decStatement->recurrent=true;
-		}
-		
-		else if (getToken().value == "backprop" )
-		{
-			decStatement->backProp=true;
-		}
-		else if (getToken().value == "nodist" )
-		{
-			if(decStatement->recurrent)
-			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber, "nodist variable can not be recurrent !");
-			}
-			
-			////displayWarning(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber, "Warning, nodist variable");
-			distributed = false;
-			decStatement->distributed = false;
-		}
-		else if (getToken().value == "channel" )
-		{
-			if (decStatement->recurrent || !distributed || decStatement->backProp)
-			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber, "channel variable is not pure !?");
-			}
-
-			decStatement->channel=true;
-		}
-		else if (getToken().value == "global" )
-		{
-			decStatement->global=true;
-		}
-		else
-		{
-			break;
-		}
-		
-		popToken();
-	}
-	
-	
-	if(!isDataType(getToken().value))
-	{
-		RequireType("datatype", "Expected \"Data type\" and not ", true);
-	}
-	
-	decStatement->type = getToken().value;
-	decStatement->classtype = isClass(decStatement->type);
-	decStatement->array = false;
-		
-	popToken();
-	
-	//array
-	if (getToken().value == "[" )
-	{
-		decStatement->array = true;
-		popToken();
-		if (getToken().type == "int")
-		{
-			stringstream SS;
-			SS << getToken().value;
-			SS >> decStatement->size;
-			distributedVariablesCount += decStatement->size;
-			popToken();
-			RequireValue("]", "Expected ] and not ", true);		
-		}
-		else
-		{
-			decStatement->size = 0;
-			RequireValue("]", "Expected ] and not ", true);
-		}
-		popToken();
-	}
-	
-	// matrix
-	if (getToken().value == "[" )
-	{
-		decStatement->array = true;
-		popToken();
-		if (getToken().type == "int")
-		{
-			stringstream SS;
-			SS << getToken().value;
-			SS >> decStatement->size;
-			distributedVariablesCount += decStatement->size;
-			popToken();
-			RequireValue("]", "Expected ] and not ", true);		
-		}
-		else
-		{
-			decStatement->size = 0;
-			RequireValue("]", "Expected ] and not ", true);
-		}
-		popToken();
-	}
-
-
-	if (getToken().value == "(")
-	{
-		int to = reachToken(")", true, true, false, false, true);
-		decStatement->value = parseOpStatement(*working_tokens_index, to-1, decStatement->type, 0, decStatement);
-		reachToken(")", true, true, true, false, true);
-		popToken();
-		RequireValue(terminal, "Expected " + terminal + " and not ", true);
-		decStatement->Initilazed = true;
-	}
-	else if (getToken().value == "=" )
-	{
-		if(peekToken("{"))
-		{
-			popToken();
-			
-			if (!decStatement->array)
-			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"This varaible is not an array");
-			}
-			
-			int plevel = 1;
-			int from = *working_tokens_index+1;
-			while (popToken().value.size())
-			{
-				if (getToken().value == "(")
-				{
-					plevel++;
-				}
-				else if (getToken().value == ")" || getToken().value == "}")
-				{
-					plevel--;
-					if(plevel ==0)
-					{
-						if(*working_tokens_index != from)
-						{
-							decStatement->values.push_back(parseOpStatement(from, *working_tokens_index - 1, "-2", 0, decStatement));
-						}
-						break;
-					}
-				}
-				else if (getToken().value == ",")
-				{
-					if (plevel==1)
-					{		
-						if(*working_tokens_index != from)
-						{
-							decStatement->values.push_back(parseOpStatement(from, *working_tokens_index-1, "-2", 0, decStatement));
-							from = *working_tokens_index+1;
-						}
-					}
-				}
-			}
-			
-			if (decStatement->values.size() > (unsigned int) decStatement->size && decStatement->size !=  0)
-			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"too many initilizations");
-			}
-			
-			if (decStatement->size == 0)
-			{
-				decStatement->size = decStatement->values.size();
-			}
-			
-			stringstream SS;
-			for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
-			{
-				for (unsigned int i =0; i < decStatement->values.size(); i++)
-				{
-					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
-					termstatement->scope = scope;
-					
-					SS << i;
-					termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
-					arrayIndex->scope = scope;
-					
-					termstatement->arrayIndex = arrayIndex;
-					//termstatement->identifier = true;
-					
-					operationalStatement* os = new operationalStatement();
-					os->left = termstatement;
-					os->op = "=";
-					os->right = decStatement->values.at(i);
-					os->type = decStatement->type;
-					os->scope = scope;
-					currentFunction.body->push_back(os);
-
-					//FIX ??
-					if(!decStatement->global)
-					{
-						idInfo id(decStatement->identifiers->at(k).name, decStatement->scope, decStatement->type, arrayIndex);
-						id.distributedScope = distributedScope;
-						id.array = false;	
-						id.distributed = distributed;				
-						id.backProp = decStatement->backProp;
-						id.recurrent = decStatement->recurrent;
-						id.channel = decStatement->channel;
-						id.noblock = decStatement->noblock;
-						id.global = decStatement->global;
-						id.global = decStatement->shared;
-						id.type = decStatement->type;
-						statement* origiCurrentStatement = currentStatement;
-						currentStatement = os;
-						pushModified("=", id);
-						currentStatement = origiCurrentStatement;
-					}
-					
-					SS.str("");
-					SS.clear();
-				}
-			}
-			if (decStatement->size == 0) // FIX && decStatement->distributed)
-			{
-				distributedVariablesCount += decStatement->values.size();
-			}
-			decStatement->Initilazed = false;
-		}
-		else
-		{			
-			int to = reachToken(terminal, true, true, false, false, false);
-			decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
-			reachToken(terminal, true, true, true, false, false);
-			
-			if(decStatement->global)
-			{
-				for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
-				{
-					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
-					termstatement->scope = scope;
-					
-					operationalStatement* os = new operationalStatement();
-					os->left = termstatement;
-					os->op = "=";
-					os->right = decStatement->value;
-					os->type = decStatement->type;
-					os->scope = scope;
-					//globalDefinitions.push_back(os);
-					decStatement->splitStatements.push_back(os);
-					////currentFunction.body->push_back(os);
-				}
-				
-				if(decStatement->splitStatements.size())
-				{
-					decStatement->splitStatements.at(0)->distStatements = decStatement->distStatements;
-					decStatement->distStatements.clear();
-				}
-				decStatement->value = NULL;
-			}
-			decStatement->Initilazed = true;
-		}
-	}
-	else
-	{
-		cerr << "VAL :" << getToken().value.size() << endl;
-		RequireValue(terminal, "Expected " + terminal + " and not ", true);
-		decStatement->Initilazed = false;
-		decStatement->value = NULL;
-	}
-	
-	stringstream SS;
-	
-	decStatement->identifiers->clear();
-	for ( unsigned int i = 0; i < tempIdentifiers->size(); i++ )
-	{
-		SS << i;
-		termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
-		arrayIndex->scope = scope;
-		
-		idInfo idinfo(tempIdentifiers->at(i).name, decStatement->scope, decStatement->type, arrayIndex);
-		idinfo.tmpScope = tmpScope;
-		idinfo.size = decStatement->size;
-		idinfo.distributed = distributed;
-		idinfo.backProp = decStatement->backProp;
-		idinfo.recurrent = decStatement->recurrent;
-		idinfo.channel = decStatement->channel;
-		idinfo.noblock = decStatement->noblock;
-		idinfo.array = false;
-		idinfo.global = decStatement->global;
-		idinfo.type = decStatement->type;
-		if(decStatement->array)
-		{
-			idinfo.array = true;
-		}
-		
-		decStatement->identifiers->push_back(idinfo);
-		identifiers->push_back(idinfo);
-		
-		for(unsigned int i =0; i < datatypes.size(); i++)
-		{
-			if(datatypes.at(i).typeID == idinfo.type && datatypes.at(i).classType)
-			{
-				for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
-				{
-					idInfo id = idInfo(datatypes.at(i).memberVariables.at(k).name, decStatement->scope, datatypes.at(i).memberVariables.at(k).returnType, NULL);
-					//FIX bad ?!
-					idInfo* parentID = new idInfo();
-					*parentID = idinfo;
-					id.parent = parentID;
-					id.tmpScope = idinfo.tmpScope;
-					id.size = idinfo.size;
-					id.distributed = idinfo.distributed;
-					id.backProp = idinfo.backProp;
-					idinfo.recurrent = idinfo.recurrent;
-					id.channel = idinfo.channel;
-					id.noblock = idinfo.noblock;
-					id.array = idinfo.array;
-					id.global = decStatement->global;
-					id.type = decStatement->type;
-					identifiers->push_back(id);
-				}
-			}
-		}
-		SS.str("");
-		SS.clear();
-	}
-	
-	if(decStatement->global)
-	{
-		globalDeclarations.push_back(decStatement);
-	}
-	
-	return decStatement;
-};
-
 
 int parser::pushDependency(idInfo& id)
 {
@@ -2116,11 +1720,13 @@ statement* parser::parseFunctionCall(bool terminated,const string& returnType, c
 				{
 					if(terminated)
 					{
-						funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+						funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
 					}
 					else
 					{
-						funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+						funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
 					}
 					parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
 				}
@@ -2135,11 +1741,13 @@ statement* parser::parseFunctionCall(bool terminated,const string& returnType, c
 				{
 					if(terminated)
 					{
-						funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+						funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
 					}
 					else
 					{
-						funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+						funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
 					}
 					parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
 					
@@ -2294,12 +1902,15 @@ statement* parser::parseForloop()
 
 	while(!peekToken("}"))
 	{
+		cerr << "HEREEEEEE" << endl;
 		statement* stmt = parseStatement();
 		addStatementDistributingVariables(stmt);
 		floop->body->push_back(stmt);
+		exit(1);
 	}
 	
 	popToken();
+
 	decreaseScope();
 		
 	return floop;
@@ -4178,16 +3789,19 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 				{
 					if (plevel == 0)
 					{
-						return *working_tokens_index;
+						//return *working_tokens_index;
+						return 0;
 					}
 				}
 				else
 				{
-					return *working_tokens_index;
+					//return *working_tokens_index;
+					return 0;
 				}
 			}
 			
-			if ((unsigned) *working_tokens_index == working_tokens->size())
+			//if ((unsigned) *working_tokens_index == working_tokens->size())
+			if ((unsigned) 0 == working_tokens->size())
 			{
 				if (reportError)
 				{
@@ -4260,29 +3874,19 @@ token parser::peekToken(const int& pos)
 	return token();
 };
 
+
+/**
+ * @detail peek the first token in the working_tokens vector, which is not poped yet
+ */
 bool parser::peekToken(const string& str)
 {
 	if(working_tokens->size())
 	{
-		if ((unsigned) *working_tokens_index < working_tokens->size()-1 &&
-			working_tokens->size() > 1)
+		if (working_tokens->at(0).value == str)
 		{
-			if (working_tokens->at(*working_tokens_index+1).value == str)
-			{
-				return true;
-			}
+			return true;
 		}
-		else if (*working_tokens_index  == 0 &&
-				 working_tokens->size() == 1)
-		{
-			if (working_tokens->at(0).value == str)
-			{
-				return true;
-			}
-		}
-		
 	}
-		
 	return false;
 };
 
@@ -5191,3 +4795,423 @@ idInfo parser::findID(const string& ID, const string& parentID)
 	}
 	return idInfo();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+statement* parser::parseDeclaration()
+{
+	cerr << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE3" << getToken().value << endl;
+	cerr << token_index << ":" << working_tokens->size() << endl;
+	for(unsigned int i =0; i< working_tokens->size(); i++)
+	{
+		cerr << "::" << working_tokens->at(i).value << endl;
+	}
+
+	popToken();
+	statement* result = parseDeclarationInternal(";");
+	return result;
+}
+
+statement* parser::parseDeclarationInternal(const string& terminal)
+{
+	declareStatement* decStatement = new declareStatement;
+	decStatement->line = getToken().lineNumber;
+	decStatement->scope = scope;
+	
+	if(scope == 0)
+	{
+		decStatement->global = true;
+	}
+	else
+	{
+		decStatement->global = false;
+	}
+
+	decStatement->tmpScope = tmpScope;
+
+	Array<idInfo>* tempIdentifiers = new Array<idInfo>;
+
+	while (true)
+	{
+		checkToken(Function, "this is a function name ! :  ", true);
+		RequireType("identifier", "Expected \"Identifier\" and not ", true);
+		
+		if (findIDInfo(idInfo(getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
+		{
+			if (findIDInfo(idInfo(getToken().value, 0, "", NULL),TMPSCOPE))
+			{
+				displayWarning(fName, getToken().lineNumber,getToken().columnNumber,"Pre-defined variable in different scope :  " + getToken().value);
+			}
+			else if(!tmpScope)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defineddd variable :  " + getToken().value);
+			}
+		}
+		else if (findIDInfo(idInfo(getToken().value, 0, "", NULL),GLOBAL))
+		{
+			displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defined Global variable :  " + getToken().value);
+		}
+		
+		tempIdentifiers->push_back(idInfo(getToken().value, 0, "", NULL));	
+		decStatement->identifiers->push_back(idInfo(getToken().value, 0, "", NULL)) ;
+		if(!decStatement->tmpScope)
+		{
+			distributedVariablesCount++;
+		}
+		
+		popToken();
+		
+		if(getToken().value != "," )
+		{
+			break;
+		}
+		
+		popToken();
+	}
+	
+	bool distributed = true;
+	
+	while(true)
+	{
+				cerr << "EEEEEEEEEEEEEEEEEEEEEEE 2" << getToken().value << endl;
+
+		if (getToken().value == "noblock" )
+		{
+			decStatement->noblock = true;
+		}
+		else if (getToken().value == "recurrent" )
+		{
+			decStatement->recurrent=true;
+		}
+		
+		else if (getToken().value == "backprop" )
+		{
+			decStatement->backProp=true;
+		}
+		else if (getToken().value == "nodist" )
+		{
+			if(decStatement->recurrent)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber, "nodist variable can not be recurrent !");
+			}
+			
+			////displayWarning(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber, "Warning, nodist variable");
+			distributed = false;
+			decStatement->distributed = false;
+		}
+		else if (getToken().value == "channel" )
+		{
+			if (decStatement->recurrent || !distributed || decStatement->backProp)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber, "channel variable is not pure !?");
+			}
+
+			decStatement->channel=true;
+		}
+		else if (getToken().value == "global" )
+		{
+			decStatement->global=true;
+		}
+		else
+		{
+			break;
+		}
+		
+		popToken();
+	}
+	
+	
+	if(!isDataType(getToken().value))
+	{
+		RequireType("datatype", "Expected \"Data type\" and not ", true);
+	}
+	
+	decStatement->type = getToken().value;
+	decStatement->classtype = isClass(decStatement->type);
+	decStatement->array = false;
+		
+	popToken();
+	
+	//array
+	if (getToken().value == "[" )
+	{
+		decStatement->array = true;
+		popToken();
+		if (getToken().type == "int")
+		{
+			stringstream SS;
+			SS << getToken().value;
+			SS >> decStatement->size;
+			distributedVariablesCount += decStatement->size;
+			popToken();
+			RequireValue("]", "Expected ] and not ", true);		
+		}
+		else
+		{
+			decStatement->size = 0;
+			RequireValue("]", "Expected ] and not ", true);
+		}
+		popToken();
+	}
+	
+	// matrix
+	if (getToken().value == "[" )
+	{
+		decStatement->array = true;
+		popToken();
+		if (getToken().type == "int")
+		{
+			stringstream SS;
+			SS << getToken().value;
+			SS >> decStatement->size;
+			distributedVariablesCount += decStatement->size;
+			popToken();
+			RequireValue("]", "Expected ] and not ", true);		
+		}
+		else
+		{
+			decStatement->size = 0;
+			RequireValue("]", "Expected ] and not ", true);
+		}
+		popToken();
+	}
+
+
+	if (getToken().value == "(")
+	{
+		int to = reachToken(")", true, true, false, false, true);
+		//decStatement->value = parseOpStatement(*working_tokens_index, to-1, decStatement->type, 0, decStatement);
+		decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
+		reachToken(")", true, true, true, false, true);
+		popToken();
+		RequireValue(terminal, "Expected " + terminal + " and not ", true);
+		decStatement->Initilazed = true;
+	}
+	else if (getToken().value == "=" )
+	{
+		if(peekToken("{"))
+		{
+			popToken();
+			
+			if (!decStatement->array)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"This varaible is not an array");
+			}
+			
+			int plevel = 1;
+			//int from = *working_tokens_index+1;
+			int from = 1;
+			while (popToken().value.size())
+			{
+				if (getToken().value == "(")
+				{
+					plevel++;
+				}
+				else if (getToken().value == ")" || getToken().value == "}")
+				{
+					plevel--;
+					if(plevel ==0)
+					{
+						//if(*working_tokens_index != from)
+						if(0 != from)
+						{
+							//decStatement->values.push_back(parseOpStatement(from, *working_tokens_index - 1, "-2", 0, decStatement));
+							decStatement->values.push_back(parseOpStatement(from, - 1, "-2", 0, decStatement));
+						}
+						break;
+					}
+				}
+				else if (getToken().value == ",")
+				{
+					if (plevel==1)
+					{		
+						//if(*working_tokens_index != from)
+						if(0 != from)
+						{
+							//decStatement->values.push_back(parseOpStatement(from, *working_tokens_index-1, "-2", 0, decStatement));
+							decStatement->values.push_back(parseOpStatement(from, -1, "-2", 0, decStatement));
+							//from = *working_tokens_index+1;
+							from = 1;
+						}
+					}
+				}
+			}
+			
+			if (decStatement->values.size() > (unsigned int) decStatement->size && decStatement->size !=  0)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"too many initilizations");
+			}
+			
+			if (decStatement->size == 0)
+			{
+				decStatement->size = decStatement->values.size();
+			}
+			
+			stringstream SS;
+			for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
+			{
+				for (unsigned int i =0; i < decStatement->values.size(); i++)
+				{
+					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
+					termstatement->scope = scope;
+					
+					SS << i;
+					termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
+					arrayIndex->scope = scope;
+					
+					termstatement->arrayIndex = arrayIndex;
+					//termstatement->identifier = true;
+					
+					operationalStatement* os = new operationalStatement();
+					os->left = termstatement;
+					os->op = "=";
+					os->right = decStatement->values.at(i);
+					os->type = decStatement->type;
+					os->scope = scope;
+					currentFunction.body->push_back(os);
+
+					//FIX ??
+					if(!decStatement->global)
+					{
+						idInfo id(decStatement->identifiers->at(k).name, decStatement->scope, decStatement->type, arrayIndex);
+						id.distributedScope = distributedScope;
+						id.array = false;	
+						id.distributed = distributed;				
+						id.backProp = decStatement->backProp;
+						id.recurrent = decStatement->recurrent;
+						id.channel = decStatement->channel;
+						id.noblock = decStatement->noblock;
+						id.global = decStatement->global;
+						id.global = decStatement->shared;
+						id.type = decStatement->type;
+						statement* origiCurrentStatement = currentStatement;
+						currentStatement = os;
+						pushModified("=", id);
+						currentStatement = origiCurrentStatement;
+					}
+					
+					SS.str("");
+					SS.clear();
+				}
+			}
+			if (decStatement->size == 0) // FIX && decStatement->distributed)
+			{
+				distributedVariablesCount += decStatement->values.size();
+			}
+			decStatement->Initilazed = false;
+		}
+		else
+		{			
+			int to = reachToken(terminal, true, true, false, false, false);
+			decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
+			reachToken(terminal, true, true, true, false, false);
+			
+			if(decStatement->global)
+			{
+				for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
+				{
+					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
+					termstatement->scope = scope;
+					
+					operationalStatement* os = new operationalStatement();
+					os->left = termstatement;
+					os->op = "=";
+					os->right = decStatement->value;
+					os->type = decStatement->type;
+					os->scope = scope;
+					//globalDefinitions.push_back(os);
+					decStatement->splitStatements.push_back(os);
+					////currentFunction.body->push_back(os);
+				}
+				
+				if(decStatement->splitStatements.size())
+				{
+					decStatement->splitStatements.at(0)->distStatements = decStatement->distStatements;
+					decStatement->distStatements.clear();
+				}
+				decStatement->value = NULL;
+			}
+			decStatement->Initilazed = true;
+		}
+	}
+	else
+	{
+		cerr << "VAL :" << getToken().value.size() << endl;
+		RequireValue(terminal, "Expected " + terminal + " and not ", true);
+		decStatement->Initilazed = false;
+		decStatement->value = NULL;
+	}
+	
+	stringstream SS;
+	
+	decStatement->identifiers->clear();
+	for ( unsigned int i = 0; i < tempIdentifiers->size(); i++ )
+	{
+		SS << i;
+		termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
+		arrayIndex->scope = scope;
+		
+		idInfo idinfo(tempIdentifiers->at(i).name, decStatement->scope, decStatement->type, arrayIndex);
+		idinfo.tmpScope = tmpScope;
+		idinfo.size = decStatement->size;
+		idinfo.distributed = distributed;
+		idinfo.backProp = decStatement->backProp;
+		idinfo.recurrent = decStatement->recurrent;
+		idinfo.channel = decStatement->channel;
+		idinfo.noblock = decStatement->noblock;
+		idinfo.array = false;
+		idinfo.global = decStatement->global;
+		idinfo.type = decStatement->type;
+		if(decStatement->array)
+		{
+			idinfo.array = true;
+		}
+		
+		decStatement->identifiers->push_back(idinfo);
+		identifiers->push_back(idinfo);
+		
+		for(unsigned int i =0; i < datatypes.size(); i++)
+		{
+			if(datatypes.at(i).typeID == idinfo.type && datatypes.at(i).classType)
+			{
+				for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
+				{
+					idInfo id = idInfo(datatypes.at(i).memberVariables.at(k).name, decStatement->scope, datatypes.at(i).memberVariables.at(k).returnType, NULL);
+					//FIX bad ?!
+					idInfo* parentID = new idInfo();
+					*parentID = idinfo;
+					id.parent = parentID;
+					id.tmpScope = idinfo.tmpScope;
+					id.size = idinfo.size;
+					id.distributed = idinfo.distributed;
+					id.backProp = idinfo.backProp;
+					idinfo.recurrent = idinfo.recurrent;
+					id.channel = idinfo.channel;
+					id.noblock = idinfo.noblock;
+					id.array = idinfo.array;
+					id.global = decStatement->global;
+					id.type = decStatement->type;
+					identifiers->push_back(id);
+				}
+			}
+		}
+		SS.str("");
+		SS.clear();
+	}
+	
+	if(decStatement->global)
+	{
+		globalDeclarations.push_back(decStatement);
+	}
+	
+	return decStatement;
+};

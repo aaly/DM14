@@ -116,7 +116,7 @@ class parser
 	
 		ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens);
 		Array<token>* working_tokens = NULL;
-		int *working_tokens_index = NULL;
+		//int *working_tokens_index = NULL;
 		Array<token>* input_tokens = NULL;
 		int *input_tokens_index = NULL;
 		bool pushStatements = true;
@@ -234,6 +234,8 @@ class parser
 			PROTECTED=3
 		};*/
 		
+
+		/** @details print the Extended BNF grammar */
 		int printEBNF();
 
 		int addIncludePath(string path);
