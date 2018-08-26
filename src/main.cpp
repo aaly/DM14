@@ -49,8 +49,6 @@ class InputParser
 int main(int argc, char** argv)
 {
 	InputParser input(argc, argv);
- 
-    
 
 	// when  variavle declared , if no value initialized , then just make a pointer to it
 	// wait when the operational statement that assigns it , then initialize it with NEW , and use it as *P :)
@@ -79,7 +77,7 @@ int main(int argc, char** argv)
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
-	//scner->printTokens();
+	scner->printTokens();
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");

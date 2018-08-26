@@ -47,7 +47,7 @@ token parser::getToken()
 	return current_token;
 }
 
-token parser::getToken(const unsigned int index)
+token parser::getToken(const uint32_t index)
 {
 	if(working_tokens->size() > 0 &&
 		index < working_tokens->size())
@@ -78,7 +78,7 @@ statement* parser::empty_file()
 	displayError(fName, -1,0,"unable to proceed file", false);
 	displayError(fName, -1,0,"dumping stack : ", false);
 	
-	for(unsigned int i =0; i < working_tokens->size(); i++)
+	for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << working_tokens->at(i).value << endl;
 	}
@@ -103,7 +103,6 @@ int parser::advance_EBNFindex()
 
 int parser::deadvance_EBNFindex()
 {
-	//if(index-1 > -1)
 	if(input_tokens->size())
 	{
 		removeToken();
@@ -127,7 +126,7 @@ int parser::printEBNF()
 		string start_map_index = it->first;
 		cerr << "<" << start_map_index << "> ::=";
 		// loop over std::vector<grammar_token_array_t>
-		for (unsigned int i = 0; i < EBNF[start_map_index].size(); i++)
+		for (uint32_t i = 0; i < EBNF[start_map_index].size(); i++)
 		{
 			grammar_rule_t current_rule = EBNF[start_map_index].at(i);
 			if (current_rule.tokens.size() > 1)
@@ -135,7 +134,7 @@ int parser::printEBNF()
 				cerr << " {";
 			}
 			
-			for (unsigned int k = 0; k < current_rule.tokens.size(); k++)
+			for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
 			{
 				EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 				
@@ -219,6 +218,39 @@ int parser::printEBNF()
 	return 0;
 }
 
+/**
+ * @details get the depth of a specific rule starting from a specific start rule
+ */
+uint32_t parser::getLevelOfEBNFRule(const std::string rule, const std::string start)
+{
+	int32_t result = 0;
+	for (uint32_t i = 0; i < EBNF[start].size(); i++)
+	{
+		grammar_rule_t current_rule = EBNF[start].at(i);
+		
+		for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
+		{
+			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
+
+			if(ebnf_token.expansion == rule)
+			{
+				return 1;
+			}
+		}
+
+		for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
+		{
+			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
+			uint32_t tmp = getLevelOfEBNFRule(rule, ebnf_token.expansion);
+			if(tmp > 0)
+			{
+				return result + tmp;
+			}
+		}
+	}
+	return result;
+}
+
 
 /**
  * @details This function takes a set of input tokens, and a start map key, and a pointer to the output tokens vector
@@ -246,7 +278,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 	#endif
 	
 	// loop over std::vector<grammar_token_array_t>
-	for (unsigned int i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
+	for (uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
 		result.first = 0;
 		
@@ -260,7 +292,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		int old_index = *input_tokens_index; // used for ONLY_ONE rules
 		int old_tokens_size = working_tokens->size(); // used for callbacks with only current rule pushed tokens
 		
-		for (unsigned int k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
+		for (uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 		{
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 			
@@ -370,24 +402,27 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					advance_EBNFindex();
 				}
 				
-				if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback)
+				if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback && EBNF_level == (getLevelOfEBNFRule("statement", "program"))
 				{
-					for(unsigned int i =0; i < working_tokens->size(); i++)
+					for(uint32_t i =0; i < working_tokens->size(); i++)
 					{
 						cerr << "|||" << working_tokens->at(i).value << endl;
 					}
 					
 					Array<token> tempTokenStack;
-					for(unsigned int i =0; i < old_tokens_size; i++)
+					for(uint32_t i =0; i < old_tokens_size; i++)
 					{
-						cerr << "SIZE :" << i << endl;
+						//cerr << "SIZE :" << i << endl;
 						tempTokenStack.push_back(popToken());
 					}
 					
-					for(unsigned int i =0; i < working_tokens->size(); i++)
+					for(uint32_t i =0; i < working_tokens->size(); i++)
 					{
 						cerr << "///" << working_tokens->at(i).value << endl;
 					}
+
+					
+					displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 					
 					result.second = (this->*ebnf_token.callback)();
 					
@@ -396,7 +431,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 						statements_stack.push_back(result.second);
 					}
 					
-					for(unsigned int i =0; i < tempTokenStack.size(); i++)
+					for(uint32_t i =0; i < tempTokenStack.size(); i++)
 					{
 						pushToken(tempTokenStack.at(i));
 					}					
@@ -412,7 +447,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				if(result.first != 0)
 				{
-					for(unsigned int i =0; i < *input_tokens_index - old_index; i++)
+					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
 					{
 						cerr << "DEADVANCE" << endl << flush;	
 						deadvance_EBNFindex();
@@ -431,7 +466,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					cerr << string(EBNF_level*4, ' ') << " ERROR : tokens do not (follow order/exist)" << endl;
 					#endif 
 
-					for(unsigned int i =0; i < *input_tokens_index - old_index; i++)
+					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
 					{
 						deadvance_EBNFindex();
 					}
@@ -472,7 +507,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				if(result.first == 1)
 				{
-					for(unsigned int i =0; i < *input_tokens_index - old_index; i++)
+					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
 					{
 						deadvance_EBNFindex();
 					}
@@ -542,8 +577,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["program"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"statement",EXPANSION_TOKEN},
 											    {".*",REGEX_TOKEN, &parser::empty_file}}}};
 	
-	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
-	
 	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
 												  {"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
 												  {"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
@@ -558,14 +591,15 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  //{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
 												  //{"addparent-statement",EXPANSION_TOKEN},
 												  {"thread-list",EXPANSION_TOKEN},
-												  //{"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
+												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 												  {"function-list",EXPANSION_TOKEN, &parser::parseFunction},
 												  {"return-list",EXPANSION_TOKEN},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
-												  {"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement},
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement}
 												  }}};
-	
+
+	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
+
 	/** the with statement */
 	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",TERMINAL_TOKEN},
 														   {"include-statement-body",EXPANSION_TOKEN}}}};
@@ -735,7 +769,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
 	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"=",TERMINAL_TOKEN},
-															//{".*",REGEX_TOKEN}
 															{"expression",EXPANSION_TOKEN}}}};
 	
 	
@@ -752,7 +785,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["function-call-arguments-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"function-call-arguments",EXPANSION_TOKEN}}}};
 	
 	EBNF["function-call-arguments"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN},
-																		 {",",TERMINAL_TOKEN}}},
+																 {",",TERMINAL_TOKEN}}},
 									   {GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN}}}};
 	
 	EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN},
@@ -763,6 +796,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN},
 													{"SING_OP",SINGLE_OP_TOKEN}}},
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN}}},
+						  {GRAMMAR_TOKEN_AND_ARRAY,{{"IMMEDIATE",IMMEDIATE_TOKEN}}},
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN},
 													{"BIN_OP",BINARY_OP_TOKEN},
 													{"expression",EXPANSION_TOKEN}}},
@@ -811,7 +845,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													{";",TERMINAL_TOKEN}}}};
 	/* nop statement */
 	EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{";",TERMINAL_TOKEN}}}};
-}
+};
 
 
 
@@ -839,7 +873,7 @@ int	parser::parse()
 	{
 		if(parseEBNF(tokens, "program", &tokens_stack).first != 0)
 		{
-			for(unsigned int i =0; i < ebnf_verification_list.size(); i++)
+			for(uint32_t i =0; i < ebnf_verification_list.size(); i++)
 			{
 				cerr << *ebnf_verification_list.end() << endl;
 				ebnf_verification_list.erase(ebnf_verification_list.end());
@@ -848,7 +882,7 @@ int	parser::parse()
 	}
 	cerr << "<<<<<<<<<< END " << endl << flush;
 	
-	for (unsigned int i =0; i < working_tokens->size(); i++)
+	for (uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << "Token:" << working_tokens->at(i).value << endl;
 	}
@@ -893,7 +927,7 @@ int	parser::parse()
  * pass package AND library , add the File including too , call parser on it */
 statement* parser::parseIncludes() 
 {
-	for(unsigned int i =0; i < working_tokens->size(); i++)
+	for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << ":::" << working_tokens->at(i).value << endl;
 	}
@@ -966,7 +1000,7 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 	if (fileInclude)
 	{
 		string fullPath;
-		for(unsigned int i = 0; i < includePaths.size(); i++)
+		for(uint32_t i = 0; i < includePaths.size(); i++)
 		{
 			ifstream ifs;			
 			ifs.open(includePaths.at(i)+"/"+package);
@@ -989,14 +1023,14 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 		
 		displayInfo(" Parsing   ... [" + package + "/" + library + "]");
 		parser Parser(Scanner.getTokens(),package);
-		for(unsigned int i = 0; i < includePaths.size(); i++)
+		for(uint32_t i = 0; i < includePaths.size(); i++)
 		{
 			Parser.addIncludePath(includePaths.at(i));
 		}
 		Parser.Header = true;
 		Parser.parse();
 		
-		for(unsigned int i =0; i < Parser.getMapCodes()->size(); i++)
+		for(uint32_t i =0; i < Parser.getMapCodes()->size(); i++)
 		{
 			Parser.getMapCodes()->at(i).setHeader(true);
 			*Parser.getMapCodes()->at(i).ExternCodes = *Parser.ExternCodes;
@@ -1019,16 +1053,16 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 			//mapCodes->at(mapCodes->size()-1).Print();
 		}
 		
-		for (unsigned int i =0; i< Parser.libs->size(); i++)
+		for (uint32_t i =0; i< Parser.libs->size(); i++)
 		{
 			libs->push_back(Parser.libs->at(i));
 		}
 	
-		for (unsigned int i =0; i< Parser.getIncludes().size(); i++)
+		for (uint32_t i =0; i< Parser.getIncludes().size(); i++)
 		{
 			bool push = true;
 			
-			for (unsigned int k =0; k< includes.size(); k++)
+			for (uint32_t k =0; k< includes.size(); k++)
 			{
 				if(Parser.getIncludes().at(i).first == includes.at(k).first &&
 					Parser.getIncludes().at(i).second == includes.at(k).second)
@@ -1045,7 +1079,7 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 		
 		// push new stuff
 
-		for (unsigned int i =0; i< Parser.functionsInfo->size(); i++)
+		for (uint32_t i =0; i< Parser.functionsInfo->size(); i++)
 		{
 			functionsInfo->push_back(Parser.functionsInfo->at(i));
 		}
@@ -1119,7 +1153,7 @@ statement* parser::parseStatement()
 	retStmt = parseEBNF(working_tokens, "program", working_tokens2).second;
 	
 
-	for (unsigned int i =0; i < temp_input_tokens_index; i++)
+	for (uint32_t i =0; i < temp_input_tokens_index; i++)
 	{
 		popToken();
 	}
@@ -1149,7 +1183,7 @@ statement* parser::parseNOPStatement()
 	result->op = ";";
 	
 	return result;
-}
+};
 
 statement* parser::parseAddParent()
 {
@@ -1218,7 +1252,7 @@ statement* parser::parseDistribute()
 	diststatementTemp = new distStatement();
 	distributedScope++;
 	return stmt;
-}
+};
 
 /*
 statement* parser::parseTempDeclaration()
@@ -1251,7 +1285,7 @@ int parser::pushDependency(idInfo& id)
 		return 1;
 	}
 	
-	for(unsigned int i = 0; i < currentFunction.parameters->size(); i++)
+	for(uint32_t i = 0; i < currentFunction.parameters->size(); i++)
 	{
 		if( currentFunction.parameters->at(i).name == id.name &&
 			currentFunction.parameters->at(i).parent == id.parent)
@@ -1296,7 +1330,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// FIX109 a modified varaible in current scope, we dont need to receive it then.
-	for ( unsigned int i =0; i<distModifiedGlobal->size(); i++)
+	for ( uint32_t i =0; i<distModifiedGlobal->size(); i++)
 	{
 		string listParentName;
 		
@@ -1322,7 +1356,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we modified it before in this scope!
-	for ( unsigned int i =0; i<diststatementTemp->modifiedVariables->size(); i++)
+	for ( uint32_t i =0; i<diststatementTemp->modifiedVariables->size(); i++)
 	{
 		string listParentName;
 		
@@ -1346,7 +1380,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we requested it before !
-	for ( unsigned int i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+	for ( uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
 	{
 		string listParentName;
 		
@@ -1370,7 +1404,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we already requested it before this statement !
-	for ( unsigned int i =0; i<currentStatement->distStatements.size(); i++)
+	for ( uint32_t i =0; i<currentStatement->distStatements.size(); i++)
 	{
 		string listParentName;
 		
@@ -1395,7 +1429,7 @@ int parser::pushDependency(idInfo& id)
 	if (isClass(id.type))
 	{
 		DatatypeBase datatype = findDataType(id.type);
-		for (unsigned int i =0; i < datatype.memberVariables.size(); i++)
+		for (uint32_t i =0; i < datatype.memberVariables.size(); i++)
 		{
 			idInfo id2(id);
 			id2.name = datatype.memberVariables.at(i).name;
@@ -1471,7 +1505,8 @@ idInfo* parser::getTopParent(idInfo* id)
 		return id;
 	}
 	return getTopParent(id->parent);
-}
+};
+
 int parser::pushModified(const string& op, idInfo& id)
 {
 	if(globalNoDist)
@@ -1485,7 +1520,7 @@ int parser::pushModified(const string& op, idInfo& id)
 		return 1;
 	}
 	
-	for(unsigned int i = 0; i < currentFunction.parameters->size(); i++)
+	for(uint32_t i = 0; i < currentFunction.parameters->size(); i++)
 	{
 		if( currentFunction.parameters->at(i).name == id.name &&
 			currentFunction.parameters->at(i).parent == id.parent)
@@ -1524,7 +1559,7 @@ int parser::pushModified(const string& op, idInfo& id)
 		
 		// also make sure it is not modified twice in the same op statement like : A = B + C(A), where C() will modify A
 		// use same code like below (for array index ? )
-		for ( unsigned int i =0; i< dvList->size(); i++)
+		for ( uint32_t i =0; i< dvList->size(); i++)
 		{
 			if(id.channel || id.recurrent)
 			{
@@ -1571,7 +1606,7 @@ int parser::pushModified(const string& op, idInfo& id)
 			dvstatement->variable = idd;
 			dvstatement->type = distributingVariablesStatement::MODS;
 			
-			for ( unsigned int i =0; i<dvList->size(); i++)
+			for ( uint32_t i =0; i<dvList->size(); i++)
 			{
 				if(id.channel)
 				{
@@ -1624,7 +1659,7 @@ int parser::pushModified(const string& op, idInfo& id)
 			pushDependency(id);
 		}
 		
-		for ( unsigned int i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+		for ( uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
 		{
 			
 			int sameParentArrayIndex = false;
@@ -1678,11 +1713,17 @@ int parser::pushModifiedGlobal(idInfo& id)
 	//if exists, remove it and out the newest/ just to save memory ?
 	distModifiedGlobal->push_back(id);
 	return 0;
+};
+
+statement* parser::parseFunctionCall()
+{
+	statement* result = parseFunctionCallInternal(true, "", "");
+	return result;
 }
 
-statement* parser::parseFunctionCall(bool terminated,const string& returnType, const string& classID)
+statement* parser::parseFunctionCallInternal(bool terminated,const string& returnType, const string& classID)
 {
-	exit(1);
+	popToken();
 	functionCall* funcCall = new functionCall; // for every comma , call parseOP
 	funcCall->line = getToken().lineNumber;
 	funcCall->scope = scope;
@@ -1700,73 +1741,82 @@ statement* parser::parseFunctionCall(bool terminated,const string& returnType, c
 	
 	popToken();
 	RequireValue("(", "Expected \"(\" and not ", true);
-	//loop through prameters
+	
+	/*loop through parameters*/
 	Array<string>* parameters = new Array<string>();
-	int plevel = 1;
-	int counter = 0;
-	while (counter++)
+	if(peekToken(")"))
 	{
-		if (getToken(counter).value == "(")
+		popToken();
+	}
+	else /** we have parameters ! */
+	{
+		int plevel = 1;
+		int counter = 0;
+		while (counter++)
 		{
-			plevel++;
-		}
-		else if (getToken(counter).value == ")")
-		{
-			plevel--;
-			
-			if(plevel ==0)
+			if (getToken(counter).value == "(")
 			{
-				if(counter > 1)
-				{
-					if(terminated)
-					{
-						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-						funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
-					}
-					else
-					{
-						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-						funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
-					}
-					parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
-				}
-				break;
+				plevel++;
 			}
-		}
-		else if (getToken(counter).value == ",")
-		{
-			if (plevel==1)
-			{		
-				if(counter > 1)
+			else if (getToken(counter).value == ")")
+			{
+				plevel--;
+				
+				if(plevel ==0)
 				{
-					if(terminated)
+					if(counter > 1)
 					{
-						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-						funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
+						statement* parameter = nullptr;
+						if(terminated)
+						{
+							//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+							parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
+						}
+						else
+						{
+							//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+							parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
+						}
+						funcCall->parameters->push_back(parameter);
+						parameters->push_back(parameter->type);
 					}
-					else
-					{
-						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-						funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
-					}
-					parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
-					
-					counter = 0;
 					popToken();
+					break;
 				}
-				continue;
+			}
+			else if (getToken(counter).value == ",")
+			{
+				if (plevel==1)
+				{		
+					if(counter > 1)
+					{
+						if(terminated)
+						{
+							//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+							funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
+						}
+						else
+						{
+							//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+							funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
+						}
+						parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
+						
+						counter = 0;
+						popToken();
+					}
+					continue;
+				}
 			}
 		}
 	}
 	
-	//cout <<"P:" << parameters->size() << ";;" << parameters->at(0) << endl;
 	bool error = true;
-	
 	
 	if(funcCall->name == currentFunction.name)
 	{
 		////cout~~ << "HEREeeeeeee : " << funcCall->name << endl;
-		for (unsigned int i =0; i < currentFunction.parameters->size(); i++)
+		for (uint32_t i =0; i < currentFunction.parameters->size(); i++)
 		{
 			if(parameters->size()-1 <= i)
 			{
@@ -1808,10 +1858,9 @@ statement* parser::parseFunctionCall(bool terminated,const string& returnType, c
 		funcCall->type = getFunc(funcCall->name, parameters, returnType, classID).returnType;
 	}
 	
-	
 	if (terminated)
 	{
-		nextIndex();
+		popToken();
 		RequireValue(";", "Expected ; and not ", true);
 	}
 	
@@ -1821,7 +1870,7 @@ statement* parser::parseFunctionCall(bool terminated,const string& returnType, c
 statement* parser::parseForloop()
 {
 	cerr << endl << endl;
-	for (unsigned int i = 0; i < working_tokens->size(); i++)
+	for (uint32_t i = 0; i < working_tokens->size(); i++)
 	{
 		cerr << working_tokens->at(i).value << endl;
 	}
@@ -1919,7 +1968,7 @@ statement* parser::parseForloop()
 int parser::addStatementDistributingVariables(statement* stmt)
 {
 	
-	for (unsigned int i=0; i < currentFunction.body->appendBeforeList.size(); i++)
+	for (uint32_t i=0; i < currentFunction.body->appendBeforeList.size(); i++)
 	{
 		//if ( ((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
 		if ( (termStatment*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
@@ -1931,7 +1980,7 @@ int parser::addStatementDistributingVariables(statement* stmt)
 			i--;
 		}
 	}
-	for (unsigned int i=0; i < currentFunction.body->appendAfterList.size(); i++)
+	for (uint32_t i=0; i < currentFunction.body->appendAfterList.size(); i++)
 	{
 		//if ( ((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
 		if ( (termStatment*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
@@ -1949,7 +1998,7 @@ int parser::addStatementDistributingVariables(statement* stmt)
 statement* parser::parseFunction() // add functions prototypes to userFunctions Array too :)
 {
 	cerr << "PARSING FUNC" << endl;
-	for (unsigned int i =0; i < working_tokens->size(); i++)
+	for (uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << working_tokens->at(i).value << endl;
 	}
@@ -1958,7 +2007,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	Array<idInfo>* tmpIdentifiers = identifiers;
 	identifiers			= new Array<idInfo>;
 	globalNoDist = true;
-	for(unsigned int i =0; i < tmpIdentifiers->size(); i++)
+	for(uint32_t i =0; i < tmpIdentifiers->size(); i++)
 	{
 		if(tmpIdentifiers->at(i).global)
 		{
@@ -1969,8 +2018,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 
 	
 	popToken();
-	
-	cerr << "TOKEN :" << getToken().value << endl;
+
 	RequireType("identifier", "Invalid function declaration", false);
 	
 	funcInfo Funcinfo;
@@ -1989,16 +2037,17 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	popToken();
 	RequireValue("(", "Expected \"(\" and not "+ getToken().value + " after function definition ", false);
 		
-	if (popToken().value != "->")
+	//if (popToken().value != "->")
+	if (!peekToken("->"))
 	{
 		while (getToken().value != "->")
 		{
-			//FIX102
-			// should make a Array of declaration satements and add the statements to it, for the compiler to pase them
-			// with their inizialized values ?
+			//FIX 102
+			// should make a Array of declaration statements and add the statements to it, for the compiler to parse them
+			// with their initialized values ?
 			declareStatement* stmt = (declareStatement*)parseDeclarationInternal("->");
 			stmt->line = getToken().lineNumber;
-			for ( unsigned int i = 0; i < stmt->identifiers->size(); i++ )
+			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
 				idInfo Id;
 				Id.name = (stmt->identifiers->at(i)).name;
@@ -2014,44 +2063,34 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	}
 	
 	RequireValue("->", "Expected \"->\" and not "+getToken().value + " after function definition ", false);
+
 	
-	//if ( (tokens->at(index)).value ==  "->" )
-	//{
-		if (popToken().value ==  ")")
+	if (peekToken(")"))
+	{
+		popToken();
+		currentFunction.returnIDType = "NIL";
+		currentFunction.returnID = "NIL";
+	}
+	else
+	{	
+		while (getToken().value != ")")
 		{
-			currentFunction.returnIDType = "NIL";
-			currentFunction.returnID = "NIL";
-		}
-		else// if ( (tokens->at(index)).value ==  "|" )
-		{
-			//index--;
-			while (getToken().value != ")")
+			declareStatement* stmt = (declareStatement*)parseDeclarationInternal(")");
+			stmt->line = getToken().lineNumber;
+			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
-				declareStatement* stmt = (declareStatement*)parseDeclarationInternal(")");
 				stmt->line = getToken().lineNumber;
-				for ( unsigned int i = 0; i < stmt->identifiers->size(); i++ )
+				currentFunction.returnIDType = stmt->type;
+				Funcinfo.returnType = stmt->type;
+				currentFunction.returnID = stmt->identifiers->at(0).name;
+				if (stmt->identifiers->size() > 1)
 				{
-					stmt->line = getToken().lineNumber;
-					currentFunction.returnIDType = stmt->type;
-					Funcinfo.returnType = stmt->type;
-					currentFunction.returnID = stmt->identifiers->at(0).name;
-					if (stmt->identifiers->size() > 1)
-					{
-						displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Function : " + Funcinfo.name + " : more than one variable for return, only the first will be used");
-						break;
-					}
+					displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Function : " + Funcinfo.name + " : more than one variable for return, only the first will be used");
+					break;
 				}
 			}
 		}
-		//else
-		//{
-		//	displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Expected return identifier or ) ");
-		//}
-	//}
-	//else
-	//{
-	//	displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Expected -> and not: " + (tokens->at(index)).value);
-	//}
+	}
 	
 	globalNoDist = false;
 	// continue to body !
@@ -2064,7 +2103,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		Funcinfo.protoType = true;
 		if (isFunction(Funcinfo.name, false))
 		{
-			for (unsigned int i =0; i < functionsInfo->size(); i++)
+			for (uint32_t i =0; i < functionsInfo->size(); i++)
 			{
 				//FIX21
 				if (functionsInfo->at(i).name == Funcinfo.name)
@@ -2093,7 +2132,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		//FIX , isFucntion again ?
 		if (isFunction(Funcinfo.name, false))
 		{
-			for (unsigned int i =0; i < functionsInfo->size(); i++)
+			for (uint32_t i =0; i < functionsInfo->size(); i++)
 			{
 				if (functionsInfo->at(i).name == Funcinfo.name &&
 					*functionsInfo->at(i).parameters == *Funcinfo.parameters)
@@ -2132,7 +2171,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 						//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
 						declarations->push_back(decStatement);
 						//functionStatementsCount++;
-						for (unsigned int i=0 ; i < decStatement->identifiers->size(); i++)
+						for (uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
 						{
 							//functionStatementsCount++;
 							//fix add type and scope ....
@@ -2182,12 +2221,12 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		}
 		cerr << "ARSING :" << getToken().value << endl;
 		//let's fix all backprob variables :)
-		for( unsigned int i =0; i< dvList->size(); i++ )
+		for( uint32_t i =0; i< dvList->size(); i++ )
 		{
 			if( (dvList->at(i))->type == distributingVariablesStatement::DEPS &&
 				(dvList->at(i))->variable.backProp  )
 			{
-				for( unsigned int k =i+1; k< dvList->size(); k++ )
+				for( uint32_t k =i+1; k< dvList->size(); k++ )
 				{
 					if( (dvList->at(k))->type != distributingVariablesStatement::MODS ||
 					  ( (dvList->at(k))->variable.distributedScope == (dvList->at(i))->variable.distributedScope) ||
@@ -2214,7 +2253,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		//termstatement->arrayIndex = aIndex;
 		//termstatement->identifier = true;
 		declarations->push_back(termstatement);
-		for (unsigned int i=0; i < currentFunction.body->size(); i++)
+		for (uint32_t i=0; i < currentFunction.body->size(); i++)
 		{
 			declarations->push_back(currentFunction.body->at(i));
 		}
@@ -2246,18 +2285,17 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 
 int parser::nextIndex()
 {
-	if ( (unsigned) index == ( tokens->size() - 1 ) )
+	if ((unsigned) index == (tokens->size() - 1))
 	{
 		displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Unexpected EOF");
 	}
-	//nextIndex();
 	index++;
 	return index;
 };
 
 bool parser::isIdentifier(const string& ID)
 {
-	for ( unsigned int i =0; i< identifiers->size(); i++ )
+	for ( uint32_t i =0; i< identifiers->size(); i++ )
 	{
 		if ( ID == (identifiers->at(i)).name )
 		{
@@ -2273,7 +2311,7 @@ bool parser::isIdentifier(const string& ID)
 
 int parser::findIDInfo(const idInfo& ID, const int& returnType)
 {	
-	for ( unsigned int i =0; i< identifiers->size(); i++ )
+	for ( uint32_t i =0; i< identifiers->size(); i++ )
 	{
 		//if ( ID.name == (identifiers->at(i)).name && ID.parent && ID.parent->name == (identifiers->at(i)).parent->name)
 		
@@ -2364,11 +2402,11 @@ string parser::findIDType(const idInfo& ID, const string& classID)
 {
 	if(classID.size())
 	{
-		for(unsigned int i =0; i < datatypes.size(); i++)
+		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
 			if(datatypes.at(i).typeID == classID && (datatypes.at(i).classType || datatypes.at(i).enumType))
 			{
-				for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
+				for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 				{
 					if(datatypes.at(i).memberVariables.at(k).name == ID.name)
 					{
@@ -2380,7 +2418,7 @@ string parser::findIDType(const idInfo& ID, const string& classID)
 	}
 	else
 	{
-		for ( unsigned int i =0; i< identifiers->size(); i++ )
+		for ( uint32_t i =0; i< identifiers->size(); i++ )
 		{
 			//if ( ID.name == identifiers->at(i).name && !identifiers->at(i).parent.size())
 			if ( ID.name == identifiers->at(i).name && !identifiers->at(i).parent)
@@ -2405,7 +2443,7 @@ bool parser::isFunction(const string& func, bool recursiveCurrent,const string& 
 
 bool parser::isBuiltinFunction(const string& func)
 {
-	for ( unsigned int i = 0; i < functionsInfo->size(); i++)
+	for ( uint32_t i = 0; i < functionsInfo->size(); i++)
 	{	
 		if (func == (functionsInfo->at(i)).name)
 		{
@@ -2431,7 +2469,7 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 			}
 		}
 	
-		for ( unsigned int i = 0; i < functionsInfo->size(); i++)
+		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
 		{	
 			if (func == (functionsInfo->at(i)).name)
 			{
@@ -2549,7 +2587,7 @@ statement* parser::parseExpressionStatement()
 {
 	
 	cerr << "ALL" << endl;
-	for(unsigned int i =0; i < working_tokens->size(); i++)
+	for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr <<  working_tokens->at(i).value << endl;
 	}
@@ -2856,7 +2894,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 						{
 							// remove ny depedency of this the variable as we only need its address and 
 							// we don't access the variable ittself !
-							for(unsigned int l =0; l < currentStatement->distStatements.size(); l++)
+							for(uint32_t l =0; l < currentStatement->distStatements.size(); l++)
 							{
 								if(currentStatement->distStatements.at(l)->type == distributingVariablesStatement::DEPS)
 								{
@@ -2973,17 +3011,17 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			{
 				if(opstatement->type != classID)
 				{
-					stmt = parseFunctionCall(false, opstatement->type, classID);
+					stmt = parseFunctionCallInternal(false, opstatement->type, classID);
 				}
 				else
 				{
-					stmt = parseFunctionCall(false, "", classID);
+					stmt = parseFunctionCallInternal(false, "", classID);
 					stmt->type = classMemberFunctionType(classID, getToken(from).value);
 				}
 			}
 			else
 			{
-				stmt = parseFunctionCall(false, opstatement->type);
+				stmt = parseFunctionCallInternal(false, opstatement->type);
 			}
 			delete opstatement;
 			stmt->distStatements = opstatement->distStatements;
@@ -3138,11 +3176,11 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 			return funcInfo();
 		}
 		
-		for(unsigned int i =0; i < datatypes.size(); i++)
+		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
 			if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 			{
-				for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+				for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 				{
 					if(datatypes.at(i).memberFunctions.at(k).name == funcID)
 					{
@@ -3154,7 +3192,7 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 	}
 	else
 	{
-		for ( unsigned int i = 0; i < functionsInfo->size(); i++)
+		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
 			if (funcID == (functionsInfo->at(i)).name)
 			{
@@ -3176,11 +3214,11 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 			return funcInfo();
 		}	
 		
-		for(unsigned int i =0; i < datatypes.size(); i++)
+		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
 			if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 			{
-				for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+				for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 				{
 					if (datatypes.at(i).memberFunctions.at(k).returnType != returnType && returnType.size())
 					{
@@ -3194,7 +3232,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 							return datatypes.at(i).memberFunctions.at(k);
 						}
 						
-						for ( unsigned int f = 0, l =0; f < datatypes.at(i).memberFunctions.at(k).parameters->size() && l < mparameters->size(); f++, l++)
+						for ( uint32_t f = 0, l =0; f < datatypes.at(i).memberFunctions.at(k).parameters->size() && l < mparameters->size(); f++, l++)
 						{
 							if(mparameters->at(l) != datatypes.at(i).memberFunctions.at(k).parameters->at(f).first)
 							{
@@ -3230,7 +3268,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 	}
 	else
 	{
-		for ( unsigned int i = 0; i < functionsInfo->size(); i++)
+		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
 			if (functionsInfo->at(i).returnType != returnType && returnType.size())
 			{
@@ -3244,7 +3282,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 					return functionsInfo->at(i);
 				}
 				
-				for ( unsigned int k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
+				for ( uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
 				{
 					if(mparameters->at(l) != functionsInfo->at(i).parameters->at(k).first)
 					{
@@ -3359,12 +3397,12 @@ int mapcode::Print()
 	displayDebug(" Code Map  ... [" + fileName + "]");
 	displayDebug(" Functions : ");
 			
-	for (unsigned int i =0; i < functions->size(); i++)
+	for (uint32_t i =0; i < functions->size(); i++)
 	{
 		string functionHeader;
 		functionHeader += functions->at(i).returnIDType + " ";
 		functionHeader += functions->at(i).name + "(";
-		for (unsigned int k =0; k < functions->at(i).parameters->size(); k++)
+		for (uint32_t k =0; k < functions->at(i).parameters->size(); k++)
 		{
 			functionHeader += functions->at(i).parameters->at(k).type;
 			if(k+1 < functions->at(i).parameters->size())
@@ -3386,14 +3424,14 @@ bool mapcode::setHeader(bool set)
 
 statement* parser::parseConditionalExpression(statement* caller)
 {
-	nextIndex();
+	popToken();
 	RequireValue("[", "Expected [ and not : ", true);
 	int from = index+1;
 	int to = reachToken("]", false, true, true, false, true) - 1;
 	//statement* result = parseOpStatement(from, to, getType(from), 0, stmt);
 	statement* result = parseOpStatement(from, to, "-2", 0, caller);
-	result->line = (tokens->at(index)).lineNumber;
-	nextIndex();
+	result->line = getToken().lineNumber;
+	popToken();
 	
 	return result;
 } 
@@ -3600,7 +3638,7 @@ statement* parser::parseStruct()
 		
 		//extract members ....
 		
-		for(unsigned int i = 0; i < stmt->identifiers->size(); i++)
+		for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
 		{
 			funcInfo finfo;
 			finfo.type = DATAMEMBER;
@@ -4013,7 +4051,7 @@ int parser::mapFunctions(const string& package, const string& library)
 	// get the includes folder full path from the compiler strings
 
 	string fullLibraryName;
-	for(unsigned int i = 0; i < includePaths.size(); i++)
+	for(uint32_t i = 0; i < includePaths.size(); i++)
 	{
 		ifstream ifs;			
 		
@@ -4054,13 +4092,13 @@ int parser::mapFunctions(const string& package, const string& library)
 
 	Array<string> templateNames;
 	
-	for (unsigned int i = 0; i < mapTokens->size(); i++)
+	for (uint32_t i = 0; i < mapTokens->size(); i++)
 	{
 		
 		if (mapTokens->at(i).value == "#")
 		{
 			int line = mapTokens->at(i).lineNumber;
-			for (unsigned int k = i; k <  mapTokens->size(); k++)
+			for (uint32_t k = i; k <  mapTokens->size(); k++)
 			{
 				if (mapTokens->at(k).lineNumber != line)
 				{
@@ -4084,7 +4122,7 @@ int parser::mapFunctions(const string& package, const string& library)
 		else if (mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename")
 		{
 			int brace = 0;
-			for (unsigned int k = i+1; k < mapTokens->size(); k++)
+			for (uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
 				if(mapTokens->at(k).value == "class" || mapTokens->at(k).value == "typename")
 				{
@@ -4137,7 +4175,7 @@ int parser::mapFunctions(const string& package, const string& library)
 };
 
 
-long parser::parseCClass(scanner* scner, unsigned int start, const Array<string>& templateNames)
+long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& templateNames)
 {
 	DatatypeBase CClass;
 	CClass.templateNames = templateNames;
@@ -4208,7 +4246,7 @@ long parser::parseCClass(scanner* scner, unsigned int start, const Array<string>
 		
 	if (!forwardDecelation)
 	{
-		for (unsigned int i = start; i < mapTokens->size(); i++)
+		for (uint32_t i = start; i < mapTokens->size(); i++)
 		{
 			if (mapTokens->at(i).value == "public" || mapTokens->at(i).value == "public:")
 			{
@@ -4282,7 +4320,7 @@ long parser::parseCClass(scanner* scner, unsigned int start, const Array<string>
 	CClass.addTypeValue(CClass.typeID);
 	CClass.classType = true;
 	
-	for (unsigned int i =0; i < CClass.parents.size(); i++)
+	for (uint32_t i =0; i < CClass.parents.size(); i++)
 	{
 		CClass.addTypeValue(CClass.parents.at(i));
 	}
@@ -4299,7 +4337,7 @@ long parser::parseCClass(scanner* scner, unsigned int start, const Array<string>
 	
 	if(!protoType)
 	{
-		for(unsigned int i =0; i < datatypes.size(); i++)
+		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
 			if(datatypes.at(i).typeID == CClass.typeID && datatypes.at(i).classType && datatypes.at(i).protoType)
 			{
@@ -4315,7 +4353,7 @@ long parser::parseCClass(scanner* scner, unsigned int start, const Array<string>
 
 
 
-funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const DatatypeBase& parentClass)
+funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBase& parentClass)
 {
 	funcInfo funcinfo;
 	Array<token>* mapTokens = scner->getTokens();
@@ -4323,7 +4361,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 	//cout << " tempalte : " << parentClass.templateName << endl;
 	bool destructor = false;
 	bool Enum = false;
-	for (unsigned int i = start; i < mapTokens->size(); i++) // function return, data member type
+	for (uint32_t i = start; i < mapTokens->size(); i++) // function return, data member type
 	{
 		
 		if (mapTokens->at(i).value  == "const" || 
@@ -4348,7 +4386,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		}
 		else if (mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename" )
 		{
-			for (unsigned int k = i+1; k < mapTokens->size(); k++) // skip tempalte stuff
+			for (uint32_t k = i+1; k < mapTokens->size(); k++) // skip tempalte stuff
 			{
 				if(mapTokens->at(k).value == ">")
 				{
@@ -4418,12 +4456,12 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 	}
 	
 	
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) //ignore template parameters
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) //ignore template parameters
 	{
 		
 		if (mapTokens->at(i).value == "<")
 		{
-			for (unsigned int k = i+1; k < mapTokens->size(); k++)
+			for (uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
 				if (mapTokens->at(k).value == ">")
 				{
@@ -4435,7 +4473,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		break;
 	}
 	
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) // the function/member name
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
 	{
 		
 		if (mapTokens->at(i).value == "(")
@@ -4471,7 +4509,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		CUSTOMENUM.addTypeValue("float");
 		CUSTOMENUM.parents.push_back(parentClass.typeID);
 				
-		for (unsigned int i = start+1; i < mapTokens->size(); i++) // the function/member name
+		for (uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
 		{
 			if (mapTokens->at(i).type == "identifier")
 			{
@@ -4492,7 +4530,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 					
 					i++;
 				}
-				/*for (unsigned int l = 0; l < datatypes.size(); l++)
+				/*for (uint32_t l = 0; l < datatypes.size(); l++)
 				{
 					if (datatypes.at(i).typeID == "int")
 					{
@@ -4512,7 +4550,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 	
 	if (mapTokens->at(start+1).value == "[") // array index ?
 	{
-		for (unsigned int i = start+1; i < mapTokens->size(); i++) 
+		for (uint32_t i = start+1; i < mapTokens->size(); i++) 
 		{
 			if (mapTokens->at(i).value == "]")
 			{
@@ -4524,7 +4562,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 	
 	if (mapTokens->at(start+1).value == "[") // two diemnsional array index ?
 	{
-		for (unsigned int i = start+1; i < mapTokens->size(); i++) 
+		for (uint32_t i = start+1; i < mapTokens->size(); i++) 
 		{
 			if (mapTokens->at(i).value == "]")
 			{
@@ -4534,7 +4572,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		}
 	}
 	
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) // the member variable
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) // the member variable
 	{
 		if (mapTokens->at(i).value == ";")
 		{
@@ -4554,12 +4592,12 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		break;
 	}
 	
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) // function parameterss
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) // function parameterss
 	{
 		if (mapTokens->at(i).value == "::") // function member dfinition,, ignore all
 		{
 			int depthLevel = 0;
-			for (unsigned int k = i+1; k < mapTokens->size(); k++)
+			for (uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
 				if (mapTokens->at(k).value == "{")
 				{
@@ -4607,7 +4645,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		
 		bool init = false;
 		int depthLevel = 0;
-		for (unsigned int k = i; k < mapTokens->size(); k++) // parameter type
+		for (uint32_t k = i; k < mapTokens->size(); k++) // parameter type
 		{
 			if (mapTokens->at(k).value  == "const" || 
 			    mapTokens->at(k).value == "unsigned" || 
@@ -4689,11 +4727,11 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 		start = i;
 	}
 	
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) // finish variables inizilization :X(x),Y(y),Z(z)
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) // finish variables inizilization :X(x),Y(y),Z(z)
 	{
 		if (mapTokens->at(i).value == ":")
 		{
-			for (unsigned int k = i+1; k < mapTokens->size(); k++) 
+			for (uint32_t k = i+1; k < mapTokens->size(); k++) 
 			{
 				if (mapTokens->at(k).value == ")")
 				{
@@ -4723,12 +4761,12 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 	
 	
 		
-	for (unsigned int i = start+1; i < mapTokens->size(); i++) // function inizliation;
+	for (uint32_t i = start+1; i < mapTokens->size(); i++) // function inizliation;
 	{
 		int depthLevel = 1;
 		if (mapTokens->at(i).value == "{")
 		{
-			for (unsigned int k = i+1; k < mapTokens->size(); k++) 
+			for (uint32_t k = i+1; k < mapTokens->size(); k++) 
 			{
 				if (mapTokens->at(k).value == "{")
 				{
@@ -4775,7 +4813,7 @@ funcInfo parser::parseCFunction(scanner* scner, unsigned int start, const Dataty
 
 idInfo parser::findID(const string& ID, const string& parentID)
 {
-	for ( unsigned int i =0; i< identifiers->size(); i++ )
+	for ( uint32_t i =0; i< identifiers->size(); i++ )
 	{
 		//if ( ID == (identifiers->at(i)).name && parentID == (identifiers->at(i)).parent)
 		if ((identifiers->at(i)).parent && parentID.size())
@@ -4796,33 +4834,15 @@ idInfo parser::findID(const string& ID, const string& parentID)
 	return idInfo();
 }
 
-
-
-
-
-
-
-
-
-
-
-
 statement* parser::parseDeclaration()
 {
-	cerr << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE3" << getToken().value << endl;
-	cerr << token_index << ":" << working_tokens->size() << endl;
-	for(unsigned int i =0; i< working_tokens->size(); i++)
-	{
-		cerr << "::" << working_tokens->at(i).value << endl;
-	}
-
-	popToken();
 	statement* result = parseDeclarationInternal(";");
 	return result;
 }
 
 statement* parser::parseDeclarationInternal(const string& terminal)
 {
+	popToken();
 	declareStatement* decStatement = new declareStatement;
 	decStatement->line = getToken().lineNumber;
 	decStatement->scope = scope;
@@ -4941,7 +4961,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 		
 	popToken();
 	
-	//array
+	/** array index */
 	if (getToken().value == "[" )
 	{
 		decStatement->array = true;
@@ -4961,28 +4981,28 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 			RequireValue("]", "Expected ] and not ", true);
 		}
 		popToken();
-	}
-	
-	// matrix
-	if (getToken().value == "[" )
-	{
-		decStatement->array = true;
-		popToken();
-		if (getToken().type == "int")
+
+		/** second array index == a matrix */
+		if (getToken().value == "[" )
 		{
-			stringstream SS;
-			SS << getToken().value;
-			SS >> decStatement->size;
-			distributedVariablesCount += decStatement->size;
+			decStatement->array = true;
 			popToken();
-			RequireValue("]", "Expected ] and not ", true);		
+			if (getToken().type == "int")
+			{
+				stringstream SS;
+				SS << getToken().value;
+				SS >> decStatement->size;
+				distributedVariablesCount += decStatement->size;
+				popToken();
+				RequireValue("]", "Expected ] and not ", true);		
+			}
+			else
+			{
+				decStatement->size = 0;
+				RequireValue("]", "Expected ] and not ", true);
+			}
+			popToken();
 		}
-		else
-		{
-			decStatement->size = 0;
-			RequireValue("]", "Expected ] and not ", true);
-		}
-		popToken();
 	}
 
 
@@ -4998,6 +5018,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	}
 	else if (getToken().value == "=" )
 	{
+		/* FIX: fix the array list initilization or atleast review */
 		if(peekToken("{"))
 		{
 			popToken();
@@ -5046,7 +5067,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 				}
 			}
 			
-			if (decStatement->values.size() > (unsigned int) decStatement->size && decStatement->size !=  0)
+			if (decStatement->values.size() > (uint32_t) decStatement->size && decStatement->size !=  0)
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"too many initilizations");
 			}
@@ -5057,9 +5078,9 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 			}
 			
 			stringstream SS;
-			for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
+			for (uint32_t k =0; k < decStatement->identifiers->size(); k++)
 			{
-				for (unsigned int i =0; i < decStatement->values.size(); i++)
+				for (uint32_t i =0; i < decStatement->values.size(); i++)
 				{
 					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
 					termstatement->scope = scope;
@@ -5079,7 +5100,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 					os->scope = scope;
 					currentFunction.body->push_back(os);
 
-					//FIX ??
+					/*FIX: ?? */
 					if(!decStatement->global)
 					{
 						idInfo id(decStatement->identifiers->at(k).name, decStatement->scope, decStatement->type, arrayIndex);
@@ -5103,7 +5124,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 					SS.clear();
 				}
 			}
-			if (decStatement->size == 0) // FIX && decStatement->distributed)
+			if (decStatement->size == 0) /*FIX: && decStatement->distributed) */
 			{
 				distributedVariablesCount += decStatement->values.size();
 			}
@@ -5117,7 +5138,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 			
 			if(decStatement->global)
 			{
-				for (unsigned int k =0; k < decStatement->identifiers->size(); k++)
+				for (uint32_t k =0; k < decStatement->identifiers->size(); k++)
 				{
 					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
 					termstatement->scope = scope;
@@ -5154,7 +5175,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	stringstream SS;
 	
 	decStatement->identifiers->clear();
-	for ( unsigned int i = 0; i < tempIdentifiers->size(); i++ )
+	for(uint32_t i = 0; i < tempIdentifiers->size(); i++)
 	{
 		SS << i;
 		termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
@@ -5179,14 +5200,14 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 		decStatement->identifiers->push_back(idinfo);
 		identifiers->push_back(idinfo);
 		
-		for(unsigned int i =0; i < datatypes.size(); i++)
+		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
 			if(datatypes.at(i).typeID == idinfo.type && datatypes.at(i).classType)
 			{
-				for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
+				for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 				{
 					idInfo id = idInfo(datatypes.at(i).memberVariables.at(k).name, decStatement->scope, datatypes.at(i).memberVariables.at(k).returnType, NULL);
-					//FIX bad ?!
+					/*FIX: bad ?! */
 					idInfo* parentID = new idInfo();
 					*parentID = idinfo;
 					id.parent = parentID;

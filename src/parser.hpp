@@ -137,7 +137,8 @@ class parser
 		statement*					parseStruct();
 		statement*					parseDeclaration();
 		statement*					parseDeclarationInternal(const string& terminal = ";");
-		statement*					parseFunctionCall(bool, const string& returnType = "", const string& classID = "");
+		statement*					parseFunctionCall();
+		statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
 		statement*					parseConditionalExpression(statement* stmt);
 		statement*					parseForloop();
 		statement*					parseIF();
@@ -250,11 +251,12 @@ class parser
 			Array<token> tokens_stack;
 			token popToken();
 			token getToken();
-			token getToken(const unsigned int index);
+			token getToken(const uint32_t index);
 
 			
 			void parseReturn();
 			EBNF_map_t EBNF;
+			uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start);
 			
 			int deadvance_EBNFindex();
 			int advance_EBNFindex();
@@ -308,8 +310,8 @@ class parser
 			Array<distributingVariablesStatement*>* dvList;
 			Array<statement*>*				libs;
 			
-			long parseCClass(scanner* scner, unsigned int start, const Array<string>& templateName);
-			funcInfo parseCFunction(scanner* scner, unsigned int start, const DatatypeBase& parentClass);
+			long parseCClass(scanner* scner, uint32_t start, const Array<string>& templateName);
+			funcInfo parseCFunction(scanner* scner, uint32_t start, const DatatypeBase& parentClass);
 
 
 };
