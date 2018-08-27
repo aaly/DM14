@@ -114,7 +114,11 @@ class parser
 {
 	public:
 	
-		ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens);
+		//ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens);
+		ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens, const bool verify_only = false);
+
+		bool freeze_EBNFindex();
+		bool unfreeze_EBNFindex();
 		Array<token>* working_tokens = NULL;
 		//int *working_tokens_index = NULL;
 		Array<token>* input_tokens = NULL;
@@ -148,7 +152,7 @@ class parser
 		statement*					parseExtern();
 		statement*					parseLink();
 //		statement*					parseExpression(const int&, const int&);
-		statement*					parseStatement();
+		statement*					parseStatement(const std::string starting_rule);
 		statement*					parseDistribute();
 		statement*					parseReset();
 		statement*					parseSetNode();
