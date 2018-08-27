@@ -499,6 +499,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				}
 				else
 				{
+					cerr << "ERROR " << endl << flush;
 					result.first= 0;
 				}
 			}
@@ -609,6 +610,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 												  {"return-list",EXPANSION_TOKEN},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
+												  {"expression", EXPANSION_TOKEN, &parser::parseExpressionStatement},  //to be used for the last part of for loop
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
 												  }}};
 	
@@ -1163,7 +1165,8 @@ statement* parser::parseStatement(const std::string starting_rule)
 	Array<token>* working_tokens2 = new Array<token>();
 	int working_tokens_size_before = working_tokens->size();
 	
-	retStmt = parseEBNF(working_tokens, starting_rule, working_tokens2).second;
+	ebnfResult result = parseEBNF(working_tokens, starting_rule, working_tokens2);
+	retStmt = result.second;
 	
 
 	for (uint32_t i =0; i < temp_input_tokens_index; i++)
@@ -1883,7 +1886,6 @@ statement* parser::parseForloop()
 {
 	popToken();
 	
-	exit(1);
 	// for [decl;cond;stmt] {stmts}
 	forloop* floop = new forloop;
 	floop->line = getToken().lineNumber;
@@ -1899,7 +1901,7 @@ statement* parser::parseForloop()
 	if(!peekToken(";"))
 	{
 		//statement* stmt =  parseDeclarationInternal(";");
-		statement* stmt =  parseStatement("program");
+		statement* stmt =  parseStatement("statement");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != dStatement && stmt->statementType != eStatement)
 		{
@@ -1916,7 +1918,7 @@ statement* parser::parseForloop()
 	
 	if(!peekToken(";"))
 	{
-		statement* stmt= parseStatement("program");
+		statement* stmt= parseStatement("statement");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
@@ -1930,10 +1932,12 @@ statement* parser::parseForloop()
 		
 		addStatementDistributingVariables(stmt);
 	}
+
+	
 	
 	if(!peekToken("]"))
 	{
-		statement* stmt= parseStatement("program");
+		statement* stmt= parseStatement("statement");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
@@ -1948,6 +1952,7 @@ statement* parser::parseForloop()
 		addStatementDistributingVariables(stmt);
 	}
 	
+	
 	popToken();
 	RequireValue("]", "Expected ] and not ", true);
 	
@@ -1958,11 +1963,9 @@ statement* parser::parseForloop()
 
 	while(!peekToken("}"))
 	{
-		cerr << "HEREEEEEE" << endl;
-		statement* stmt = parseStatement("program");
+		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		floop->body->push_back(stmt);
-		exit(1);
 	}
 	
 	popToken();
@@ -2164,7 +2167,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		//while (popToken().value != "}")
 		while (!peekToken("}"))
 		{
-			statement* stmt = parseStatement("statement-list");
+			statement* stmt = parseStatement("statement");
 			
 			if(stmt != NULL)
 			{
@@ -3482,7 +3485,7 @@ statement* parser::parseThread()
 	nextIndex();
 	int from = index;
 	
-	statement* stmt = parseStatement("program");
+	statement* stmt = parseStatement("statement");
 	
 	for (int i = from; i <= index; i++)
 	{
@@ -3556,7 +3559,7 @@ statement* parser::parseIF()
 			
 	while (tokens->at(index).value != "}")
 	{
-		statement* stmt = parseStatement("program");
+		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		If->body->push_back(stmt);
 		nextIndex();
@@ -3584,7 +3587,7 @@ statement* parser::parseIF()
 			
 			while (tokens->at(index).value != "}")
 			{
-				statement* stmt = parseStatement("program");
+				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				elseIf->body->push_back(stmt);
 				nextIndex();
@@ -3599,7 +3602,7 @@ statement* parser::parseIF()
 			
 			while (tokens->at(index).value != "}")
 			{
-				statement* stmt = parseStatement("program");
+				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				If->ELSE->push_back(stmt);
 				nextIndex();
@@ -3733,7 +3736,7 @@ statement* parser::parseWhile()
 			
 	while (tokens->at(index).value != "}")
 	{
-		statement* stmt = parseStatement("program");
+		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		While->body->push_back(stmt);
 		nextIndex();
@@ -3774,7 +3777,7 @@ statement* parser::parseCase()
 		//check if it peek of current ???
 		while(tokens->at(index).value != "}" && tokens->at(index).value != "[")
 		{
-			Case->Body[CCondition].push_back(parseStatement("program"));
+			Case->Body[CCondition].push_back(parseStatement("statement"));
 			if (!peekToken("}") && !peekToken("["))
 			{
 				nextIndex();
