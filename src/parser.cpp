@@ -610,7 +610,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 												  {"return-list",EXPANSION_TOKEN},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
-												  {"expression", EXPANSION_TOKEN, &parser::parseExpressionStatement},  //to be used for the last part of for loop
+												  //{"expression", EXPANSION_TOKEN, &parser::parseExpressionStatement},  //to be used for the last part of for loop
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
 												  }}};
 	
@@ -676,11 +676,11 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"]",TERMINAL_TOKEN},
 												  {"compound-statement",EXPANSION_TOKEN}}}};
 																	
-	EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-list",EXPANSION_TOKEN},
-																	{";",TERMINAL_TOKEN}}}};
+	EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
+																	{";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 																	
-	EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"logical-expression-list",EXPANSION_TOKEN},
-																   {";",TERMINAL_TOKEN}}}};
+	EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"logical-expression-list",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+																   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 	
 	EBNF["logical-expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression",EXPANSION_TOKEN},
 																  {";",TERMINAL_TOKEN}}}};
@@ -693,7 +693,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 																 {".*",IMMEDIATE_TOKEN}}}};
 															 
 
-	EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"loop-expression-step",EXPANSION_TOKEN}}}};
+	EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"loop-expression-step",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
 	
 	EBNF["loop-expression-step"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 															   {".*",SINGLE_OP_TOKEN}}},
@@ -1897,11 +1897,11 @@ statement* parser::parseForloop()
 	
 	popToken();
 	RequireValue("[", "Expected [ and not ", true);
-	
+
 	if(!peekToken(";"))
 	{
 		//statement* stmt =  parseDeclarationInternal(";");
-		statement* stmt =  parseStatement("statement");
+		statement* stmt =  parseStatement("loop-expression-declarator");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != dStatement && stmt->statementType != eStatement)
 		{
@@ -1918,7 +1918,7 @@ statement* parser::parseForloop()
 	
 	if(!peekToken(";"))
 	{
-		statement* stmt= parseStatement("statement");
+		statement* stmt= parseStatement("loop-expression-condition");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
@@ -1937,7 +1937,7 @@ statement* parser::parseForloop()
 	
 	if(!peekToken("]"))
 	{
-		statement* stmt= parseStatement("statement");
+		statement* stmt= parseStatement("loop-expression-step-list");
 		stmt->line = getToken().lineNumber;
 		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
