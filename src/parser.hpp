@@ -11,15 +11,14 @@
 @copyright        See file "license" for bsd license
 */
 
-#include <regex> // for grammar_token_type::REGEX_TOKEN
+#include <regex> /**<  grammar_token_type::REGEX_TOKEN */
+#include <iostream> /**< std::cerr, std::cout, std::endl */
+#include <string> /**< std::string */
 #include "types.hpp"
-#include <iostream>
-#include <string>
-#include <list>
 #include "ast.hpp"
-#include "scanner.hpp"
-#include <unordered_map> /** EBNF */
-#include <sstream>
+#include "scanner.hpp" /**< class token */
+#include <unordered_map> /**< EBNF */
+#include <sstream> 
 
 using namespace std;
 
@@ -30,28 +29,29 @@ class mapcode
 {
 	public:
 		mapcode();
-		mapcode(const string&, Array<ast_function>* const, const Array<pair<string,string> >&, const bool&, const int&, const int&);
+		mapcode(const string&, Array<ast_function>* const, const Array<pair<string,string>>&, const bool&, const int&, const int&);
 		~mapcode();
 		string					getFileName();
 		Array<ast_function>*		getFunctions();
 		//multimap<string,string> getIncludes();
-		Array<pair<string,string> > getIncludes();
+		Array<pair<string,string>> getIncludes();
 		bool					isHeader();
 		bool					setHeader(bool);
 		int						nodesCount;
 		int						dVariablesCount;
 		Array<string>*			ExternCodes;
-		Array<statement*>*		libs;
+		Array<statement*>*		linkLibs;
 		int						Print();
 		Array<statement*>		globalDeclarations;
 		Array<statement*>		globalDefinitions;
 		Array<DatatypeBase>		dataTypes;
-		
+		uint32_t				addInclude(std::pair<std::string, std::string> library);
+	
 	private:
 		string						fileName;
-		Array<ast_function>*			functions;
-		//multimap<string,string>		includes;
-		Array<pair<string,string> >	includes;
+		Array<ast_function>*		functions;
+		//multimap<string,string>	includes;
+		Array<pair<string,string>>	includes;
 		bool						Header;
 };
 
@@ -110,15 +110,30 @@ typedef std::unordered_map <std::string, std::vector<grammar_rule_t> > EBNF_map_
 typedef std::pair<int, statement*> ebnfResult;
 
 
+class includePath
+{
+	public:
+
+		enum class sourceFileType
+		{
+			FILE_DM14 = 1,
+			FILE_C,
+			LIBRARY
+		};
+
+		std::string package;
+		std::string library;
+		sourceFileType includeType;
+
+		
+};
+
 class parser
 {
 	public:
 	
-		//ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens);
 		ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens, const bool verify_only = false);
 
-		bool freeze_EBNFindex();
-		bool unfreeze_EBNFindex();
 		Array<token>* working_tokens = NULL;
 		//int *working_tokens_index = NULL;
 		Array<token>* input_tokens = NULL;
@@ -136,7 +151,7 @@ class parser
 		Array<mapcode>*				getMapCodes();
 		// parse functions
 		int							parse();
-		statement*						parseIncludes();
+		statement*					parseIncludes();
 		statement*					parseFunction();
 		statement*					parseStruct();
 		statement*					parseDeclaration();
@@ -151,7 +166,6 @@ class parser
 		//DatatypeBase				parseClass();
 		statement*					parseExtern();
 		statement*					parseLink();
-//		statement*					parseExpression(const int&, const int&);
 		statement*					parseStatement(const std::string starting_rule);
 		statement*					parseDistribute();
 		statement*					parseReset();
@@ -161,10 +175,9 @@ class parser
 		statement*					parseExpressionStatement();
 		statement*					parseNOPStatement();
 		statement*					parseOpStatement(const int&, const int&, const string&, const int&, statement*, idInfo* parent = NULL, const string& parentOp = "");
-		//statement*					parseOpStatement(const int&, const int&, const string&, const int&, bool cmember=false, const string& classID="", const string& parentID = "");
 		int							increaseScope(statement*);
 		int							decreaseScope();
-		int							parseIncludesInsider(const string&, const string&, const bool);
+		int							parseIncludesInsider(const string&, const string&, const includePath::sourceFileType);
 		//string 						getDataType(const string&);
 		
 		// helper functions
@@ -181,8 +194,6 @@ class parser
 		int							searchVariables(statement* opstatement, int depencyType, string op="");
 		
 		// identifiers
-		//Array<idInfo>*				totalDistIdentifiers;
-		//Array<idInfo>*				distIdentifiers;
 		distStatement*				diststatementTemp;
 		Array<idInfo>*				distModifiedGlobal;
 		
@@ -197,7 +208,7 @@ class parser
 		bool						isFunction(const string&, bool, const string& classID = "");
 		bool						isUserFunction(const string&, bool,const string& classID = "");
 		bool 						isBuiltinFunction(const string&);
-		//int							findFUNCInfo(const string&, const int&);
+		//int						findFUNCInfo(const string&, const int&);
 		funcInfo					getFunc(const string&, const string& classID = "");
 		funcInfo					getFunc(const string&, Array<string>*, const string& returnType, const string& classID);
 		
@@ -230,6 +241,8 @@ class parser
 			CLASS,
 			GLOBAL
 		};
+
+		
 		
 		
 		/*enum  classClassifier
@@ -258,7 +271,7 @@ class parser
 			token getToken(const uint32_t index);
 
 			
-			void parseReturn();
+			statement* parseReturn();
 			EBNF_map_t EBNF;
 			uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start);
 			
@@ -279,7 +292,6 @@ class parser
 			int							distributedScope;
 			
 			bool						Header;
-			bool						fileInclude;
 			// map for dividing files
 			Array<mapcode>*			mapCodes;
 			
@@ -312,7 +324,7 @@ class parser
 			
 			int 							addStatementDistributingVariables(statement* stmt);
 			Array<distributingVariablesStatement*>* dvList;
-			Array<statement*>*				libs;
+			Array<statement*>*				linkLibs;
 			
 			long parseCClass(scanner* scner, uint32_t start, const Array<string>& templateName);
 			funcInfo parseCFunction(scanner* scner, uint32_t start, const DatatypeBase& parentClass);

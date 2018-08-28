@@ -4,11 +4,10 @@
 #include <string>
 //std::map <std::string, std::vector<string> > EBNF;
 
-class InputParser
+class parametersHandler
 {
-	//https://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
     public:
-        InputParser (int &argc, char **argv)
+        parametersHandler (int &argc, char **argv)
 		{
             for (int i=1; i < argc; ++i)
 			{
@@ -48,7 +47,7 @@ class InputParser
 // we need boolean and arrays
 int main(int argc, char** argv)
 {
-	InputParser input(argc, argv);
+	parametersHandler pHandler(argc, argv);
 
 	// when  variavle declared , if no value initialized , then just make a pointer to it
 	// wait when the operational statement that assigns it , then initialize it with NEW , and use it as *P :)
@@ -56,11 +55,21 @@ int main(int argc, char** argv)
 
 	intSymbols();
 	string fname;
-	
+	std::vector<std::string> includePaths;
+	while(pHandler.hasParameterOption("-I") == true)
+	{		
+		const std::string &includePath = pHandler.geOptionValue("-I");
 
-	if(input.hasParameterOption("--sources"))
+		if (!includePath.empty())
+		{
+			displayInfo(" adding   ... [" + includePath + "]");
+			includePaths.push_back(includePath);
+		}
+	}
+
+	if(pHandler.hasParameterOption("--sources"))
 	{
-        fname = input.geOptionValue("--sources");
+        fname = pHandler.geOptionValue("--sources");
     	if (fname.empty())
 		{
         	fname = "testsrc.m14";
@@ -83,27 +92,26 @@ int main(int argc, char** argv)
 	displayInfo(" Parsing   ... [" + fname + "]");
 	parser* prser = new parser(scner->getTokens(), fname, false);
 
-	while(input.hasParameterOption("-I") == true)
+	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
-        const std::string &includePath = input.geOptionValue("-I");
-
-    	if (!includePath.empty())
-		{
-			displayInfo(" adding   ... [" + includePath + "]");
-        	prser->addIncludePath(includePath);
-    	}
-    }	
+		displayInfo(" adding   ... [" + includePaths.at(i) + "]");
+		prser->addIncludePath(includePaths.at(i));
+	}
 	//prser->printEBNF();
 	prser->parse();
 	
 	
-	//cout << " Compiling ... " << endl;
+	
 	displayInfo(" Compiling  ... [" + fname + "]");
 	compiler* Compiler = new compiler(prser->getMapCodes());
-	
+
+	for(uint32_t i =0; i < includePaths.size(); i++)
+	{		
+		displayInfo(" adding   ... [" + includePaths.at(i) + "]");
+		Compiler->addIncludePath(includePaths.at(i));
+	}
 
 	Compiler->setVersion(0.01);
-	Compiler->setIncludesDir("includes");
 	Compiler->setgccPath("");
 	Compiler->setcompileStatic(false);
 	Compiler->compile();

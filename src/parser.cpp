@@ -10,8 +10,12 @@
 
 TODO: report grammar error using the longest trace and quite.
 
-*/
+/section EBNF
 
+the extended back-naur form grammar is possible to express using the provided functions such as \ref parseEBNF() , however it is tricky
+to accomplish some goals.
+
+*/
 
 #include "parser.hpp"
 
@@ -89,28 +93,6 @@ statement* parser::empty_file()
 
 bool EBNF_is_index_frozen = false; /** boolean used by freeze_EBNFindex() and unfreeze_EBNFindex() */
 int EBNF_frozen_index = -1; /** last index before freezing the EBNF index using freeze_EBNFindex(), to be used for restoration using unfreeze_EBNFindex()*/
-
-bool parser::freeze_EBNFindex()
-{
-	if (EBNF_is_index_frozen == false)
-	{
-		EBNF_is_index_frozen = true;
-		EBNF_frozen_index = *input_tokens_index;
-	}
-	
-	return EBNF_is_index_frozen;
-}
-
-bool parser::unfreeze_EBNFindex()
-{
-	if (EBNF_is_index_frozen == true)
-	{
-		EBNF_is_index_frozen = false;
-		*input_tokens_index = EBNF_frozen_index;
-	}
-	
-	return EBNF_is_index_frozen;
-}
 
 int parser::advance_EBNFindex()
 {
@@ -560,7 +542,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	mapCodes 			=	new Array<mapcode>;
 	index				=	0;
 	scope				=	0;
-	fileInclude			=	false;
 	Header				=	false;
 	diststatementTemp	=	new distStatement();
 	distributedVariablesCount = 0;
@@ -574,7 +555,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	input_tokens = tokens;
 	
 	dvList				=	new Array<distributingVariablesStatement*>;
-	libs				=	new Array<statement*>();
+	linkLibs			=	new Array<statement*>();
 
 	this->insider = insider;
 	
@@ -608,9 +589,8 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  //{"addparent-statement",EXPANSION_TOKEN},
 												  {"thread-list",EXPANSION_TOKEN},
 												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
-												  {"return-list",EXPANSION_TOKEN},
+												  {"return-list",EXPANSION_TOKEN, &parser::parseReturn},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
-												  //{"expression", EXPANSION_TOKEN, &parser::parseExpressionStatement},  //to be used for the last part of for loop
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
 												  }}};
 	
@@ -880,7 +860,7 @@ int	parser::parse()
 {
 	if (!insider)
 	{
-		parseIncludesInsider("core/DM14GLOBAL.m14", "file", true);
+		parseIncludesInsider("core/DM14GLOBAL.m14", "", includePath::sourceFileType::FILE_DM14);
 	}
 
 	cerr << ">>>>>>>>>> START " << EBNF_level <<  endl << flush;
@@ -923,7 +903,7 @@ int	parser::parse()
 	mapCode.ExternCodes = new Array<string>();
 	*mapCode.ExternCodes = *ExternCodes;
 	mapCode.ExternCodes = ExternCodes;
-	mapCode.libs = libs;
+	mapCode.linkLibs = linkLibs;
 	mapCode.globalDeclarations = globalDeclarations;
 	mapCode.globalDefinitions = globalDefinitions;
 	mapCode.dataTypes = mapcodeDatatypes;
@@ -941,18 +921,12 @@ int	parser::parse()
  * and then cpps and hpps named after libraries , so when calling mapFunctions , 
  * pass package AND library , add the File including too , call parser on it */
 statement* parser::parseIncludes() 
-{
-	for(uint32_t i =0; i < working_tokens->size(); i++)
-	{
-		cerr << ":::" << working_tokens->at(i).value << endl;
-	}
-	cerr << "PARSE INCLUDES 1 " << endl << flush;
-	
+{	
 	popToken();
 	popToken();
 	string package = "";
 	string library = "";
-	fileInclude = false;
+	includePath::sourceFileType includeType = includePath::sourceFileType::LIBRARY;
 	if (getToken().type != "string" && getToken().type != "identifier" && !isDataType(getToken().value))//tokens->at(index).type != "datatype")
 	{
 		displayError(fName, getToken().lineNumber,getToken().columnNumber,"Expected Package name and not " + getToken().value );
@@ -960,14 +934,26 @@ statement* parser::parseIncludes()
 
 	if(getToken().type == "string")
 	{
-		fileInclude = true;
 		
 		package = getToken().value.substr(1, (getToken().value.size() - 2 ));
-		library = "file";
+		if(package.substr(package.size()-5) == ".m14")
+		{
+			includeType = includePath::sourceFileType::FILE_DM14;
+		}
+		else if(package.substr(package.size()-5) == ".cpp" || package.substr(package.size()-4) == ".cc")
+		{
+			includeType = includePath::sourceFileType::FILE_C;
+		}
+		else
+		{
+			displayError("Unknown file include type");
+		}
+		library = "";
 	}
 	else
 	{
 		package = getToken().value;
+		includeType = includePath::sourceFileType::LIBRARY;
 		popToken();
 		if(getToken().value == "use")
 		{
@@ -996,10 +982,8 @@ statement* parser::parseIncludes()
 		}
 	}
 	
-	parseIncludesInsider(package, library, fileInclude);
-	
-	cerr << "PARSE INCLUDES 2 " << endl << flush;
-	
+	parseIncludesInsider(package, library, includeType);
+		
 	return NULL;
 };
 
@@ -1008,11 +992,11 @@ int parser::addIncludePath(string path)
 	includePaths.push_back(path);
 	return includePaths.size();
 }
-int parser::parseIncludesInsider(const string& package, const string& library, const bool fileInclude)
+
+int parser::parseIncludesInsider(const string& package, const string& library, const includePath::sourceFileType includeType)
 {
-	cerr << "PARSE INCLUDES 11 " << endl << flush;
 	includes.push_back(pair<string,string>(package,library));
-	if (fileInclude)
+	if (includeType == includePath::sourceFileType::FILE_DM14 || includeType == includePath::sourceFileType::FILE_C)
 	{
 		string fullPath;
 		for(uint32_t i = 0; i < includePaths.size(); i++)
@@ -1048,7 +1032,7 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 		for(uint32_t i =0; i < Parser.getMapCodes()->size(); i++)
 		{
 			Parser.getMapCodes()->at(i).setHeader(true);
-			*Parser.getMapCodes()->at(i).ExternCodes = *Parser.ExternCodes;
+			Parser.getMapCodes()->at(i).ExternCodes = Parser.ExternCodes;
 			
 			/*for(unsigned k =0; k < Parser.getMapCodes()->at(i).globalDefinitions.size(); k++)
 			{
@@ -1068,9 +1052,9 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 			//mapCodes->at(mapCodes->size()-1).Print();
 		}
 		
-		for (uint32_t i =0; i< Parser.libs->size(); i++)
+		for (uint32_t i =0; i< Parser.linkLibs->size(); i++)
 		{
-			libs->push_back(Parser.libs->at(i));
+			linkLibs->push_back(Parser.linkLibs->at(i));
 		}
 	
 		for (uint32_t i =0; i< Parser.getIncludes().size(); i++)
@@ -1132,24 +1116,28 @@ statement* parser::parseLink()
 		stmt->libs = getToken().value.substr(1, getToken().value.size()-2);
 	}
 	
-	libs->push_back(stmt);
+	linkLibs->push_back(stmt);
 	
 	return stmt;
 }
 
 
-void parser::parseReturn()
+statement* parser::parseReturn()
 {
+	popToken();
 	returnStatement* returnstatement = new returnStatement;
-	returnstatement->line = (tokens->at(index)).lineNumber;
+	returnstatement->line = getToken().lineNumber;
 	returnstatement->scope = scope;
-	nextIndex();
-	if (getToken().value != ";" )
+	
+	if (!peekToken(";"))
 	{
-		int currentIndex = index;
-		returnstatement->retValue = parseOpStatement(currentIndex, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
+		returnstatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
 	}
+
+	popToken();
 	RequireValue(";","exptected ; and not:", true);
+
+	return returnstatement;
 }
 
 statement* parser::parseStatement(const std::string starting_rule)
@@ -3335,7 +3323,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 
 
 mapcode::mapcode(const string& mname, Array<ast_function>* const mfunctions, 
-				 const Array<pair<string,string> >& mincludes, const bool& header,
+				 const Array<pair<string,string>>& mincludes, const bool& header,
 				 const int& nodesC, const int& variablesCount)
 {
 	mapcode();
@@ -3346,7 +3334,7 @@ mapcode::mapcode(const string& mname, Array<ast_function>* const mfunctions,
 	Header = header;
 	nodesCount = nodesC;
 	dVariablesCount = variablesCount;
-	libs = new Array<statement*>();
+	linkLibs = new Array<statement*>();
 	ExternCodes = new Array<string>();
 };
 
@@ -3361,7 +3349,7 @@ mapcode::~mapcode()
 {
 	//cout << "DELETE " << endl;
 	//delete functions;
-}
+};
 
 
 Array< pair<string,string> > parser::getIncludes()
@@ -3371,7 +3359,7 @@ Array< pair<string,string> > parser::getIncludes()
 
 Array<ast_function>* parser::getFunctions()
 {
-	return (functions);
+	return functions;
 };
 
 Array<mapcode>* parser::getMapCodes()
@@ -3396,10 +3384,18 @@ Array<ast_function>* mapcode::getFunctions()
 };
 
 
-Array<pair<string,string> > mapcode::getIncludes()
+uint32_t mapcode::addInclude(std::pair<std::string, std::string> library)
+{
+	includes.push_back(library);
+	return includes.size();
+};
+
+Array<pair<string,string>> mapcode::getIncludes()
 {
 	return includes;
 };
+
+
 
 
 bool mapcode::isHeader()
@@ -3681,8 +3677,9 @@ statement* parser::parseStruct()
 
 statement* parser::parseExtern()
 {
+	popToken();
 	EXTERN* externstatment = new EXTERN;
-	externstatment->line = (tokens->at(index)).lineNumber;
+	externstatment->line = getToken().lineNumber;
 	externstatment->scope = scope;
 	
 	int from = index+1;

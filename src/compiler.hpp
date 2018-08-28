@@ -1,8 +1,14 @@
-// Copyright (c) 2010, <Abdallah Aly> <l3thal8@gmail.com>
-//
-// Part of Mission14 programming language
-//
-// See file "license" for bsd license
+#ifndef DM14_COMPILER_HPP
+#define DM14_COMPILER_HPP
+/**
+@file             compiler.hpp
+@brief            compiler implementation
+@details          compiler implementation
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2018
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
 
 
 #include "scanner.hpp"
@@ -10,10 +16,8 @@
 #include <stdlib.h>
 #include "ast.hpp"
 #include <iomanip> // std::setw
-
-//#include "common.hpp"
 #include <sstream>
-using namespace std;
+
 
 extern Array<DatatypeBase>	datatypes;
 
@@ -30,10 +34,10 @@ class compiler
 		~compiler();
 		
 		int		setVersion(const double&);
-		int		setIncludesDir(const string&);
-		int		setgccPath(const string&);
-		int		write(const string&);
-		int		writeLine(const string&);
+		uint32_t addIncludePath(const std::string& path);
+		int		setgccPath(const std::string&);
+		int		write(const std::string&);
+		int		writeLine(const std::string&);
 		int 	compile();
 		int 	compileIncludes();
 		int		compileDistributeNodes();
@@ -71,22 +75,23 @@ class compiler
 		
 		
 	private:
-	
-		iostream*				outStream;
+		std::string pathSeperator = "/";
+		Array<string>			includePaths;
+		std::iostream*			outStream;
 		bool					compileStatic;
 		double					Version;
-		string					IncludesDir;
-		string					gccPath;
-		string					fName;
-		fstream					srcFile;
-		fstream					m14FileDefs;
+		std::string					IncludesDir;
+		std::string					gccPath;
+		std::string					fName;
+		std::fstream					srcFile;
+		std::fstream					m14FileDefs;
 		Array<mapcode>*						mapCodes;
 		//Array < pair<string, int> >*		nodesModifiers;
 		
 		int						index; // index of mapCodes ( current file )	
 		unsigned int			fIndex;// function index
 		
-		Array<string>			dVariablesNames;
+		Array<std::string>			dVariablesNames;
 		int						dVariablesCount;
 		int						currentNode;
 		
@@ -94,6 +99,8 @@ class compiler
 		bool					declaringVars;
 		
 		int 					nodesCount;
-		string					bufferedOutput;
+		std::string					bufferedOutput;
 		bool					compilingMain;
 };
+
+#endif /** DM14_COMPILER_HPP */

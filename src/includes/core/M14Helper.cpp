@@ -1,11 +1,15 @@
 #include "M14Helper.hpp"
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <core/Node.hpp>
 
-int setArgs(int argc, char* argv[], Node& n, string& mainParameters)
+int setArgs(int argc, char* argv[], Node& n, std::string& mainParameters)
 {
 	for (int i =1; i < argc; i++)
 	{
 		int switchType = 0;
-		string S = argv[i];
+		std::string S = argv[i];
 		
 		if(S == "-P")
 		{
@@ -24,10 +28,10 @@ int setArgs(int argc, char* argv[], Node& n, string& mainParameters)
 		{
 			i++;
 			//int port = 0;
-			string port = "";
-			string ip;
+			std::string port = "";
+			std::string ip;
 			ip = argv[i];
-			stringstream SS;
+			std::stringstream SS;
 			//SS << ip.substr(ip.find(':')+1, ip.size());
 			//SS >> port;
 			port = ip.substr(ip.find(':')+1, ip.size());
@@ -36,12 +40,12 @@ int setArgs(int argc, char* argv[], Node& n, string& mainParameters)
 			
 			if(switchType == 1)
 			{
-				cout << "PIP:" << ip << " PORT:" << port << endl;
+				std::cout << "PIP:" << ip << " PORT:" << port << std::endl;
 				n.addNode(ip, port, true);
 			}
 			else if(switchType == 2)
 			{
-				cout << "SIP:" << ip << " PORT:" << port << endl;
+				std::cout << "SIP:" << ip << " PORT:" << port << std::endl;
 				n.setServer(ip, port, 60);
 			}
 		}
@@ -49,7 +53,7 @@ int setArgs(int argc, char* argv[], Node& n, string& mainParameters)
 		{
 			i++;
 			int nodeN = 0;
-			stringstream SS;
+			std::stringstream SS;
 			SS << string(argv[i]);
 			SS >> nodeN;
 			n.setNodeNumber(nodeN);

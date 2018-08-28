@@ -1,8 +1,13 @@
-// Copyright (c) 2010, <Abdallah Aly> <l3thal8@gmail.com>
-//
-// Part of Mission14 programming language
-//
-// See file "license" for license
+/**
+@file             compiler.cpp
+@brief            compiler implementation
+@details          compiler implementation
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2018
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
+
 #include "compiler.hpp"
 
 // hmm , the cin function must be awesome such that if a user enters char in a int it wont give him C++ error but a M14 error
@@ -112,20 +117,22 @@ int compiler::setVersion(const double& version)
 	return 0;
 };
 
-int compiler::setIncludesDir(const string& includesdir)
-{
-	IncludesDir = includesdir;
-	return 0;
-};
 
-int compiler::setgccPath(const string& gccpath)
+
+uint32_t compiler::addIncludePath(const std::string& path)
+{
+	includePaths.push_back(path);
+	return includePaths.size();
+}
+
+int compiler::setgccPath(const std::string& gccpath)
 {
 	gccPath = gccpath;
 	
 	return 0;
 };
 
-int compiler::write(const string& output)
+int compiler::write(const std::string& output)
 {
 	if(outStream)
 	{
@@ -133,21 +140,21 @@ int compiler::write(const string& output)
 	}
 	else
 	{
-		cout << "ERROR STREAM" << endl;
+		std::cout << "ERROR STREAM" << std::endl;
 		exit(1);
 	}
 	return 0;
 };
 
-int compiler::writeLine(const string& output)
+int compiler::writeLine(const std::string& output)
 {
 	if(outStream)
 	{
-		*outStream << output<< endl << flush;
+		*outStream << output<< std::endl << std::flush;
 	}
 	else
 	{
-		cout << "ERROR STREAM" << endl;
+		std::cout << "ERROR STREAM" << std::endl;
 		exit(1);
 	}
 	
@@ -157,20 +164,21 @@ int compiler::writeLine(const string& output)
 int compiler::compile()
 {
 	// loop through mapCodes ( files ) and call other funcs to write src files
-	m14FileDefs.open("M14Defs.hpp",ios::out);
-	m14FileDefs << "#ifndef __DM14HEADER_HPP" << endl;
-	m14FileDefs << "#define __DM14HEADER_HPP" << endl;
-	m14FileDefs << "#include \"M14Helper.hpp\"" << endl;
-	m14FileDefs << "unsigned int M14RESETCOUNTER = 0;" << endl;
+	m14FileDefs.open("M14Defs.hpp", std::ios::out);
+	m14FileDefs << "#ifndef __DM14HEADER_HPP" << std::endl;
+	m14FileDefs << "#define __DM14HEADER_HPP" << std::endl;
+	m14FileDefs << "#include <core" + pathSeperator + "M14Helper.hpp>" << std::endl;
+	m14FileDefs << "unsigned int M14RESETCOUNTER = 0;" << std::endl;
 	//m14FileDefs << "map<string, unsigned int> _DM14VARIABLESMAP;" << endl;
 	//m14FileDefs << "string SERVINGIP;" << endl;
 	//m14FileDefs << "int SERVINGPORT;" << endl;
 	//m14FileDefs << "string PARENTIP;" << endl;
 	//m14FileDefs << "int PARENTORT;" << endl;
 	
-	string com;
+	std::string com;
 	
-	for ( unsigned int i =0; i < mapCodes->size(); i++)
+	cerr << "SIZE : " << mapCodes->size() << endl;
+	for (uint32_t i =0; i < mapCodes->size(); i++)
 	{
 		bufferedOutput = "";
 		//mapCodes->at(i).Print();
@@ -179,20 +187,24 @@ int compiler::compile()
 		nodesCount += (mapCodes->at(index)).nodesCount;
 		dVariablesCount += (mapCodes->at(index)).dVariablesCount;
 		
+		std::string fileName = (mapCodes->at(index)).getFileName() ;
+		std::size_t splitPoint = fileName.find_last_of("/\\");
+		fileName = fileName.substr(splitPoint+1);
+
 		// get source file name
 		if ((mapCodes->at(index)).isHeader())
 		{
-			fName = (mapCodes->at(index)).getFileName() + ".hpp";
+			fName = fileName + ".hpp";
 		}
 		else
 		{
-			fName = (mapCodes->at(index)).getFileName() + ".cpp";
+			fName = fileName + ".cpp";
 		}
 		// open source file
 		srcFile.open(fName.c_str(),ios::out);
 		outStream = &srcFile;
 		
-		string headrmacroname = "";
+		std::string headrmacroname = "";
 		
 		for(unsigned int i =0; i<fName.size(); i++)
 		{
@@ -227,14 +239,13 @@ int compiler::compile()
 		if (!(mapCodes->at(index)).isHeader())
 		{
 			com += "g++ " + fName;	
-			Array<pair<string,string> > incs = (mapCodes->at(index)).getIncludes();
-			string pathSeperator = "/";
+			Array<pair<std::string, std::string> > incs = (mapCodes->at(index)).getIncludes();
 			
-			incs.push_back(pair<string,string>("core", "common"));
-			incs.push_back(pair<string,string>("core", "M14Helper"));
-			incs.push_back(pair<string,string>("core", "Socket"));
-			incs.push_back(pair<string,string>("core", "Node"));
-			incs.push_back(pair<string,string>("core", "message"));
+			incs.push_back(pair<std::string, std::string>("core", "common"));
+			incs.push_back(pair<std::string, std::string>("core", "M14Helper"));
+			incs.push_back(pair<std::string, std::string>("core", "Socket"));
+			incs.push_back(pair<std::string, std::string>("core", "Node"));
+			incs.push_back(pair<std::string, std::string>("core", "message"));
 			
 			for (unsigned int i =0; i < incs.size(); i++)
 			{
@@ -260,24 +271,45 @@ int compiler::compile()
 				}
 				else
 				{
-					fstream file;
-					string path = IncludesDir + pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".cpp";
-					file.open(path.c_str(),ios::in);
+
+					string fullPath;
+					for(uint32_t k = 0; k < includePaths.size(); k++)
+					{
+						ifstream ifs;			
+
+						ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".cpp");
+						if(ifs.is_open())
+						{
+							fullPath = includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".cpp";
+							com += " -I" +  includePaths.at(k) +pathSeperator + incs.at(i).first +  " ";
+							ifs.close();
+							break;
+						}
+					}
+
+					if (!fullPath.size())
+					{
+						displayError("Error not able to find unit : " +  incs.at(i).first + pathSeperator + incs.at(i).second  + ".cpp");
+						exit(1);
+					}
+					
+					std::fstream file;
+					file.open(fullPath.c_str(),ios::in);
 					if(file.is_open())
 					{
-						com += " " + path + " ";
+						com += " " + fullPath + " ";
 					}
 					file.close();
 				}
 			}
 			// FIX1022, only add m14main if this map has main function ?
 			
-			for (unsigned int k =0; k <  (mapCodes->at(index)).libs->size(); k++ )
+			for (unsigned int k =0; k <  (mapCodes->at(index)).linkLibs->size(); k++ )
 			{
 				bool cont = false;
-				for (unsigned int i =k+1; i < (mapCodes->at(index)).libs->size(); i++)
+				for (unsigned int i =k+1; i < (mapCodes->at(index)).linkLibs->size(); i++)
 				{
-					if ( ((Link*)mapCodes->at(index).libs->at(i))->libs == ((Link*)mapCodes->at(index).libs->at(k))->libs)
+					if ( ((Link*)mapCodes->at(index).linkLibs->at(i))->libs == ((Link*)mapCodes->at(index).linkLibs->at(k))->libs)
 					{
 						 cont = true;
 					}
@@ -288,15 +320,15 @@ int compiler::compile()
 					continue;
 				}
 				
-				if(((Link*)mapCodes->at(index).libs->at(k))->Static)
+				if(((Link*)mapCodes->at(index).linkLibs->at(k))->Static)
 				{
 					com += " ";
-					com += ((Link*)mapCodes->at(index).libs->at(k))->libs;
+					com += ((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
 				}
 				else
 				{
 					com += " -l";
-					com += ((Link*)mapCodes->at(index).libs->at(k))->libs;
+					com += ((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
 					/*for (unsigned int l =0; l < ((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
 					{
 						if ( ((Link*)mapCodes->at(index).libs->at(k))->libs.at(l) == ',')
@@ -310,18 +342,23 @@ int compiler::compile()
 					}*/
 				}
 			}
+
+			for(uint32_t k = 0; k < includePaths.size(); k++)
+			{
+				com += " -I" + includePaths.at(k) + " ";
+			}
 			
 			if(compileStatic)
 			{
 				com += "-static -static-libgcc -static-libstdc++";
 			}
 
-			com += " -fpermissive -I . -I includes/core -lpthread -Wall -o " + (mapCodes->at(index)).getFileName() + ".bin -g;";
+			com += " -fpermissive  -lpthread -Wall -o " + fileName + ".bin -g;";
 		}
 	}
 	
 	compileDistributeNodes();
-	m14FileDefs << "#endif" << endl;
+	m14FileDefs << "#endif" << std::endl;
 	m14FileDefs.close();
 	
 	displayDebug("Compiling : " + com);
@@ -343,8 +380,8 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	Array<pair<string,string> > incs = (mapCodes->at(index)).getIncludes();
-	string headerName;
+	Array<pair<std::string, std::string> > incs = (mapCodes->at(index)).getIncludes();
+	std::string headerName;
 	
 	for (unsigned int i =0; i < incs.size(); i++)
 	{
@@ -352,20 +389,45 @@ int compiler::compileIncludes()
 		{
 			headerName = incs.at(i).first + ".hpp";
 		}
+		else if (incs.at(i).second == "DM14file")
+		{
+			headerName = incs.at(i).first + ".hpp";
+		}
 		else
 		{
-			headerName = IncludesDir + "/" + incs.at(i).first + "/" + incs.at(i).second + ".hpp";
+			string fullPath;
+			for(uint32_t k = 0; k < includePaths.size(); k++)
+			{
+				ifstream ifs;			
+
+				ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp");
+				if(ifs.is_open())
+				{
+					fullPath = includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp";
+					ifs.close();
+					break;
+				}
+			}
+			if(fullPath.size())
+			{
+				headerName = fullPath;
+			}
+			else
+			{
+				displayError("unable to find library header : " + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp");
+			}
+			//headerName = IncludesDir + "/" + incs.at(i).first + "/" + incs.at(i).second + ".hpp";
 		}
 		
-		write("#include \"");
+		write("#include <");
 		write(headerName);
-		writeLine("\"");
+		writeLine(">");
 	}
 	
-	write("#include \"");
+	write("#include <");
 	//write("Node.hpp");
 	write("M14Defs.hpp");
-	writeLine("\"");
+	writeLine(">");
 		
 	return 0;
 };
@@ -374,14 +436,14 @@ int compiler::compileIncludes()
 
 int compiler::compileDistributeNodes()
 {
-	m14FileDefs << "#define __M14DIRECTVARSCOUNT " << dVariablesNames.size() << endl;
-	stringstream ss;
+	m14FileDefs << "#define __M14DIRECTVARSCOUNT " << dVariablesNames.size() << std::endl;
+	std::stringstream ss;
 	ss << nodesCount;
-	m14FileDefs << "#define __M14MAXIMUMNODES " << ss.str() << endl;
+	m14FileDefs << "#define __M14MAXIMUMNODES " << ss.str() << std::endl;
 	ss.str("");
 	ss.clear();
 	ss << dVariablesCount;
-	m14FileDefs << "#define __M14MAXIMUMVARSCOUNT " << ss.str() << endl;
+	m14FileDefs << "#define __M14MAXIMUMVARSCOUNT " << ss.str() << std::endl;
 	//writeLine("#define __M14VPOINTERS[M14VPOINTERSCOUNT] void* __M14VPOINTERS[M14VPOINTERSCOUNT]");
 	//m14FileDefs << "void* __M14VPOINTERS[__M14MAXIMUMVARSCOUNT];" << endl;
 	//m14FileDefs << "bool __M14VSTATUSES[__M14MAXIMUMVARSCOUNT];" << endl;
@@ -645,7 +707,7 @@ int	compiler::compileNodeSelector(ast_function& fun)
 {
 	writeLine("switch (Distributed.nodeNumber)");
 	writeLine("{");
-	stringstream SS;
+	std::stringstream SS;
 	for (unsigned int k =0; k < fun.functionNodes.size(); k++)
 	{
 		SS << k+1;
@@ -843,7 +905,7 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 			
 			if(decStatement->size != 0)
 			{
-				stringstream SS;
+				std::stringstream SS;
 				SS <<  decStatement->size;
 				write(">("+SS.str()+")");
 			}
@@ -927,7 +989,7 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 		string arraySpec;
 		if(decStatement->array)
 		{
-			stringstream SS;
+			std::stringstream SS;
 			SS <<  decStatement->size;
 			arraySpec=SS.str()+", true";
 		}
@@ -979,7 +1041,7 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 		{
 			if(decStatement->array)
 			{
-				stringstream SS;
+				std::stringstream SS;
 				SS <<  decStatement->size;
 				writeLine("for (unsigned int i =0; i < " + SS.str() + "; i++)");
 				writeLine("{");
@@ -1208,7 +1270,7 @@ int compiler::compileFunctionCall(statement*& stmt)
 	
 	if (!implemented)
 	{
-		stringstream ss;
+		std::stringstream ss;
 		ss <<  funCall->line ;
 		displayError(funCall->name + " is not implemnted, called at: " + ss.str());
 	}
@@ -1460,7 +1522,7 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 			return 0;
 		}
 	}
-	m14FileDefs << "#define " << name << " " << dVariablesNames.size() << endl;
+	m14FileDefs << "#define " << name << " " << dVariablesNames.size() << std::endl;
 	dVariablesNames.push_back(name);
 	
 	DatatypeBase dType =  findDataType(id.type);
@@ -1590,12 +1652,12 @@ int compiler::compileThread(statement*& stmt)
 	if(threadStmt->classMember)
 	{
 		writeLine( "&" + threadStmt->parentID + ");");
-		m14FileDefs <<  threadStmt->returnType << " " << functionID << "(void*);" << endl;
+		m14FileDefs <<  threadStmt->returnType << " " << functionID << "(void*);" << std::endl;
 		
 		bufferedOutput +=  threadStmt->returnType + " " + functionID + "(void* caller)\n";
 		bufferedOutput += "{\n";
 		bufferedOutput += "return ((" +  threadStmt->classID + "*)caller)->";
-		stringstream SS;
+		std::stringstream SS;
 		compileInsider(threadStmt->functioncall, &SS, true);
 		bufferedOutput += SS.str();
 		bufferedOutput += ";\n};\n";
@@ -1604,13 +1666,13 @@ int compiler::compileThread(statement*& stmt)
 	{
 		writeLine("NULL);");
 		//m14FileDefs <<  threadStmt->returnType << " " << functionID << "();" << endl;
-		m14FileDefs <<  "void* " << functionID << "();" << endl;
+		m14FileDefs <<  "void* " << functionID << "();" << std::endl;
 		
 		//bufferedOutput +=  threadStmt->returnType + " " + functionID + "()\n";
 		bufferedOutput +=  "void* " + functionID + "()\n";
 		bufferedOutput += "{\n";
 		//bufferedOutput += "return (void*)";
-		stringstream SS;
+		std::stringstream SS;
 		compileInsider(threadStmt->functioncall, &SS, true);
 		bufferedOutput += SS.str();
 		bufferedOutput += ";\n};\n";
@@ -1774,7 +1836,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 		return 1;
 	}
 	
-	stringstream SS;
+	std::stringstream SS;
 				
 	write( "Distributed.need<");
 	if (id.array && (id.arrayIndex == NULL))
@@ -1911,7 +1973,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 int compiler::compileDistribute(statement*& stmt)
 {	
 	//distStatement* diststatement = (distStatement*)stmt;
-	string funcName = ((mapCodes->at(index)).getFunctions()->at(fIndex)).name;
+	std::string funcName = ((mapCodes->at(index)).getFunctions()->at(fIndex)).name;
 	if (funcName != "main")
 	{
 		displayError((mapCodes->at(index)).getFileName(), stmt->line,0,"Distribute statement outside main function, ignored.");
@@ -1919,7 +1981,7 @@ int compiler::compileDistribute(statement*& stmt)
 	}
 
 	writeLine("goto end"+funcName+";");
-	stringstream ss;
+	std::stringstream ss;
 	ss << stmt->line;
 	funcName += ss.str();
 	writeLine(funcName+":");
