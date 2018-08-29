@@ -40,6 +40,16 @@ with::~with()
 }
 
 
+NOPStatement::NOPStatement()
+{
+	statementType = NOPSTATEMENT;
+}
+
+NOPStatement::~NOPStatement()
+{
+}
+
+
 /*
 Class::Class()
 {

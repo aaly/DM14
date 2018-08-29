@@ -25,16 +25,46 @@ using namespace std;
 extern Array<DatatypeBase>	datatypes;
 static Array<DatatypeBase>	mapcodeDatatypes;
 
+class includePath
+{
+	public:
+
+		enum class sourceFileType
+		{
+			FILE_DM14 = 1,
+			FILE_C,
+			LIBRARY
+		};
+
+		std::string package;
+		std::string library;
+		sourceFileType includeType;
+		
+		includePath()
+		{
+
+		}
+
+		includePath(const std::string& package, const std::string& library, const includePath::sourceFileType includeType)
+		{
+			this->package = package;
+			this->library = library;
+			this->includeType = includeType;
+		}
+
+		
+};
+
 class mapcode
 {
 	public:
 		mapcode();
-		mapcode(const string&, Array<ast_function>* const, const Array<pair<string,string>>&, const bool&, const int&, const int&);
+		mapcode(const string&, Array<ast_function>* const, const Array<includePath>&, const bool&, const int&, const int&);
 		~mapcode();
 		string					getFileName();
 		Array<ast_function>*		getFunctions();
 		//multimap<string,string> getIncludes();
-		Array<pair<string,string>> getIncludes();
+		Array<includePath> getIncludes();
 		bool					isHeader();
 		bool					setHeader(bool);
 		int						nodesCount;
@@ -45,13 +75,13 @@ class mapcode
 		Array<statement*>		globalDeclarations;
 		Array<statement*>		globalDefinitions;
 		Array<DatatypeBase>		dataTypes;
-		uint32_t				addInclude(std::pair<std::string, std::string> library);
+		uint32_t				addInclude(includePath);
 	
 	private:
 		string						fileName;
 		Array<ast_function>*		functions;
 		//multimap<string,string>	includes;
-		Array<pair<string,string>>	includes;
+		Array<includePath>	includes;
 		bool						Header;
 };
 
@@ -110,24 +140,6 @@ typedef std::unordered_map <std::string, std::vector<grammar_rule_t> > EBNF_map_
 typedef std::pair<int, statement*> ebnfResult;
 
 
-class includePath
-{
-	public:
-
-		enum class sourceFileType
-		{
-			FILE_DM14 = 1,
-			FILE_C,
-			LIBRARY
-		};
-
-		std::string package;
-		std::string library;
-		sourceFileType includeType;
-
-		
-};
-
 class parser
 {
 	public:
@@ -147,7 +159,8 @@ class parser
 		Array<ast_function>*			getFunctions();
 		Array<string>*				getExternCodes();
 		//multimap<string,string>		getIncludes();
-		Array<pair<string,string> > getIncludes();
+		//Array<pair<string,string> > getIncludes();
+		Array<includePath>			 getIncludes();
 		Array<mapcode>*				getMapCodes();
 		// parse functions
 		int							parse();
@@ -174,7 +187,7 @@ class parser
 		statement*					parseThread();
 		statement*					parseExpressionStatement();
 		statement*					parseNOPStatement();
-		statement*					parseOpStatement(const int&, const int&, const string&, const int&, statement*, idInfo* parent = NULL, const string& parentOp = "");
+		statement*					parseOpStatement(int32_t, int32_t, const string&, const int&, statement*, idInfo* parent = NULL, const string& parentOp = "");
 		int							increaseScope(statement*);
 		int							decreaseScope();
 		int							parseIncludesInsider(const string&, const string&, const includePath::sourceFileType);
@@ -302,7 +315,8 @@ class parser
 			
 			Array<string>*				ExternCodes;
 
-			Array<pair<string,string>>		includes;
+			//Array<pair<string,string>>		includes;
+			Array<includePath>				includes;
 			Array<string>			includePaths;
 			string						package;
 			string						library;

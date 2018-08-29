@@ -220,6 +220,13 @@ class parentAddStatement : public statement
 		statement* ip;
 };
 
+class NOPStatement : public statement
+{
+	public:
+		NOPStatement();
+		~NOPStatement();	
+};
+
 class setNodeStatement : public statement
 {
 	public:
@@ -363,30 +370,29 @@ enum grammarTerminals
 	
 };
 
-//enum sTypes
 enum grammarNonTerminals
 {
-	iStatement = 1,	// Include Statement
-	eStatement, 	// Empty Statement
-	rStatement,		// return Statement
-	dStatement,		// Declare Statement
-	oStatement,		// Operational Statement
-	tStatement,		// Term Statement
-	fCall,			// Function  Call
-	fLoop,			// For Loop
-	wLoop,			// while loop
-	IFStatement,	// IF statement
-	CASEStatement,	// Case statement
-	DISTStatement,	// distribute statement
-	adressingStatement,		// Node addressing Statement
-	Expr,
-	dvStatement,	//distributingVariablesStatement
-	RESETStatement,	//Reset statement
-	PAStatement,	//Parent Add statement
-	SNStatement,	// Set Node statement
-	EXTERNStatement, // Extern Statement
-	THREADStatement// Thread Statement
-	
+	iStatement = 1,			/**< Include Statement */
+	eStatement, 			/**< Empty Statement */
+	rStatement,				/**< return Statement */
+	dStatement,				/**< Declare Statement */
+	oStatement,				/**< Operational Statement */
+	tStatement,				/**< Term Statement */
+	fCall,					/**< Function  Call */
+	fLoop,					/**< For Loop */
+	wLoop,					/**< while loop */
+	IFStatement,			/**< IF statement */
+	CASEStatement,			/**< Case statement */
+	DISTStatement,			/**< distribute statement */
+	adressingStatement,		/**< Node addressing Statement */
+	Expr,					/**< Expression statement */
+	dvStatement,			/**< distributingVariablesStatement */
+	RESETStatement,			/**< Reset statement */
+	PAStatement,			/**< Parent Add statement */
+	SNStatement,			/**< Set Node statement */
+	EXTERNStatement, 		/**< Extern Statement */
+	THREADStatement, 		/**< Thread Statement */
+	NOPSTATEMENT			/**< nop statement */
 };
 
 class ast_function

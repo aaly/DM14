@@ -44,6 +44,7 @@ class compiler
 		int 	compileOuterExtern();
 		int 	compileFunction();
 		int		compileGlobalStructs();
+		int 	compileNOPStatement(statement*&);
 		int		compileGlobalDeclarations();
 		int		compileRetStatement(statement*&);
 		int 	compileForLoop(statement*&);

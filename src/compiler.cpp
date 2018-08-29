@@ -239,49 +239,40 @@ int compiler::compile()
 		if (!(mapCodes->at(index)).isHeader())
 		{
 			com += "g++ " + fName;	
-			Array<pair<std::string, std::string> > incs = (mapCodes->at(index)).getIncludes();
+			Array<includePath> incs = (mapCodes->at(index)).getIncludes();
 			
-			incs.push_back(pair<std::string, std::string>("core", "common"));
-			incs.push_back(pair<std::string, std::string>("core", "M14Helper"));
-			incs.push_back(pair<std::string, std::string>("core", "Socket"));
-			incs.push_back(pair<std::string, std::string>("core", "Node"));
-			incs.push_back(pair<std::string, std::string>("core", "message"));
-			
+			incs.push_back(includePath("core", "common", includePath::sourceFileType::LIBRARY));
+			incs.push_back(includePath("core", "M14Helper", includePath::sourceFileType::LIBRARY));
+			incs.push_back(includePath("core", "Socket", includePath::sourceFileType::LIBRARY));
+			//incs.push_back(includePath("core", "Node", includePath::sourceFileType::LIBRARY));
+			incs.push_back(includePath("core", "message", includePath::sourceFileType::LIBRARY));
+			incs.push_back(includePath("io", "string", includePath::sourceFileType::LIBRARY));
+				
 			for (unsigned int i =0; i < incs.size(); i++)
 			{
-				bool cont = false;
-				
-				for (unsigned int k =i+1; k < incs.size(); k++)
+				std::string headerName;
+
+				if (incs.at(i).includeType == includePath::sourceFileType::FILE_DM14)
 				{
-					if ( incs.at(i).first == incs.at(k).first &&
-						 incs.at(i).second == incs.at(k).second)
-					{
-						 cont = true;
-					}
+					//headerName = incs.at(i).library + ".hpp";
+					//headerName = headerName.substr(headerName.find_last_of(pathSeperator));
 				}
-				
-				if(cont)
+				else if (incs.at(i).includeType == includePath::sourceFileType::FILE_C)
 				{
-					continue;
-				}
-				
-				if (incs.at(i).second == "file")
-				{
-					//headerName = it->first + ".hpp";
+					//headerName = incs.at(i).library + ".hpp";
 				}
 				else
 				{
-
 					string fullPath;
 					for(uint32_t k = 0; k < includePaths.size(); k++)
 					{
 						ifstream ifs;			
 
-						ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".cpp");
+						ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).package + pathSeperator + incs.at(i).library + ".cpp");
 						if(ifs.is_open())
 						{
-							fullPath = includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".cpp";
-							com += " -I" +  includePaths.at(k) +pathSeperator + incs.at(i).first +  " ";
+							fullPath = includePaths.at(k) +pathSeperator + incs.at(i).package + pathSeperator + incs.at(i).library + ".cpp";
+							com += " -I" +  includePaths.at(k) +pathSeperator + incs.at(i).package +  " ";
 							ifs.close();
 							break;
 						}
@@ -289,7 +280,7 @@ int compiler::compile()
 
 					if (!fullPath.size())
 					{
-						displayError("Error not able to find unit : " +  incs.at(i).first + pathSeperator + incs.at(i).second  + ".cpp");
+						displayError("Error not able to find unit : " +  incs.at(i).package + pathSeperator + incs.at(i).library  + ".cpp");
 						exit(1);
 					}
 					
@@ -302,7 +293,8 @@ int compiler::compile()
 					file.close();
 				}
 			}
-			// FIX1022, only add m14main if this map has main function ?
+			
+			// FIXME 1022, only add m14main if this map has main function ?
 			
 			for (unsigned int k =0; k <  (mapCodes->at(index)).linkLibs->size(); k++ )
 			{
@@ -353,7 +345,7 @@ int compiler::compile()
 				com += "-static -static-libgcc -static-libstdc++";
 			}
 
-			com += " -fpermissive  -lpthread -Wall -o " + fileName + ".bin -g;";
+			com += " -I . -fpermissive  -lpthread -Wall -o " + fileName + ".bin -g;";
 		}
 	}
 	
@@ -380,18 +372,22 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	Array<pair<std::string, std::string> > incs = (mapCodes->at(index)).getIncludes();
+	Array<includePath> incs = (mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
 	for (unsigned int i =0; i < incs.size(); i++)
 	{
-		if (incs.at(i).second == "file")
+		if (incs.at(i).includeType == includePath::sourceFileType::FILE_DM14)
 		{
-			headerName = incs.at(i).first + ".hpp";
+			headerName = incs.at(i).package + ".hpp";
+			if(headerName.find_last_of(pathSeperator) != std::string::npos)
+			{
+				headerName = headerName.substr(headerName.find_last_of(pathSeperator)+1);
+			}
 		}
-		else if (incs.at(i).second == "DM14file")
+		else if (incs.at(i).includeType == includePath::sourceFileType::FILE_C)
 		{
-			headerName = incs.at(i).first + ".hpp";
+			headerName = incs.at(i).package + ".hpp";
 		}
 		else
 		{
@@ -400,10 +396,10 @@ int compiler::compileIncludes()
 			{
 				ifstream ifs;			
 
-				ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp");
+				ifs.open(includePaths.at(k) +pathSeperator + incs.at(i).package + pathSeperator + incs.at(i).library + ".hpp");
 				if(ifs.is_open())
 				{
-					fullPath = includePaths.at(k) +pathSeperator + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp";
+					fullPath = includePaths.at(k) +pathSeperator + incs.at(i).package + pathSeperator + incs.at(i).library + ".hpp";
 					ifs.close();
 					break;
 				}
@@ -414,7 +410,7 @@ int compiler::compileIncludes()
 			}
 			else
 			{
-				displayError("unable to find library header : " + incs.at(i).first + pathSeperator + incs.at(i).second + ".hpp");
+				displayError("unable to find library header : " + incs.at(i).package + pathSeperator + incs.at(i).library + ".hpp");
 			}
 			//headerName = IncludesDir + "/" + incs.at(i).first + "/" + incs.at(i).second + ".hpp";
 		}
@@ -425,7 +421,6 @@ int compiler::compileIncludes()
 	}
 	
 	write("#include <");
-	//write("Node.hpp");
 	write("M14Defs.hpp");
 	writeLine(">");
 		
@@ -1381,7 +1376,6 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 	{
 		if ( (stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
 		{
-			//writeLine("YESSSS");
 			compileDitributingVariables((statement*&)stmt->distStatements.at(i));
 			stmt->distStatements.erase(stmt->distStatements.begin()+i);
 			i--;
@@ -1391,8 +1385,6 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 	
 	switch (stmt->statementType)
 	{
-		//case eStatement :		srcFile << ";" << endl;
-//								break;
 		case rStatement	:		compileRetStatement(stmt);
 								break;
 		case dStatement :		compileDecStatement(stmt);
@@ -1423,6 +1415,8 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 		case EXTERNStatement:	compileExtern(stmt);
 								break;
 		case THREADStatement:	compileThread(stmt);
+								break;
+		case NOPSTATEMENT:		compileNOPStatement(stmt);
 								break;
 		default : return(-1);
 	}
@@ -1699,6 +1693,13 @@ int compiler::compileParentAddStatement(statement*& stmt)
 	write(", ");
 	compileInsider(ap->socket);
 	writeLine(");");
+	return 0;
+};
+
+
+int compiler::compileNOPStatement(statement*& stmt)
+{
+	writeLine(";");
 	return 0;
 };
 

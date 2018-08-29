@@ -995,7 +995,13 @@ int parser::addIncludePath(string path)
 
 int parser::parseIncludesInsider(const string& package, const string& library, const includePath::sourceFileType includeType)
 {
-	includes.push_back(pair<string,string>(package,library));
+	includePath include;
+	include.package = package;
+	include.library = library;
+	include.includeType = includeType;
+
+	//includes.push_back(pair<string,string>(package,library));
+	includes.push_back(include);
 	if (includeType == includePath::sourceFileType::FILE_DM14 || includeType == includePath::sourceFileType::FILE_C)
 	{
 		string fullPath;
@@ -1063,8 +1069,8 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 			
 			for (uint32_t k =0; k< includes.size(); k++)
 			{
-				if(Parser.getIncludes().at(i).first == includes.at(k).first &&
-					Parser.getIncludes().at(i).second == includes.at(k).second)
+				if(Parser.getIncludes().at(i).package == includes.at(k).package &&
+					Parser.getIncludes().at(i).library == includes.at(k).library)
 				{
 					push = false;
 				}
@@ -1179,11 +1185,10 @@ statement* parser::parseStatement(const std::string starting_rule)
 statement* parser::parseNOPStatement()
 {
 	popToken();
-	operationalStatement* result = new operationalStatement;
+	NOPStatement* result = new NOPStatement;
 	result->line = getToken().lineNumber;
 	result->scope = scope;
 	result->scopeLevel = scope;
-	result->op = ";";
 	
 	return result;
 };
@@ -1456,7 +1461,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	else
 	{
-		for ( int i = distModifiedGlobal->size()-1; i >= 0; i--)
+		for ( int32_t i= distModifiedGlobal->size()-1; i >= 0; i--)
 		{
 			
 			string listParentName = "";
@@ -1755,7 +1760,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	{
 		int plevel = 1;
 		int counter = 0;
-		while (counter++)
+		while (++counter)
 		{
 			if (getToken(counter).value == "(")
 			{
@@ -1763,26 +1768,25 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 			}
 			else if (getToken(counter).value == ")")
 			{
+				
 				plevel--;
 				
 				if(plevel ==0)
 				{
-					if(counter > 1)
+					statement* parameter = nullptr;
+					if(terminated)
 					{
-						statement* parameter = nullptr;
-						if(terminated)
-						{
-							//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-							parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
-						}
-						else
-						{
-							//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-							parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
-						}
-						funcCall->parameters->push_back(parameter);
-						parameters->push_back(parameter->type);
+						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+						parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
 					}
+					else
+					{
+						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+						parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
+					}
+					funcCall->parameters->push_back(parameter);
+					parameters->push_back(parameter->type);
+				
 					popToken();
 					break;
 				}
@@ -1818,7 +1822,6 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	
 	if(funcCall->name == currentFunction.name)
 	{
-		////cout~~ << "HEREeeeeeee : " << funcCall->name << endl;
 		for (uint32_t i =0; i < currentFunction.parameters->size(); i++)
 		{
 			if(parameters->size()-1 <= i)
@@ -1831,7 +1834,6 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 					}
 					continue;
 				}
-				
 				break;
 			}
 			else
@@ -1851,7 +1853,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 		{
 			if(getFunc(funcCall->name, classID).name.size())
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"return type error for function call : " + funcCall->name);
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"return type error [" + returnType + "] for function call : " + funcCall->name);
 			}
 			else
 			{
@@ -2602,7 +2604,7 @@ statement* parser::parseExpressionStatement()
 	
 	if(working_tokens->at(working_tokens->size()-1).value == ";")
 	{
-		popToken();
+		//popToken();
 		result = parseOpStatement(0, working_tokens->size()-2,
 								  "-2", scope, parentStatement);
 	}
@@ -2615,7 +2617,7 @@ statement* parser::parseExpressionStatement()
 	return result;
 }
 
-statement* parser::parseOpStatement(const int& from, const int& to, 
+statement* parser::parseOpStatement(int32_t from, int32_t to, 
 									const string& stmtType, const int& scopeLevel, statement* caller, 
 									idInfo* parent, const string& parentOp)
 {
@@ -2630,7 +2632,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 	
 	
 	// [ overall check for (s and )s
-	for ( int i = from; i <= to ; i++ )
+	for ( int32_t i= from; i <= to ; i++ )
 	{
 		if (getToken(i).value == "(" )
 		{
@@ -2656,7 +2658,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 	{
 		plevel = 0;
 		bool bigStatement = true;
-		for ( int i = from; i <= to ; i++ )
+		for ( int32_t i= from; i <= to ; i++ )
 		{
 			if (getToken(i).value == "(" )
 			{
@@ -2676,7 +2678,9 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 		
 		if(bigStatement)
 		{
-			return parseOpStatement(from+1, to-1, stmtType, scopeLevel+1, caller);
+			popToken();
+			statement* stmt =  parseOpStatement(from, to-2, stmtType, scopeLevel+1, caller);
+			popToken();
 		}
 	}
 	// ]
@@ -2691,9 +2695,8 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 		
 	// [ split the opstatement to left and right if there is an operator ;)
 	plevel= 0;
-	for ( int i = from; i <= to; i++ )
+	for (int32_t i = from; i <= to; i++ )
 	{
-		cerr << "FROM:" << from << " TO:" << to << endl;
 		if(caller)
 		{
 			currentStatement = caller;
@@ -2703,12 +2706,12 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			currentStatement = opstatement;
 		}
 	
-		if ((tokens->at(i)).value == "(")
+		if (getToken(i).value == "(")
 		{
 			plevel++;
 			continue;
 		}
-		else if ( (tokens->at(i)).value == ")" )
+		else if (getToken(i).value == ")" )
 		{
 			plevel--;
 			continue;
@@ -2717,13 +2720,22 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 		if (plevel == 0)
 		{
 			if ((getToken(i).type == "operator") &&
-			     !(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
+			    !(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
 			{		
 				opstatement->op = getToken(i).value;
 				
-				if(i != from) // not operator like ++x
+				if(i != from) /** not a prefix operator like ++x */
 				{
 					opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
+					
+					if(i<=to)
+					{
+						to -= i+1;
+					}
+					from = 0;
+					popToken(); /** pop the op token */
+
+					cerr << "AFTER" << from << ":" << to << endl << flush;
 				}
 				
 				
@@ -2747,10 +2759,8 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 					{
 						displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"incmplemete data member access !");
 					}
-					
-					//opstatement->op = "::";
-					///opstatement->right = parseOpStatement(i+1, to, "-2", opstatement->scopeLevel, currentStatement, true, opstatement->left->type, id->name);
-					opstatement->right = parseOpStatement(i+1, to, "-2", opstatement->scopeLevel, currentStatement, id);
+
+					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement, id);
 					opstatement->left->type = opstatement->right->type;
 					
 					//statement* res = findTreeNode(opstatement->right, tStatement);
@@ -2758,15 +2768,14 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 					//rightID->arrayIndex = id->arrayIndex;
 					//id->arrayIndex = NULL;
 					
-					//if ( stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
-					//{
-					//	displayError(fName, (tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
-					//}
+					/*if ( stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
+					{
+						displayError(fName, (tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
+					}*/
 				}
-				else if(i < to)
+				else if(to > -1)
 				{
-					//opstatement->right = parseOpStatement(i+1, to, "-2", opstatement->scopeLevel, currentStatement, false, "", "");
-					opstatement->right = parseOpStatement(i+1, to, "-2", opstatement->scopeLevel, currentStatement);
+					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement);
 				}
 				
 				if(opstatement->left)
@@ -2792,10 +2801,10 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 					
 					if(!opstatement->right)
 					{
-						displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"Missing right operand");
+						displayError(fName, getToken().lineNumber, getToken().columnNumber,"Missing right operand");
 					}
 					
-					//FIX
+					//FIXme
 					/*else if (caller && caller->statementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opstatement->type) && opstatement->op != "::"  )
 					{
 						cerr  << opstatement->op << endl;
@@ -2805,7 +2814,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 					}*/
 					else if (!typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
 					{
-						displayError(fName, getToken(from).lineNumber, getToken(from+2).columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
 					
 					searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
@@ -2815,7 +2824,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 				{
 					if (!typeHasOperator(opstatement->op, opstatement->type) && (opstatement->op != "@") )
 					{
-						displayError(fName, getToken(from).lineNumber, getToken(from+2).columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
 					searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
 				}
@@ -2864,7 +2873,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 							else if(opstatement->right->statementType == tStatement)
 							{
 								 //opstatement->right->Array<distributingVariablesStatement*>* distStatements;
-								/*for (int i =0; i < opstatement->right->distStatements->size(); i++)
+								/*for (int32_t i=0; i < opstatement->right->distStatements->size(); i++)
 								{
 									cout << " IIIIIIIII :|" << i << endl;
 									opstatement->distStatements->push_back(opstatement->right->distStatements->at(i));
@@ -2914,7 +2923,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 				}
 				else
 				{
-					displayError("Operator is not defined as single or binary  : " + getToken(i).value);
+					displayError("Operator is not defined as single or binary  : " + opstatement->op);
 				}
 				
 				if(   !typeHasOperator(opstatement->op, opstatement->type) 
@@ -2939,9 +2948,12 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 	}
 	// ]
 	
-	// proceed to real statement
-	// [ find statement type
-				cerr << getToken(from).type << endl;
+	if(to == -1)
+	{
+		return opstatement;
+	}
+	/** proceed to real statement */
+	/** [ find statement type */
 
 	if (stmtType == "NIL")
 	{
@@ -2990,7 +3002,6 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 		opstatement->type  = stmtType;
 	}
 	
-	cerr << "TYPE:" << opstatement->type << endl;
 	// ]
 	
 	//if (!typeHasOperator(tokens->at(currentIndex).value, findID(tokens->at(currentIndex+1).value, classID).type))
@@ -3003,7 +3014,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 	
 	statement* aIndex = NULL;
 	// if identifier , then it might be variable or user/builtin function
-	if ( getToken(from).type == "identifier" ||  isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
+	if (getToken(from).type == "identifier" ||  isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
 	{
 		// function !
 		if (isBuiltinFunction(getToken(from).value) || isUserFunction(getToken(from).value, true) 
@@ -3033,8 +3044,8 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 		// variable !
 		else
 		{
-			//string variableName = tokens->at(from).value;
 			string variableName = getToken(from).value;
+			popToken();
 			
 			if (isDataType(variableName))
 			{
@@ -3042,25 +3053,24 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			}
 			else if(parent && !classHasMemberVariable(classID, variableName))
 			{
-				displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"class " + classID + " has no member : " + variableName);
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"class " + classID + " has no member : " + variableName);
 			}
 			else if(parent && classHasMemberVariable(classID, variableName))
 			{
 				if(getClassMemberVariable(classID, variableName).classifier != PUBLIC)
 				{
-					displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,variableName + " is a private class member variable of class type : " + classID);
+					displayError(fName, getToken().lineNumber, getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
 				}
 			}
-			else if ( findIDType(idInfo(variableName, 0, "", NULL)) == "NIL" && !parent)
+			else if (findIDType(idInfo(variableName, 0, "", NULL)) == "NIL" && !parent)
 			{
-				//fix30 fix the +1 its dangerous
-				if (getToken(from+1).value == "(")
+				if (peekToken(0).value == "(")
 				{
-					displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"Un-defined function : " + variableName);
+					displayError(fName, getToken().lineNumber, getToken().columnNumber,"Un-defined function : " + variableName);
 				}
 				else
 				{
-					displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"Un-defined variable : " + variableName);
+					displayError(fName, getToken().lineNumber, getToken().columnNumber,"Un-defined variable : " + variableName);
 				}
 			}
 
@@ -3077,11 +3087,11 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			termstatement->identifier = true;
 			termstatement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
 						
-			if ( getToken(from).value == "[")
+			if ( getToken().value == "[")
 			{
 				if (!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
 				{
-					displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber, variableName + " is not an array, invalid use of indexing");
+					displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
 				}
 				termstatement->arrayIndex = parseConditionalExpression(currentStatement);
 				aIndex = termstatement->arrayIndex;
@@ -3131,7 +3141,7 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			
 			if (parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@")
 			{
-				if(peekToken(from+1).value != "." && peekToken(from+1).value != "::") // do not pus class id, since it will be done by the member anyway !
+				if(peekToken(0).value != "." && peekToken(0).value != "::") // do not pus class id, since it will be done by the member anyway !
 				{
 					pushDependency(*id);
 				}
@@ -3142,14 +3152,16 @@ statement* parser::parseOpStatement(const int& from, const int& to,
 			return termstatement;
 		}
 	}
-	else if ( isImmediate(getToken(from).value)  )
+	else if (isImmediate(getToken(from).value))
 	{
-		if ( !hasTypeValue(opstatement->type, getToken(from).type) )
+		if (!hasTypeValue(opstatement->type, getToken(from).type))
 		{
 			displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"wrong immediate type : " + getToken(from).value);
 		}
+
+		popToken();
 		
-		termStatment* termstatement = new termStatment(getToken(from).value, opstatement->type);
+		termStatment* termstatement = new termStatment(getToken().value, opstatement->type);
 		termstatement->line = getToken().lineNumber;
 		termstatement->scope = scope;
 		termstatement->scopeLevel = scopeLevel;
@@ -3195,7 +3207,7 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 	}
 	else
 	{
-		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
+		for (uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
 			if (funcID == (functionsInfo->at(i)).name)
 			{
@@ -3271,7 +3283,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 	}
 	else
 	{
-		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
+		for (uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
 			if (functionsInfo->at(i).returnType != returnType && returnType.size())
 			{
@@ -3280,13 +3292,16 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 			
 			if ((functionsInfo->at(i)).name == funcID)
 			{
+				
 				if(!functionsInfo->at(i).parameters->size() && !mparameters->size())
 				{
 					return functionsInfo->at(i);
 				}
-				
-				for ( uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
+
+				cerr << functionsInfo->at(i).parameters->size() << ":" << mparameters->size() << endl;
+				for (uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
 				{
+					cerr << mparameters->at(l)  << ":" << functionsInfo->at(i).parameters->at(k).first << endl << flush;
 					if(mparameters->at(l) != functionsInfo->at(i).parameters->at(k).first)
 					{
 						break;
@@ -3308,9 +3323,9 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 						{
 							break;
 						}
-						
 					}
 				}
+
 				if(finfo.name.size())
 				{
 					break;
@@ -3323,7 +3338,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 
 
 mapcode::mapcode(const string& mname, Array<ast_function>* const mfunctions, 
-				 const Array<pair<string,string>>& mincludes, const bool& header,
+				 const Array<includePath>& mincludes, const bool& header,
 				 const int& nodesC, const int& variablesCount)
 {
 	mapcode();
@@ -3352,7 +3367,7 @@ mapcode::~mapcode()
 };
 
 
-Array< pair<string,string> > parser::getIncludes()
+Array<includePath> parser::getIncludes()
 {
 	return includes;
 };
@@ -3384,13 +3399,13 @@ Array<ast_function>* mapcode::getFunctions()
 };
 
 
-uint32_t mapcode::addInclude(std::pair<std::string, std::string> library)
+uint32_t mapcode::addInclude(includePath include)
 {
-	includes.push_back(library);
+	includes.push_back(include);
 	return includes.size();
 };
 
-Array<pair<string,string>> mapcode::getIncludes()
+Array<includePath> mapcode::getIncludes()
 {
 	return includes;
 };
@@ -3483,7 +3498,7 @@ statement* parser::parseThread()
 	
 	statement* stmt = parseStatement("statement");
 	
-	for (int i = from; i <= index; i++)
+	for (int32_t i= from; i <= index; i++)
 	{
 		string parent = "";
 		
@@ -3686,7 +3701,7 @@ statement* parser::parseExtern()
 	reachToken("endextern", false, true, true, true, true);
 	int to = index-1;
 	
-	for (int i = from; i <= to; i++)
+	for (int32_t i= from; i <= to; i++)
 	{
 		externstatment->body += (tokens->at(i)).value;
 	}
@@ -3916,7 +3931,7 @@ token parser::peekToken(const int& pos)
 {
 	if(working_tokens->size())
 	{
-		if ((unsigned) pos < working_tokens->size()-1)
+		if ((unsigned) pos < working_tokens->size())
 		{
 			return working_tokens->at(pos);
 		}
