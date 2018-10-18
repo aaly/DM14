@@ -120,19 +120,19 @@ int scanner::pushToken()
 
 int scanner::addNumber()
 {
-	if ( ch == '-' )
+	if(ch == '-')
 	{
 		tmptoken.value+= "-";
 		ch = getNextChar();
 	}
 
-	if ( ch == '.' )
+	if(ch == '.')
 	{
 		displayWarning(fName, line,column,"Immediate float does not begin with 0 !");
 		tmptoken.value+= "0.";
 		tmptoken.type = "float";
 		ch = getNextChar();
-	}	
+	}
 	bool dot = false;
 	while ( isNumber(ch) )
 	{	

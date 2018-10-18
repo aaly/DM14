@@ -95,7 +95,6 @@ typedef enum
 	SINGLE_OP_TOKEN,
 	BINARY_OP_TOKEN,
 	IMMEDIATE_TOKEN,
-	IMMEDIATE_TYPE_TOKEN,
 }
 grammar_token_type;
 
@@ -226,7 +225,8 @@ class parser
 		funcInfo					getFunc(const string&, Array<string>*, const string& returnType, const string& classID);
 		
 
-		bool						isImmediate(const string&);
+		//bool						isImmediate(const string&);
+		bool 						isImmediate(const token& tok);
 		
 		bool						checkToken(int, string, bool);
 		bool						checkToken(string, string, bool);
@@ -288,8 +288,8 @@ class parser
 			EBNF_map_t EBNF;
 			uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start);
 			
-			int deadvance_EBNFindex();
-			int advance_EBNFindex();
+			int deadvance_EBNFindex(uint16_t steps = 1);
+			int advance_EBNFindex(uint16_t steps = 1);
 			statement* empty_file();
 
 			idInfo*						getTopParent(idInfo*);

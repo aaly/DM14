@@ -10,16 +10,20 @@
 
 TODO: report grammar error using the longest trace and quite.
 
+/page  Parser the DM14 Parser
+
 /section EBNF
 
 the extended back-naur form grammar is possible to express using the provided functions such as \ref parseEBNF() , however it is tricky
 to accomplish some goals.
 
+@todo the parenthed expressions should be kept and added to the EBNF too
+
 */
 
 #include "parser.hpp"
 
-#define PARSER_EBNF_SHOW_TRACE 0
+#define PARSER_EBNF_SHOW_TRACE 1
 
 int parser::pushToken(token tok)
 {
@@ -69,7 +73,7 @@ int parser::removeToken()
 	}
 	else
 	{
-		cerr << "error removign token from the working tokens vector" << endl;
+		cerr << "error removing token from the working tokens vector" << endl;
 	}
 	
 	return 0;
@@ -94,36 +98,36 @@ statement* parser::empty_file()
 bool EBNF_is_index_frozen = false; /** boolean used by freeze_EBNFindex() and unfreeze_EBNFindex() */
 int EBNF_frozen_index = -1; /** last index before freezing the EBNF index using freeze_EBNFindex(), to be used for restoration using unfreeze_EBNFindex()*/
 
-int parser::advance_EBNFindex()
+int parser::advance_EBNFindex(uint16_t steps)
 {
-	if(*input_tokens_index < input_tokens->size())
+	for(uint16_t i =0; i < steps; i++)
 	{
-		if (EBNF_is_index_frozen == false)
+		if(*input_tokens_index < input_tokens->size())
 		{
 			pushToken(input_tokens->at(*input_tokens_index));
+			++*input_tokens_index;
 		}
-		++*input_tokens_index;
-	}
-	else
-	{
-		cerr << "ERROR ADVANCING ! " << endl << flush;
+		else
+		{
+			cerr << "ERROR ADVANCING ! " << endl << flush;
+		}
 	}
 	return *input_tokens_index;
 }
 
-int parser::deadvance_EBNFindex()
+int parser::deadvance_EBNFindex(uint16_t steps)
 {
-	if(input_tokens->size())
+	for(uint16_t i =0; i < steps; i++)
 	{
-		if (EBNF_is_index_frozen == false)
+		if(input_tokens->size())
 		{
 			removeToken();
+			--*input_tokens_index;
 		}
-		--*input_tokens_index;
-	}
-	else
-	{
-		cerr << "ERROR DE-ADVANCING ! " << endl << flush;
+		else
+		{
+			cerr << "ERROR DE-ADVANCING ! " << endl << flush;
+		}
 	}
 	return *input_tokens_index;
 }
@@ -217,7 +221,7 @@ int parser::printEBNF()
 				}
 				else
 				{
-					cerr << string(EBNF_level, ' ') << " ERROR : unknown grammar rule type" << endl;
+					//	cerr << string(EBNF_level, ' ') << " ERROR : unknown grammar rule type" << endl;
 				}
 			}
 			if (current_rule.tokens.size() > 1)
@@ -285,31 +289,30 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 	EBNF_level++;
 	ebnfResult result(0, NULL);
 	bool continue_searching_rules = true;
-	
+
 	#if PARSER_EBNF_SHOW_TRACE == 1
-	cerr << endl << std::string(EBNF_level*2, ' ') << ".LOOPING KEY : " << start_map_index << endl << flush;
+	cerr << endl << std::string(EBNF_level*2, ' ') << ".LOOPING KEY : " << start_map_index  << 	 " : " <<  *input_tokens_index << endl << flush;
 	#endif
-	
+
 	// loop over std::vector<grammar_token_array_t>
 	for (uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
 		result.first = 0;
 		
 		#if PARSER_EBNF_SHOW_TRACE == 1
-		cerr << string(EBNF_level*3, ' ')  << "..LOOPING RULE : " << i << endl << flush;
+		cerr << string(EBNF_level*2, ' ')  << "..LOOPING RULE : " << i << 	 " : " <<  *input_tokens_index << endl << flush;
 		#endif
 
 		// loop over std::vector<EBNF_entity_t>
 		grammar_rule_t current_rule = EBNF[start_map_index].at(i);
-		
-		int old_index = *input_tokens_index; // used for ONLY_ONE rules
 		int old_tokens_size = working_tokens->size(); // used for callbacks with only current rule pushed tokens
+		int rule_old_index = *input_tokens_index; // used for ONLY_ONE rules
 		
 		for (uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 		{
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
+			int token_old_index = *input_tokens_index; // used for ONLY_ONE rules
 			
-			//cerr << ebnf_token.expansion << ":" << ebnf_token.tokenType << ":" << current_rule.tokens.size() << endl << flush;
 			/** process the invidual token first */
 
 			result.first = 1; /** initial value assumes error , prove otherwise */
@@ -356,23 +359,19 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					result.first = 0;
 				}
 			}
-			else if(ebnf_token.tokenType == IMMEDIATE_TYPE_TOKEN)
+			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
 			{
-				if(isImmediate(input_tokens->at(*input_tokens_index).value))
+				//if(input_tokens->at(*input_tokens_index).type == "immediate")
+				//if(isImmediate(input_tokens->at(*input_tokens_index).value))
+				if(isImmediate(input_tokens->at(*input_tokens_index)))
 				{
+					cerr << "IMMEDIATE : " << input_tokens->at(*input_tokens_index).value << endl << flush;
 					result.first = 0;
 				}
 			}
 			else if(ebnf_token.tokenType == BINARY_OP_TOKEN)
 			{
 				if(isbinOperator(input_tokens->at(*input_tokens_index).value))
-				{
-					result.first = 0;
-				}
-			}
-			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
-			{
-				if(isImmediate(input_tokens->at(*input_tokens_index).value))
 				{
 					result.first = 0;
 				}
@@ -385,7 +384,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			if(result.first == 0)
 			{
 				#if PARSER_EBNF_SHOW_TRACE == 1
-				cerr << string(EBNF_level*4, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => success " << endl << flush;
+				cerr << string(EBNF_level*2, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => success " << endl << flush;
 				#endif
 
 				if(ebnf_token.tokenType != EXPANSION_TOKEN) // only terminals
@@ -432,21 +431,16 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			else
 			{
 				#if PARSER_EBNF_SHOW_TRACE == 1
-				////cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
+				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
 				#endif
+				int diff = *input_tokens_index - token_old_index;
+				deadvance_EBNFindex(diff);
 			}
 			
 			/** process the current grammar rule type*/
 			if(current_rule.type == GRAMMAR_TOKEN_OR_ARRAY)
 			{
-				if(result.first != 0)
-				{
-					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
-					{
-						deadvance_EBNFindex();
-					}
-				}
-				else
+				if(result.first == 0)
 				{
 					continue_searching_rules = false;
 				}
@@ -456,12 +450,8 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(result.first != 0)
 				{
 					#if PARSER_EBNF_SHOW_TRACE == 1
-					cerr << string(EBNF_level*4, ' ') << " ERROR : tokens do not (follow order/exist)" << endl;
+					cerr << string(EBNF_level*4, ' ') << "ERROR : tokens do not (follow order/exist) in map : " << start_map_index << " rule : " << i << endl;
 					#endif 
-					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
-					{
-						deadvance_EBNFindex();
-					}
 					//continue_searching_rules = false;
 					break;
 				}
@@ -481,8 +471,8 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				}
 				else
 				{
-					cerr << "ERROR " << endl << flush;
 					result.first= 0;
+					continue_searching_rules = false;
 				}
 			}
 			else if(current_rule.type == GRAMMAR_TOKEN_ONE_MORE_ARRAY)
@@ -494,29 +484,35 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				else
 				{
 					result.first = 0;
+					continue_searching_rules = false;
 				}
 			}
 			else if(current_rule.type == GRAMMAR_TOKEN_ONLY_ONE_ARRAY)
 			{
 				if(result.first == 1)
 				{
-					for(uint32_t i =0; i < *input_tokens_index - old_index; i++)
-					{
-						deadvance_EBNFindex();
-					}
 					result.first = 0;
-					break;
 				}
+				else
+				{
+					continue_searching_rules = false;
+				}
+				break;
 			}
 			else
 			{
 				#if PARSER_EBNF_SHOW_TRACE == 1
-				cerr << string(EBNF_level*4, ' ') << " ERROR : unknown grammar rule type" << endl;
+				cerr << string(EBNF_level*4, ' ') << "ERROR : unknown grammar rule type" << endl;
 				#endif
 			}
 		}
-	}
 
+		if(result.first == 1)
+		{
+			int diff = *input_tokens_index - rule_old_index;
+			deadvance_EBNFindex(diff);
+		}
+	}
 	EBNF_level--;
 	working_tokens = current_working_tokens;
 	this->input_tokens = current_input_tokens;
@@ -569,21 +565,21 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["program"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"function-list",EXPANSION_TOKEN, &parser::parseFunction},
 												//TODO {"global-statement",EXPANSION_TOKEN}, add all allowed statments in the global scope !?
 												{"statement",EXPANSION_TOKEN},
-											    {".*",REGEX_TOKEN, &parser::empty_file}}}};
+											    {"unknown-list",EXPANSION_TOKEN, &parser::empty_file}}}};
 	
-
+	EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",REGEX_TOKEN}}}};
 	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
 
 	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
 												  {"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
+												  {"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
 												  {"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
 												  {"link-statement",EXPANSION_TOKEN, &parser::parseLink},
 												  {"struct",EXPANSION_TOKEN, &parser::parseStruct},
 												  {"if-list",EXPANSION_TOKEN}, /** if [expr] {} else if[] {} else {} */
-												  {"distribute",EXPANSION_TOKEN},
+												  {"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
 												  {"reset-statement",EXPANSION_TOKEN},
 												  {"setnode-statement",EXPANSION_TOKEN},
-												  {"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
 												  {"while-list",EXPANSION_TOKEN}, /** while [ cond ] { statements } */
 												  //{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
 												  //{"addparent-statement",EXPANSION_TOKEN},
@@ -593,7 +589,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
 												  }}};
-	
 
 	/** the with statement */
 	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",TERMINAL_TOKEN},
@@ -666,7 +661,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 																  {";",TERMINAL_TOKEN}}}};
 	EBNF["logical-expression"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN},
 															 {".*",BINARY_OP_TOKEN},
-																 {"logical-expression-term",EXPANSION_TOKEN}}},
+															 {"logical-expression-term",EXPANSION_TOKEN}}},
 								  {GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN}}}};
 															 
 	EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
@@ -765,8 +760,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
 	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"=",TERMINAL_TOKEN},
 															{"expression",EXPANSION_TOKEN}}}};
-	
-	
+
 	/** the function call statement */
 	
 	EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN},
@@ -2489,12 +2483,19 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 	return classHasMemberFunction(classID, func);
 };
 
-bool parser::isImmediate(const string& immediate)
+//bool parser::isImmediate(const string& immediate)
+bool parser::isImmediate(const token& tok)
 {
-	if (!  (isOperator(immediate) || isKeyword(immediate) || 
+	/*if (!  (isOperator(immediate) || isKeyword(immediate) || 
 			isDataType(immediate) || isFunction(immediate, true) ||
-			isIdentifier(immediate)))
+			isIdentifier(immediate)))*/
+	if(tok.type == "float"||
+		tok.type == "int"||
+		tok.type == "string"||
+		tok.type == "char"||
+		tok.type == "bool")
 	{
+		std::cerr << tok.value << " Is immediate  : " << tok.type << std::endl;
 		return true;
 	}
 	return false;
@@ -2973,13 +2974,13 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		{
 			opstatement->type  = findIDType(idInfo(getToken(from).value, 0, "", NULL), classID);
 		}
-		else if (isImmediate(getToken(from).value) )
+		else if (isImmediate(getToken(from)) )
 		{
 			opstatement->type  = getToken(from).type;
 		}
 		else if ((isSingleOperator(getToken(from).value) || getToken(from).value == "@") && from < to)
 		{
-			if (isImmediate(getToken(from+1).value) )
+			if (isImmediate(getToken(from+1)) )
 			{
 				opstatement->type  = getToken(from+1).type;
 			}
@@ -3152,7 +3153,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			return termstatement;
 		}
 	}
-	else if (isImmediate(getToken(from).value))
+	else if (isImmediate(getToken(from)))
 	{
 		if (!hasTypeValue(opstatement->type, getToken(from).type))
 		{
@@ -3961,7 +3962,7 @@ string parser::getType(const int& Index)
 	{
 		return findIDType(idInfo(getToken().value, 0, "", NULL));
 	}
-	else if (isImmediate(getToken().value))
+	else if (isImmediate(getToken()))
 	{
 		return getToken().type;
 	}

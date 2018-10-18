@@ -1,0 +1,39 @@
+with io use io
+with math use math
+
+nodist global matrix_size int = 100;
+
+printMatrix(matrix[][] ->)
+{
+    for (i int =0; i<??; i++)
+    {
+        for (j=0; j<??; j++)
+        {
+            nspill(matrix[i][j]);
+        }
+    }
+}
+
+main (argv string -> result int)
+{
+    a  int[matrix_size][matrix_size];
+    b  int[matrix_size][matrix_size];
+    c  backward int[matrix_size][matrix_size];
+
+~~ fill matrices
+    n nodist int = 0;
+    for (i int =0; i<matrix_size; i++)
+    {
+        for (j=0; j<matrix_size; j++)
+        {
+            a[i][j] = n++;
+            b[i][j] = n++;
+        }
+    }
+
+row it = 0;
+column int = 0;
+
+printMatrix(c);
+distribute;
+}

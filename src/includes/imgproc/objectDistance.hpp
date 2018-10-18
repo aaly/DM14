@@ -86,12 +86,12 @@ class objectDistance
 		
 		
 		sourceType		imageSource;
-		string			srcPath;
-		unsigned int	readCounter; // =0;
+		string					srcPath;
+		unsigned int			readCounter; // =0;
 		cvVideoCapture	videoCapture; // source of a video
 		openCvMat		videoFrame; // from from the video
 		openCvMat		currentImage; // the mat to work on
-		bool			initDone; // = false;
+		bool					initDone; // = false;
 		
 		openCvScalar lowHSV;
 		openCvScalar highHSV;

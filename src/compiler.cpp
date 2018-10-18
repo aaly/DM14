@@ -1168,7 +1168,7 @@ int compiler::compileOpStatement(statement*& stmt)
 	
 	if(bigStatement)
 	{
-		write("(");
+		//write("(");
 	}
 	
 	if (opStatement->left != NULL)
@@ -1214,7 +1214,7 @@ int compiler::compileOpStatement(statement*& stmt)
 	
 	if(bigStatement)
 	{
-		write(")");
+		//write(")");
 	}
 	
 	/*
