@@ -134,11 +134,11 @@ int scanner::addNumber()
 		ch = getNextChar();
 	}
 	bool dot = false;
-	while ( isNumber(ch) )
+	while (DM14::types::isNumber(ch))
 	{	
 		tmptoken.value+= ch;
 			
-		if (isNumber(iFile.peek()))
+		if (DM14::types::isNumber(iFile.peek()))
 		{
 			ch = getNextChar();
 		}
@@ -154,7 +154,7 @@ int scanner::addNumber()
 				dot = true;
 				tmptoken.type = "float";
 				tmptoken.value+= getNextChar();
-				if (iFile.peek() == '.' || isNumber(iFile.peek()) )
+				if (iFile.peek() == '.' || DM14::types::isNumber(iFile.peek()) )
 				{
 					ch = iFile.get();
 				}
@@ -214,7 +214,7 @@ int scanner::addChar()
 	tmptoken.value += "'";
 	tmptoken.value += ch;
 	
-	//if ( !isLetter(ch) )
+	//if ( !DM14::types::isLetter(ch) )
 	//{
 	//	displayError(fName, line,column,"Expected character");
 	//}
@@ -246,11 +246,11 @@ int scanner::addKeyword()
 int scanner::addOperator()
 {
 	tmptoken.value+= ch;
-	if ( isOperator(tmptoken.value) )
+	if (DM14::types::isOperator(tmptoken.value))
 	{
 		if ( ( ch = iFile.peek() ) )
 		{
-			if ( isOperator( ( tmptoken.value + ch ) ) )
+			if (DM14::types::isOperator((tmptoken.value + ch)))
 			{
 				tmptoken.value+= ch;
 				getNextChar();
@@ -269,9 +269,9 @@ int scanner::addOperator()
 int scanner::addLetter()
 {
 	tmptoken.value+= ch;
-	if ( ! (isLetter(iFile.peek()) || isNumber(iFile.peek())) )
+	if (!(DM14::types::isLetter(iFile.peek()) || DM14::types::isNumber(iFile.peek())))
 	{
-		if ( isKeyword(tmptoken.value) )
+		if (DM14::types::isKeyword(tmptoken.value))
 		{
 			tmptoken.type = "keyword";
 			
@@ -286,7 +286,7 @@ int scanner::addLetter()
 			
 			pushToken();
 		}
-		else if (isDataType(tmptoken.value))
+		else if (DM14::types::isDataType(tmptoken.value))
 		{
 			tmptoken.type = "datatype";
 			pushToken();
@@ -316,7 +316,7 @@ int	scanner::scan()
 	while( !iFile.eof()  && (ch = getNextChar()))
 	{
 		//(ch = getNextChar()) ;
-		if (isWhiteSpace(ch)) // white space , doesn't matter
+		if (DM14::types::isWhiteSpace(ch)) // white space , doesn't matter
 		{
 			column++;
 			space = true;
@@ -328,7 +328,7 @@ int	scanner::scan()
 			}
 			continue;
 		}
-		else if (isNewLine(ch))
+		else if (DM14::types::isNewLine(ch))
 		{
 			line++;
 			column = 0;
@@ -348,9 +348,9 @@ int	scanner::scan()
 		{
 			addChar();
 		}
-		else if ( isLetter(ch) ) // a letter , which means an identifier or a keyword !
+		else if ( DM14::types::isLetter(ch) ) // a letter , which means an identifier or a keyword !
 		{
-			//if (isWhiteSpace(iFile.peek()))
+			//if (DM14::types::isWhiteSpace(iFile.peek()))
 			//{
 //				tmptoken.value+= ch;
 				//tmptoken.type = Char;	
@@ -358,14 +358,14 @@ int	scanner::scan()
 			//}
 			addLetter();
 		}
-		//else if ( ( ch == '.' && isNumber((char)iFile.peek()) ) || ( ch == '-' && ( isNumber(iFile.peek()) || iFile.peek() == '.' ) ) || isNumber(ch) )
-		else if ( (ch == '.' && isNumber((char)iFile.peek())) || 
-				  (ch == '-' && isNumber((char)iFile.peek())) ||
-				  isNumber(ch))
+		//else if ( ( ch == '.' && DM14::types::isNumber((char)iFile.peek()) ) || ( ch == '-' && ( DM14::types::isNumber(iFile.peek()) || iFile.peek() == '.' ) ) || DM14::types::isNumber(ch) )
+		else if ( (ch == '.' && DM14::types::isNumber((char)iFile.peek())) || 
+				  (ch == '-' && DM14::types::isNumber((char)iFile.peek())) ||
+				  DM14::types::isNumber(ch))
 		{
 			if(tmptoken.value.size() > 0)
 			{
-				if (isLetter(tmptoken.value.at(0)))
+				if (DM14::types::isLetter(tmptoken.value.at(0)))
 				{
 					addLetter();
 					continue;
@@ -405,7 +405,7 @@ int	scanner::scan()
 				while (read)
 				{	
 					ch=iFile.get();
-					if (isNewLine(ch) || iFile.eof())
+					if (DM14::types::isNewLine(ch) || iFile.eof())
 					{	
 						line++;
 						column = 0;
@@ -448,7 +448,7 @@ int	scanner::scan()
 				while (read)
 				{
 					ch = iFile.get();
-					if (isNewLine(ch))
+					if (DM14::types::isNewLine(ch))
 					{
 						line++;
 						column = 0;

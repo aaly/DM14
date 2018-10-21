@@ -19,6 +19,11 @@
 class functionCall;
 class funcInfo;
 
+namespace DM14::types
+{
+
+
+
 using namespace std;
 
 	// type checking functions
@@ -145,5 +150,6 @@ using namespace std;
 		PRIVATE,
 		PROTECTED
 	};
-	
+
+} // namespace DM14::types	
 #endif // TYPES_H

@@ -18,7 +18,8 @@
 #include <iomanip> // std::setw
 #include <sstream>
 
-
+namespace DM14::compiler
+{
 extern Array<DatatypeBase>	datatypes;
 
 enum compilerOptimizations
@@ -30,7 +31,7 @@ enum compilerOptimizations
 class compiler
 {
 	public:
-		compiler(Array<mapcode>* const);
+		compiler(Array<parser::mapcode>* const);
 		~compiler();
 		
 		int		setVersion(const double&);
@@ -86,7 +87,7 @@ class compiler
 		std::string					fName;
 		std::fstream					srcFile;
 		std::fstream					m14FileDefs;
-		Array<mapcode>*						mapCodes;
+		Array<parser::mapcode>*						mapCodes;
 		//Array < pair<string, int> >*		nodesModifiers;
 		
 		int						index; // index of mapCodes ( current file )	
@@ -100,8 +101,10 @@ class compiler
 		bool					declaringVars;
 		
 		int 					nodesCount;
-		std::string					bufferedOutput;
+		std::string				bufferedOutput;
 		bool					compilingMain;
 };
+
+} // namespace DM14::compiler
 
 #endif /** DM14_COMPILER_HPP */

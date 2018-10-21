@@ -20,10 +20,15 @@
 #include <unordered_map> /**< EBNF */
 #include <sstream> 
 
-using namespace std;
+
 
 extern Array<DatatypeBase>	datatypes;
 static Array<DatatypeBase>	mapcodeDatatypes;
+
+namespace DM14::parser
+{
+using namespace std;
+
 
 class includePath
 {
@@ -346,7 +351,7 @@ class parser
 
 };
 
-
+} //namespace DM14::parser
 
 #endif // PARSER_H
 

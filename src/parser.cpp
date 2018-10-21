@@ -17,11 +17,14 @@ TODO: report grammar error using the longest trace and quite.
 the extended back-naur form grammar is possible to express using the provided functions such as \ref parseEBNF() , however it is tricky
 to accomplish some goals.
 
-@todo the parenthed expressions should be kept and added to the EBNF too
+@TODO: the parenthed expressions should be kept and added to the EBNF too
 
 */
 
 #include "parser.hpp"
+
+namespace DM14::parser
+{
 
 #define PARSER_EBNF_SHOW_TRACE 1
 
@@ -354,15 +357,13 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else if(ebnf_token.tokenType == SINGLE_OP_TOKEN)
 			{
-				if(isSingleOperator(input_tokens->at(*input_tokens_index).value))
+				if(DM14::types::isSingleOperator(input_tokens->at(*input_tokens_index).value))
 				{
 					result.first = 0;
 				}
 			}
 			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
 			{
-				//if(input_tokens->at(*input_tokens_index).type == "immediate")
-				//if(isImmediate(input_tokens->at(*input_tokens_index).value))
 				if(isImmediate(input_tokens->at(*input_tokens_index)))
 				{
 					cerr << "IMMEDIATE : " << input_tokens->at(*input_tokens_index).value << endl << flush;
@@ -371,7 +372,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else if(ebnf_token.tokenType == BINARY_OP_TOKEN)
 			{
-				if(isbinOperator(input_tokens->at(*input_tokens_index).value))
+				if(DM14::types::isbinOperator(input_tokens->at(*input_tokens_index).value))
 				{
 					result.first = 0;
 				}
@@ -531,8 +532,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	functions			=	new Array<ast_function>;
 	identifiers			=	new Array<idInfo>;
-	//builtinFunctions	=	new Array<funcInfo>;
-	//userFunctions		=	new Array<funcInfo>;
 	functionsInfo		=	new Array<funcInfo>;
 	ExternCodes			=	new Array<string>;
 	mapCodes 			=	new Array<mapcode>;
@@ -546,7 +545,6 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	globalNoDist = false;
 	
 	working_tokens = &tokens_stack;
-	//working_tokens_index = &token_index;
 	input_tokens_index = &index;
 	input_tokens = tokens;
 	
@@ -842,8 +840,6 @@ parser::~parser()
 {
 	delete functions;
 	delete identifiers;
-	//delete builtinFunctions;
-	//delete userFunctions;
 	delete	functionsInfo;
 	//delete distIdentifiers;
 	delete diststatementTemp;
@@ -921,7 +917,7 @@ statement* parser::parseIncludes()
 	string package = "";
 	string library = "";
 	includePath::sourceFileType includeType = includePath::sourceFileType::LIBRARY;
-	if (getToken().type != "string" && getToken().type != "identifier" && !isDataType(getToken().value))//tokens->at(index).type != "datatype")
+	if (getToken().type != "string" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))//tokens->at(index).type != "datatype")
 	{
 		displayError(fName, getToken().lineNumber,getToken().columnNumber,"Expected Package name and not " + getToken().value );
 	}
@@ -954,7 +950,7 @@ statement* parser::parseIncludes()
 			RequireValue("use", "Expected \"Use\" and not ", true);
 			popToken();
 			
-			if (getToken().value != "*" && getToken().type != "identifier" && !isDataType(getToken().value))// tokens->at(index).type != "datatype")
+			if (getToken().value != "*" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))// tokens->at(index).type != "datatype")
 			{
 				displayError(fName, getToken().lineNumber,getToken().columnNumber,"Expected Package name");	
 			}
@@ -1428,9 +1424,9 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	
-	if (isClass(id.type))
+	if (DM14::types::isClass(id.type))
 	{
-		DatatypeBase datatype = findDataType(id.type);
+		DatatypeBase datatype = DM14::types::findDataType(id.type);
 		for (uint32_t i =0; i < datatype.memberVariables.size(); i++)
 		{
 			idInfo id2(id);
@@ -1573,14 +1569,10 @@ int parser::pushModified(const string& op, idInfo& id)
 				 ((dvList->at(i))->variable.parent == id.parent) &&
 				 ((dvList->at(i))->variable.arrayIndex == NULL))
 			{
-				//if ( (id.backProp && ((dvList->at(i))->variable.distributedScope < distributedScope)) ||
-				//	(!id.backProp && ((dvList->at(i))->variable.distributedScope > distributedScope)) )
 				if (!id.backProp && ((dvList->at(i))->variable.distributedScope != distributedScope))
 					
 				{
-					//distributingVariablesStatement* dvEntry = dvList->at(i);
 					dvList->at(i)->type = -1;
-					//delete dvList->at(i);
 					dvList->remove(i);
 					break;
 				}
@@ -1593,68 +1585,6 @@ int parser::pushModified(const string& op, idInfo& id)
 		
 		currentStatement->distStatements.push_back(dvstatement);
 		dvList->push_back(dvstatement);
-		
-		
-		// if array element, push final array modification
-		//FIX, just loop if found bfore, copy the idInfo and push it to the list, and remove the old one
-		/*if (id.arrayIndex != NULL)/
-		{
-			// make sure there is no previous mod statements of the same variable in the current op statement
-			distributingVariablesStatement* dvstatement = new distributingVariablesStatement();
-			idInfo idd = id;
-			idd.arrayIndex = id.arrayIndex;
-			idd.parent = id.parent;
-			idd.array = true;
-			dvstatement->variable = idd;
-			dvstatement->type = distributingVariablesStatement::MODS;
-			
-			for ( uint32_t i =0; i<dvList->size(); i++)
-			{
-				if(id.channel)
-				{
-					break;
-				}
-				
-				string parentName;
-				string listParentName;
-				if(id.parent)
-				{
-					parentName = id.parent->name;
-				}
-				
-				if((dvList->at(i))->variable.parent)
-				{
-					listParentName = (dvList->at(i))->variable.parent->name;
-				}
-				
-				if ( ((dvList->at(i))->type == distributingVariablesStatement::MODS) &&
-					 ((dvList->at(i))->variable.name == id.name) &&
-					 //((dvList->at(i))->variable.parent == id.parent) &&
-					 (listParentName == parentName) &&
-					(termStatment*)(dvList->at(i))->variable.arrayIndex == NULL &&
-					((dvList->at(i))->variable.distributedScope == distributedScope) )
-				{
-					//delete dvList->at(i);
-					dvList->at(i)->type = -1;
-					dvList->remove(i);
-					break;
-				}
-			}
-			
-			
-			if(parentStatement)
-			{
-				parentStatement->distStatements->push_back(dvstatement);
-			}
-			else
-			{
-				currentStatement->distStatements->push_back(dvstatement);
-			}
-			
-			cout << "MOD :::::: " << id.name << endl;
-			dvList->push_back(dvstatement);
-		}*/
-		
 		
 		if(op == "++" || op == "--")
 		{
@@ -1734,11 +1664,11 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	
 	if (isUserFunction(getToken().value, true))
 	{
-		funcCall->functionType = USERFUNCTION;
+		funcCall->functionType = DM14::types::types::USERFUNCTION;
 	}
 	else
 	{
-		funcCall->functionType = BUILTINFUNCTION;
+		funcCall->functionType = DM14::types::types::BUILTINFUNCTION;
 	}
 	
 	popToken();
@@ -2024,7 +1954,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	////checkToken(BUILTINFUNCTION, "Predefined function : ", true);
 	
 	Funcinfo.name = getToken().value;
-	Funcinfo.type = USERFUNCTION;
+	Funcinfo.type = DM14::types::types::USERFUNCTION;
 	
 	currentFunction.name = getToken().value;
 		
@@ -2235,12 +2165,12 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 			}
 		}
 
-		//here :D fix all functions to fill the type field , and add type to functionInfo too
+		//TODO: here :D fix all functions to fill the type field , and add type to functionInfo too
 		functionsInfo->push_back(Funcinfo);
 		
-		//before this, loop through origianl body and push the modfifyNotify statements at their right position i
+		//TODO:before this, loop through origianl body and push the modfifyNotify statements at their right position i
 		
-		//fix what if , two initiated variables are pushed at the same place ?
+		//TODO:fix what if , two initiated variables are pushed at the same place ?
 
 		termStatment* termstatement = new termStatment( "DM14FUNCTIONBEGIN", "NIL" );
 		termstatement->scope = scope;
@@ -2252,8 +2182,6 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		{
 			declarations->push_back(currentFunction.body->at(i));
 		}
-		
-		//delete Func.body;
 
 		currentFunction.body = declarations;
 		functions->push_back(currentFunction);
@@ -2446,7 +2374,7 @@ bool parser::isBuiltinFunction(const string& func)
 	{	
 		if (func == (functionsInfo->at(i)).name)
 		{
-			if ((functionsInfo->at(i)).type == BUILTINFUNCTION)
+			if ((functionsInfo->at(i)).type == DM14::types::types::BUILTINFUNCTION)
 			{
 				return true;
 			}
@@ -2472,7 +2400,7 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 		{	
 			if (func == (functionsInfo->at(i)).name)
 			{
-				if ((functionsInfo->at(i)).type == USERFUNCTION)
+				if ((functionsInfo->at(i)).type == DM14::types::types::USERFUNCTION)
 				{
 					return true;
 				}
@@ -2480,14 +2408,14 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 		}
 	}
 	
-	return classHasMemberFunction(classID, func);
+	return DM14::types::classHasMemberFunction(classID, func);
 };
 
 //bool parser::isImmediate(const string& immediate)
 bool parser::isImmediate(const token& tok)
 {
 	/*if (!  (isOperator(immediate) || isKeyword(immediate) || 
-			isDataType(immediate) || isFunction(immediate, true) ||
+			DM14::types::isDataType(immediate) || isFunction(immediate, true) ||
 			isIdentifier(immediate)))*/
 	if(tok.type == "float"||
 		tok.type == "int"||
@@ -2724,19 +2652,32 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			    !(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
 			{		
 				opstatement->op = getToken(i).value;
+				std::cerr << "Set op to : " << opstatement->op << std::endl;
 				
 				if(i != from) /** not a prefix operator like ++x */
 				{
+					std::cerr << "parsing left statement !" << std::endl;
+					for (auto x = from; x < i; x++)
+					{
+						std::cerr << "TOKEN : " << getToken(x).value << std::endl;
+					}
+					
 					opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
+					std::cerr << "done parsing left statement !" << std::endl;
 					
 					if(i<=to)
 					{
 						to -= i+1;
 					}
 					from = 0;
+					std::cerr << "POPING : " << getToken(0).value << std::endl;
 					popToken(); /** pop the op token */
 
 					cerr << "AFTER" << from << ":" << to << endl << flush;
+					for (auto x = 0; x < to+1; x++)
+					{
+						std::cerr << "TOKEN : " << getToken(x).value << std::endl;
+					}
 				}
 				
 				
@@ -2792,7 +2733,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					displayError("could not determine statement type");
 				}
 								
-				if (isbinOperator(opstatement->op))
+				if (DM14::types::isbinOperator(opstatement->op))
 				{
 					if(opstatement->op == "==" || opstatement->op == "||" || opstatement->op == ">" || opstatement->op == ">"
 					 || opstatement->op == ">=" || opstatement->op == "<=" || opstatement->op == "&&")
@@ -2813,7 +2754,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 						cerr << tokens->at(to).value << endl;
 						displayError(fName, (tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"typee \"" +opstatement->type + "\" does not support operator " + ((operationalStatement*)caller)->op);
 					}*/
-					else if (!typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
+					else if (!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
@@ -2821,15 +2762,15 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
 					searchVariables(opstatement->right, distributingVariablesStatement::DEPS);
 				}
-				else if(isSingleOperator(opstatement->op))
+				else if(DM14::types::isSingleOperator(opstatement->op))
 				{
-					if (!typeHasOperator(opstatement->op, opstatement->type) && (opstatement->op != "@") )
+					if (!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && (opstatement->op != "@") )
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
 					searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
 				}
-				else if (isCoreOperator(opstatement->op))
+				else if (DM14::types::isCoreOperator(opstatement->op))
 				{
 					if(opstatement->op == "@")
 					{
@@ -2927,7 +2868,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					displayError("Operator is not defined as single or binary  : " + opstatement->op);
 				}
 				
-				if(   !typeHasOperator(opstatement->op, opstatement->type) 
+				if(   !DM14::types::typeHasOperator(opstatement->op, opstatement->type) 
 				   && !(opstatement->left && opstatement->op == ".")
 				   && opstatement->op != "@")
 				{
@@ -2966,19 +2907,20 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		{
 			opstatement->type  = getFunc(getToken(from).value, classID).returnType;
 		}
-		else if (isDataType(getToken(from).value))
+		else if (DM14::types::isDataType(getToken(from).value))
 		{
 			opstatement->type  = getToken(from).value;
 		}		
 		else if (getToken(from).type == "identifier")
 		{
+			std::cerr << "We have identifier statement" << std::endl;
 			opstatement->type  = findIDType(idInfo(getToken(from).value, 0, "", NULL), classID);
 		}
 		else if (isImmediate(getToken(from)) )
 		{
 			opstatement->type  = getToken(from).type;
 		}
-		else if ((isSingleOperator(getToken(from).value) || getToken(from).value == "@") && from < to)
+		else if ((DM14::types::isSingleOperator(getToken(from).value) || getToken(from).value == "@") && from < to)
 		{
 			if (isImmediate(getToken(from+1)) )
 			{
@@ -3015,11 +2957,11 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	
 	statement* aIndex = NULL;
 	// if identifier , then it might be variable or user/builtin function
-	if (getToken(from).type == "identifier" ||  isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
+	if (getToken(from).type == "identifier" ||  DM14::types::isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
 	{
 		// function !
 		if (isBuiltinFunction(getToken(from).value) || isUserFunction(getToken(from).value, true) 
-			|| (parent && classHasMemberFunction(classID, getToken(from).value)))
+			|| (parent && DM14::types::classHasMemberFunction(classID, getToken(from).value)))
 		{
 			statement* stmt = NULL;
 			if(parent)
@@ -3031,7 +2973,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				else
 				{
 					stmt = parseFunctionCallInternal(false, "", classID);
-					stmt->type = classMemberFunctionType(classID, getToken(from).value);
+					stmt->type = DM14::types::classMemberFunctionType(classID, getToken(from).value);
 				}
 			}
 			else
@@ -3045,20 +2987,22 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		// variable !
 		else
 		{
-			string variableName = getToken(from).value;
-			popToken();
 			
-			if (isDataType(variableName))
+			popToken();
+			string variableName = getToken().value;
+			
+			
+			if (DM14::types::isDataType(variableName))
 			{
 				;
 			}
-			else if(parent && !classHasMemberVariable(classID, variableName))
+			else if(parent && !DM14::types::classHasMemberVariable(classID, variableName))
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"class " + classID + " has no member : " + variableName);
 			}
-			else if(parent && classHasMemberVariable(classID, variableName))
+			else if(parent && DM14::types::classHasMemberVariable(classID, variableName))
 			{
-				if(getClassMemberVariable(classID, variableName).classifier != PUBLIC)
+				if(DM14::types::getClassMemberVariable(classID, variableName).classifier != DM14::types::CLASSIFIER::PUBLIC)
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
 				}
@@ -3076,10 +3020,10 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			}
 
 			//classMember = isClass(opstatement->type);
-			classMember = isClass(classID);
+			classMember = DM14::types::isClass(classID);
 			termStatment* termstatement = new termStatment( variableName, opstatement->type );
 			
-			if( findIDType(idInfo(variableName, 0, "", NULL)) != "NIL")
+			if(findIDType(idInfo(variableName, 0, "", NULL)) != "NIL")
 			{
 				termstatement->type = findIDType(idInfo(variableName, 0, "", NULL));
 			}
@@ -3087,9 +3031,13 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			termstatement->scopeLevel = scopeLevel;
 			termstatement->identifier = true;
 			termstatement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
-						
-			if ( getToken().value == "[")
+
+			
+			std::cerr << "array Variable statement : " << getToken().value << std::endl;
+
+			if (getToken(0).value == "[")
 			{
+				std::cerr << "array Variable statement2" << std::endl;
 				if (!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
@@ -3098,6 +3046,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				aIndex = termstatement->arrayIndex;
 			}
 			
+			std::cerr << "array Variable statement3 : " << getToken(0).value << std::endl;
 				
 			index = origiIndex;
 
@@ -3127,7 +3076,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			}*/
 			
 			
-			if(isClass(findIDType(idInfo(variableName, 0, "", NULL))))
+			if(DM14::types::isClass(findIDType(idInfo(variableName, 0, "", NULL))))
 			{
 				termstatement->type = findIDType(idInfo(variableName, 0, "", NULL));
 				id->type = termstatement->type;
@@ -3155,7 +3104,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	}
 	else if (isImmediate(getToken(from)))
 	{
-		if (!hasTypeValue(opstatement->type, getToken(from).type))
+		if (!DM14::types::hasTypeValue(opstatement->type, getToken(from).type))
 		{
 			displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"wrong immediate type : " + getToken(from).value);
 		}
@@ -3187,7 +3136,7 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 {
 	if(classID.size())
 	{
-		if(!classHasMemberFunction(classID, funcID))
+		if(!DM14::types::classHasMemberFunction(classID, funcID))
 		{
 			return funcInfo();
 		}
@@ -3225,7 +3174,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 	
 	if(classID.size())
 	{
-		if(!classHasMemberFunction(classID, funcID))
+		if(!DM14::types::classHasMemberFunction(classID, funcID))
 		{
 			return funcInfo();
 		}	
@@ -3363,8 +3312,6 @@ mapcode::mapcode()
 
 mapcode::~mapcode()
 {
-	//cout << "DELETE " << endl;
-	//delete functions;
 };
 
 
@@ -3453,13 +3400,11 @@ statement* parser::parseConditionalExpression(statement* caller)
 {
 	popToken();
 	RequireValue("[", "Expected [ and not : ", true);
-	int from = index+1;
-	int to = reachToken("]", false, true, true, false, true) - 1;
-	//statement* result = parseOpStatement(from, to, getType(from), 0, stmt);
+	int from = 0;
+	int to = reachToken("]", false, true, false, true, true)-1;
 	statement* result = parseOpStatement(from, to, "-2", 0, caller);
 	result->line = getToken().lineNumber;
 	popToken();
-	
 	return result;
 } 
 
@@ -3623,13 +3568,8 @@ statement* parser::parseIF()
 		//nextIndex();
 	}
 	
-	//else
-	//{
 	decreaseScope();
 	return If;
-	//}
-	//decreaseScope();
-	//return If;
 };
 
 statement* parser::parseStruct()
@@ -3668,7 +3608,7 @@ statement* parser::parseStruct()
 		for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
 		{
 			funcInfo finfo;
-			finfo.type = DATAMEMBER;
+			finfo.type = DM14::types::types::DATAMEMBER;
 			//finfo.returnType = stmt->identifiers->at(i).type;
 			finfo.returnType = stmt->type;
 			finfo.name = stmt->identifiers->at(i).name;
@@ -3981,21 +3921,21 @@ bool parser::checkToken(int type, string error, bool addtoken)
 {
 	bool rError = false;
 	
-	if (type == Function)
+	if (type == DM14::types::types::Function)
 	{
 		if ( isBuiltinFunction(getToken().value )  || isUserFunction(getToken().value, true) )
 		{
 			rError = true;
 		}
 	}
-	else if (type == USERFUNCTION)
+	else if (type == DM14::types::types::USERFUNCTION)
 	{
 		if (isUserFunction(getToken().value, true) )
 		{
 			rError = true;
 		}
 	}
-	else if (type == BUILTINFUNCTION)
+	else if (type == DM14::types::types::BUILTINFUNCTION)
 	{
 		if ( isBuiltinFunction(getToken().value ) )
 		{
@@ -4182,7 +4122,7 @@ int parser::mapFunctions(const string& package, const string& library)
 				displayError(scner->getFileName(), -1,-1,"Internal Compiler error, parsing class in package : " + fullLibraryName);
 			}
 		}
-		else if (isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
+		else if (DM14::types::isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
 		{
 			funcInfo finfo = parseCFunction(scner, i, DatatypeBase());
 			
@@ -4243,22 +4183,6 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 			return 0;
 		}
 		
-		/*if(scner->reachToken(start, ";", false, false, true) == start+2)
-		{
-			start = scner->reachToken(start, ";", false, false, true);
-			CClass.setID(mapTokens->at(start-1).value);
-			forwardDecelation = true;
-		}
-		else if (scner->reachToken(start, "{", false, false, true) == start+2)
-		{
-			protoType = false;
-			start = scner->reachToken(start, "{", false, false, true)+1;
-			CClass.setID(mapTokens->at(start-2).value);
-		}
-		else
-		{
-			return 0;
-		}*/
 	}
 	else // typdef foo bar
 	{
@@ -4285,7 +4209,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
-				classifier = PUBLIC;
+				classifier = DM14::types::CLASSIFIER::PUBLIC;
 				i++;
 			}
 			else if (mapTokens->at(i).value == "private" || mapTokens->at(i).value == "private:")
@@ -4297,7 +4221,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
-				classifier = PRIVATE;
+				classifier = DM14::types::CLASSIFIER::PRIVATE;
 				i++;
 			}
 			else if (mapTokens->at(i).value == "protected" || mapTokens->at(i).value == "protected:")
@@ -4309,7 +4233,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
-				classifier = PROTECTED;
+				classifier = DM14::types::CLASSIFIER::PROTECTED;
 				i++;
 			}
 			else if (mapTokens->at(i).value == "}")
@@ -4326,7 +4250,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 				funcInfo finfo = parseCFunction(scner, i, CClass);
 				i = finfo.classifier;
 				finfo.classifier = classifier;
-				if(finfo.type == DATAMEMBER)
+				if(finfo.type == DM14::types::types::DATAMEMBER)
 				{
 					CClass.memberVariables.push_back(finfo);
 				}
@@ -4442,7 +4366,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				destructor = true;
 				continue;
 			}
-			else if (mapTokens->at(i).type != "identifier" && !isDataType(mapTokens->at(i).value))//mapTokens->at(i).type != "datatype")
+			else if (mapTokens->at(i).type != "identifier" && !DM14::types::isDataType(mapTokens->at(i).value))//mapTokens->at(i).type != "datatype")
 			{
 				displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"could not parse a c++ function retun type, expected identifier and not :  " + mapTokens->at(i).value);
 			}
@@ -4463,7 +4387,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				}
 				else
 				{
-					funcinfo.returnType = getDataType(mapTokens->at(i).value);
+					funcinfo.returnType = DM14::types::getDataType(mapTokens->at(i).value);
 				
 					if( funcinfo.returnType == "NIL")
 					{
@@ -4543,8 +4467,8 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 			{
 				funcInfo enumMember;
 				enumMember.name = mapTokens->at(i).value;
-				enumMember.classifier = PUBLIC;
-				enumMember.type = DATAMEMBER;
+				enumMember.classifier = DM14::types::CLASSIFIER::PUBLIC;
+				enumMember.type = DM14::types::types::DATAMEMBER;
 				//enumMember.returnType = "int";
 				enumMember.returnType = funcinfo.name;
 				CUSTOMENUM.memberVariables.push_back(enumMember);
@@ -4570,7 +4494,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				datatypes.push_back(CUSTOMENUM);
 				
 				funcinfo.classifier = i;
-				funcinfo.type = ENUM;
+				funcinfo.type = DM14::types::types::ENUM;
 				return funcinfo;
 			}
 		}
@@ -4609,7 +4533,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"parsing error : " + mapTokens->at(i).value);
 			}
 			funcinfo.classifier = i;
-			funcinfo.type = DATAMEMBER;
+			funcinfo.type = DM14::types::types::DATAMEMBER;
 			return funcinfo;
 		}
 		else if (mapTokens->at(i).value == "(")
@@ -4735,9 +4659,9 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				}
 				else
 				{
-					if( getDataType(mapTokens->at(k).value) != "NIL")
+					if(DM14::types::getDataType(mapTokens->at(k).value) != "NIL")
 					{
-						funcinfo.parameters->push_back(pair<string, bool>(getDataType(mapTokens->at(k).value), false));
+						funcinfo.parameters->push_back(pair<string, bool>(DM14::types::getDataType(mapTokens->at(k).value), false));
 						found = true;
 					}
 					else if(parentClass.typeID.size() && !found)
@@ -4832,7 +4756,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 	}
 	
 	
-	funcinfo.type = BUILTINFUNCTION;
+	funcinfo.type = DM14::types::types::BUILTINFUNCTION;
 	funcinfo.classifier = start;
 
 	return funcinfo;
@@ -4890,7 +4814,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 
 	while (true)
 	{
-		checkToken(Function, "this is a function name ! :  ", true);
+		checkToken(DM14::types::types::Function, "this is a function name ! :  ", true);
 		RequireType("identifier", "Expected \"Identifier\" and not ", true);
 		
 		if (findIDInfo(idInfo(getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
@@ -4978,13 +4902,13 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	}
 	
 	
-	if(!isDataType(getToken().value))
+	if(!DM14::types::isDataType(getToken().value))
 	{
 		RequireType("datatype", "Expected \"Data type\" and not ", true);
 	}
 	
 	decStatement->type = getToken().value;
-	decStatement->classtype = isClass(decStatement->type);
+	decStatement->classtype = DM14::types::isClass(decStatement->type);
 	decStatement->array = false;
 		
 	popToken();
@@ -5264,3 +5188,5 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	
 	return decStatement;
 };
+
+} //namespace DM14::parser

@@ -6,9 +6,7 @@
 @date			  2010-2018
 @version          1.1a
 @copyright        See file "license" for bsd license
-*/
 
-#include "compiler.hpp"
 
 // hmm , the cin function must be awesome such that if a user enters char in a int it wont give him C++ error but a M14 error
 // add argv and argc to main
@@ -19,9 +17,15 @@
 //or
 //all childs should send parents to this nodes
 
+*/
+
+#include "compiler.hpp"
+
+namespace DM14::compiler
+{
 int scopeLevel = 0;
 
-compiler::compiler(Array<mapcode>* const codes)
+compiler::compiler(Array<parser::mapcode>* const codes)
 {
 	//mapCodes =	new	Array<mapcode>;
 	mapCodes = codes;
@@ -239,25 +243,25 @@ int compiler::compile()
 		if (!(mapCodes->at(index)).isHeader())
 		{
 			com += "g++ " + fName;	
-			Array<includePath> incs = (mapCodes->at(index)).getIncludes();
+			Array<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
 			
-			incs.push_back(includePath("core", "common", includePath::sourceFileType::LIBRARY));
-			incs.push_back(includePath("core", "M14Helper", includePath::sourceFileType::LIBRARY));
-			incs.push_back(includePath("core", "Socket", includePath::sourceFileType::LIBRARY));
-			//incs.push_back(includePath("core", "Node", includePath::sourceFileType::LIBRARY));
-			incs.push_back(includePath("core", "message", includePath::sourceFileType::LIBRARY));
-			incs.push_back(includePath("io", "string", includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::parser::includePath("core", "common", DM14::parser::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::parser::includePath("core", "M14Helper", DM14::parser::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::parser::includePath("core", "Socket", DM14::parser::includePath::sourceFileType::LIBRARY));
+			//incs.push_back(DM14::parser::includePath("core", "Node", DM14::parser::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::parser::includePath("core", "message", DM14::parser::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::parser::includePath("io", "string", DM14::parser::includePath::sourceFileType::LIBRARY));
 				
 			for (unsigned int i =0; i < incs.size(); i++)
 			{
 				std::string headerName;
 
-				if (incs.at(i).includeType == includePath::sourceFileType::FILE_DM14)
+				if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 					//headerName = headerName.substr(headerName.find_last_of(pathSeperator));
 				}
-				else if (incs.at(i).includeType == includePath::sourceFileType::FILE_C)
+				else if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 				}
@@ -372,12 +376,12 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	Array<includePath> incs = (mapCodes->at(index)).getIncludes();
+	Array<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
 	for (unsigned int i =0; i < incs.size(); i++)
 	{
-		if (incs.at(i).includeType == includePath::sourceFileType::FILE_DM14)
+		if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
 		{
 			headerName = incs.at(i).package + ".hpp";
 			if(headerName.find_last_of(pathSeperator) != std::string::npos)
@@ -385,7 +389,7 @@ int compiler::compileIncludes()
 				headerName = headerName.substr(headerName.find_last_of(pathSeperator)+1);
 			}
 		}
-		else if (incs.at(i).includeType == includePath::sourceFileType::FILE_C)
+		else if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
 		{
 			headerName = incs.at(i).package + ".hpp";
 		}
@@ -842,13 +846,13 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 			{
 				compileDistributedVariable(decStatement->identifiers->at(i), decStatement->global);
 				
-				if(isClass(decStatement->type)) // && isExternalClass(decStatement->type) declared outside DM14
+				if(DM14::types::isClass(decStatement->type)) // && isExternalClass(decStatement->type) declared outside DM14
 				{
-					std::vector<funcInfo> classVars = getClassMemberVariables(decStatement->type);
+					std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);
 					
 					for ( unsigned int k = 0; k < classVars.size() ; k++ )
 					{
-						if(classVars.at(k).classifier == PUBLIC)
+						if(classVars.at(k).classifier == DM14::types::CLASSIFIER::PUBLIC)
 						{
 							idInfo id = decStatement->identifiers->at(i);
 							id.name = id.name + classVars.at(k).name;
@@ -1032,7 +1036,7 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 		writeLine(", \"" +  decStatement->type + "\");");
 		
 		
-		if(isClass(decStatement->type)) // && isExternalClass(decStatement->type) declared outside DM14
+		if(DM14::types::isClass(decStatement->type)) // && isExternalClass(decStatement->type) declared outside DM14
 		{
 			if(decStatement->array)
 			{
@@ -1042,10 +1046,10 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 				writeLine("{");
 			}
 			
-			std::vector<funcInfo> classVars = getClassMemberVariables(decStatement->type);	
+			std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);	
 			for ( unsigned int k = 0; k < classVars.size() ; k++ )
 			{
-				if(classVars.at(k).classifier != PUBLIC)
+				if(classVars.at(k).classifier != DM14::types::CLASSIFIER::PUBLIC)
 				{
 					continue;
 				}
@@ -1245,9 +1249,9 @@ int compiler::compileFunctionCall(statement*& stmt)
 	write("(");
 	bool implemented = false;
 	
-	if (funCall->functionType == USERFUNCTION)
+	if (funCall->functionType == DM14::types::types::USERFUNCTION)
 	{
-		for (unsigned int i =0; i < mapCodes->size() && funCall->functionType != BUILTINFUNCTION; i++)
+		for (unsigned int i =0; i < mapCodes->size() && funCall->functionType != DM14::types::types::BUILTINFUNCTION; i++)
 		{
 			for ( unsigned int x =0; x < (mapCodes->at(i)).getFunctions()->size(); x++)
 			{
@@ -1519,7 +1523,7 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 	m14FileDefs << "#define " << name << " " << dVariablesNames.size() << std::endl;
 	dVariablesNames.push_back(name);
 	
-	DatatypeBase dType =  findDataType(id.type);
+	DatatypeBase dType =  DM14::types::findDataType(id.type);
 	if(dType.classType)
 	{
 		for(unsigned int i =0; i < dType.memberVariables.size(); i++)
@@ -1546,9 +1550,9 @@ int compiler::compileTerm(statement*& stmt)
 		return 0;
 	}
 
-	if(isEnum(termstatement->term))
+	if(DM14::types::isEnum(termstatement->term))
 	{
-		DatatypeBase dt = findDataType(termstatement->term);
+		DatatypeBase dt = DM14::types::findDataType(termstatement->term);
 		if (dt.parents.size())
 		{
 			write(dt.parents.at(0)+"::");
@@ -2003,3 +2007,4 @@ int compiler::compileResetStatement(statement*& stmt)
 	return 0;
 };
 
+}

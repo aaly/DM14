@@ -11,7 +11,7 @@ funcInfo::funcInfo()
 	parameters = new Array<pair<string, bool> >;
 	noAutism = false;
 	protoType = false;
-	classifier = CLASSIFIER::PUBLIC;
+	classifier = DM14::types::CLASSIFIER::PUBLIC;
 	
 };
 

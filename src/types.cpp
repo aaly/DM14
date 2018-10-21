@@ -10,7 +10,9 @@ Array<DatatypeBase>	datatypes;
 std::vector<pair<string, int> >		Operators;
 std::vector<string>		keywords;
 fstream				mapsFile;
-	
+
+namespace DM14::types
+{
 //FIX105 add peek for /r/n for windows ?
 
 // add all operators to both single or binary ops and then modify functions for searching, to search both lists.
@@ -764,5 +766,5 @@ bool typeHasOperator(const string& op, const string& type)
 	return false;
 }
 
-
+} // namespace DM14::types
 

@@ -1,9 +1,0 @@
-#!/bin/bash
-#g++ ast.cpp common.cpp compiler.cpp main.cpp parser.cpp scanner.cpp types.cpp -g -static
-clang++  -std=c++11 main.cpp scanner.cpp compiler.cpp includes/io/string.cpp includes/core/common.cpp DatatypeBase.cpp types.cpp parser.cpp ast.cpp includes/core/message.cpp includes/core/Node.cpp includes/core/Socket.cpp -g -lpthread -o DMC -I . -I includes/core
-
-##g++ -Wall main.cpp scanner.cpp compiler.cpp common.cpp types.cpp parser.cpp ast.cpp Node.cpp Socket.cpp Thread.hpp -static-libgcc -g -static -lpthread -o DMC
-
-
-#g++ testsrc.m14.cpp Socket.cpp Node.cpp includes/math/math.cpp includes/io/io.cpp -lpthread -fpermissive -static -o testsrc.m14.bin -pg -std=c++11
-

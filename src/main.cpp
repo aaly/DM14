@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	// wait when the operational statement that assigns it , then initialize it with NEW , and use it as *P :)
 	// make a vector with initialzed variables to check if its initialized yet or not :)
 
-	intSymbols();
+	DM14::types::intSymbols();
 	string fname;
 	std::vector<std::string> includePaths;
 	while(pHandler.hasParameterOption("-I") == true)
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
-	parser* prser = new parser(scner->getTokens(), fname, false);
+	DM14::parser::parser* prser = new DM14::parser::parser(scner->getTokens(), fname, false);
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	
 	
 	displayInfo(" Compiling  ... [" + fname + "]");
-	compiler* Compiler = new compiler(prser->getMapCodes());
+	DM14::compiler::compiler* Compiler = new DM14::compiler::compiler(prser->getMapCodes());
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
