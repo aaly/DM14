@@ -21,10 +21,13 @@ to accomplish some goals.
 
 */
 
+
 #include "parser.hpp"
+
 
 namespace DM14::parser
 {
+
 
 #define PARSER_EBNF_SHOW_TRACE 1
 
@@ -82,13 +85,50 @@ int parser::removeToken()
 	return 0;
 }
 
+class parser_depth
+{
+	public:
+		int32_t ebnf_level = 0;
+		std::string start_map_index = "";
+		uint32_t current_rule = 0;
+		uint32_t current_token = 0;
+		int64_t input_tokens_index = 0;
+		bool operator <(const parser_depth& depth)
+		{
+			if(ebnf_level <= depth.ebnf_level &&
+			   current_rule <= depth.current_rule &&
+			   current_token < depth.current_token && 
+			   input_tokens_index < depth.input_tokens_index)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		};
+
+		int32_t print()
+		{
+			std::cerr << "Map index  : " << start_map_index << std::endl;
+			std::cerr << "ebnf level : " << ebnf_level << std::endl;
+			std::cerr << "current_rule : " << current_rule << std::endl;
+			std::cerr << "current_token : " << current_token << std::endl;
+
+			return 0;
+		}
+};
+
+parser_depth old_depth;
+
 statement* parser::empty_file()
 {
 	//cerr << "unable to proceed file [" <<  fName << "] , wrong grammar at token [" << index <<"] : " << tokens->at(index).value<< endl;
 	
 	displayError(fName, -1,0,"unable to proceed file", false);
 	displayError(fName, -1,0,"dumping stack : ", false);
-	
+	old_depth.print();
+	std::cerr  << "i can no recognize token[" << old_depth.input_tokens_index << "] : " << input_tokens->at(old_depth.input_tokens_index).value <<  std::endl;
 	for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << working_tokens->at(i).value << endl;
@@ -297,6 +337,12 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 	cerr << endl << std::string(EBNF_level*2, ' ') << ".LOOPING KEY : " << start_map_index  << 	 " : " <<  *input_tokens_index << endl << flush;
 	#endif
 
+	parser_depth depth;
+
+	depth.ebnf_level = EBNF_level;
+	depth.start_map_index = start_map_index;
+
+
 	// loop over std::vector<grammar_token_array_t>
 	for (uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
@@ -305,6 +351,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		#if PARSER_EBNF_SHOW_TRACE == 1
 		cerr << string(EBNF_level*2, ' ')  << "..LOOPING RULE : " << i << 	 " : " <<  *input_tokens_index << endl << flush;
 		#endif
+		depth.current_rule = i;
 
 		// loop over std::vector<EBNF_entity_t>
 		grammar_rule_t current_rule = EBNF[start_map_index].at(i);
@@ -313,6 +360,11 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		
 		for (uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 		{
+			if(*input_tokens_index >= depth.input_tokens_index)
+			{
+				depth.input_tokens_index = *input_tokens_index;
+			}
+
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 			int token_old_index = *input_tokens_index; // used for ONLY_ONE rules
 			
@@ -362,11 +414,17 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					result.first = 0;
 				}
 			}
+			else if(ebnf_token.tokenType == CORE_OP_TOKEN)
+			{
+				if(DM14::types::isCoreOperator(input_tokens->at(*input_tokens_index).value))
+				{
+					result.first = 0;
+				}
+			}
 			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
 			{
 				if(isImmediate(input_tokens->at(*input_tokens_index)))
 				{
-					cerr << "IMMEDIATE : " << input_tokens->at(*input_tokens_index).value << endl << flush;
 					result.first = 0;
 				}
 			}
@@ -381,6 +439,9 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				displayError(" ERROR : unknown grammar token type");
 			}
+
+			depth.current_token = k;
+
 			
 			if(result.first == 0)
 			{
@@ -393,7 +454,6 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					advance_EBNFindex();
 				}
 				
-				//if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback && EBNF_level == 	getLevelOfEBNFRule("statement", "program"))
 				if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback && verify_only == false)
 				{
 					for(uint32_t i =0; i < working_tokens->size(); i++)
@@ -413,8 +473,8 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					}
 
 					
-					displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
-					cerr << EBNF_level << endl << flush;
+					//displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
+					//cerr << EBNF_level << endl << flush;
 					
 					result.second = (this->*ebnf_token.callback)();
 					
@@ -514,6 +574,15 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			deadvance_EBNFindex(diff);
 		}
 	}
+
+	if (result.first != 0)
+	{
+		if(old_depth < depth)
+		{
+			old_depth = depth;
+		}
+	}
+
 	EBNF_level--;
 	working_tokens = current_working_tokens;
 	this->input_tokens = current_input_tokens;
@@ -780,6 +849,10 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 		
 	EBNF["expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"SING_OP",SINGLE_OP_TOKEN},
 													{"variable",EXPANSION_TOKEN}}},
+						{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
+													{"variable",EXPANSION_TOKEN}}},
+						{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
+													{"IMMEDIATE",IMMEDIATE_TOKEN}}},
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN},
 													{"SING_OP",SINGLE_OP_TOKEN}}},
 						  {GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN}}},
@@ -2526,9 +2599,6 @@ statement* parser::parseExpressionStatement()
 		cerr <<  working_tokens->at(i).value << endl;
 	}
 	
-	cerr << "END:" << working_tokens->at(0).value << getToken(0).type << endl;
-	
-	
 	statement* result = NULL;
 	
 	if(working_tokens->at(working_tokens->size()-1).value == ";")
@@ -2665,7 +2735,11 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
 					std::cerr << "done parsing left statement !" << std::endl;
 					
-					if(i<=to)
+					
+				}
+				
+				
+				if(i<=to)
 					{
 						to -= i+1;
 					}
@@ -2678,9 +2752,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					{
 						std::cerr << "TOKEN : " << getToken(x).value << std::endl;
 					}
-				}
-				
-				
+
 				idInfo* id = NULL;
 				// should we loop inside to get the term ?
 				statement* res = findTreeNode(opstatement->left, tStatement);
@@ -2717,7 +2789,10 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				}
 				else if(to > -1)
 				{
+					std::cerr << "parse right" << std::endl;
+					std::cerr << from << ":" << to << std::endl;
 					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement);
+					std::cerr << "done parse right" << std::endl;
 				}
 				
 				if(opstatement->left)
@@ -2774,6 +2849,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				{
 					if(opstatement->op == "@")
 					{
+						displayError("finding node address");
 						//construct node address statement
 						// should we loop inside to get the term ?
 						statement* res = findTreeNode(opstatement->right, tStatement);
