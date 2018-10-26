@@ -101,6 +101,7 @@ typedef enum
 	CORE_OP_TOKEN,
 	BINARY_OP_TOKEN,
 	IMMEDIATE_TOKEN,
+	KEYWORD_TOKEN,
 }
 grammar_token_type;
 

@@ -409,6 +409,10 @@ int	scanner::scan()
 					{	
 						line++;
 						column = 0;
+						if (DM14::types::isNewLine((char)iFile.peek()))
+						{
+							iFile.get();
+						}
 						break;
 						
 					}
@@ -450,6 +454,10 @@ int	scanner::scan()
 					ch = iFile.get();
 					if (DM14::types::isNewLine(ch))
 					{
+						if (DM14::types::isNewLine((char)iFile.peek()))
+						{
+							iFile.get();
+						}
 						line++;
 						column = 0;
 						continue;
@@ -472,6 +480,10 @@ int	scanner::scan()
 								read = false;
 								break;
 							}
+						}
+						if (DM14::types::isNewLine((char)iFile.peek()))
+						{
+							iFile.get();
 						}
 						line++;
 						column = 0;

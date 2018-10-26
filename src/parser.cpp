@@ -18,7 +18,7 @@ the extended back-naur form grammar is possible to express using the provided fu
 to accomplish some goals.
 
 @TODO: the parenthed expressions should be kept and added to the EBNF too
-
+@TODO: xa["x"] = 10; if xa is a map only .... and map key type is "x"
 */
 
 
@@ -95,9 +95,9 @@ class parser_depth
 		int64_t input_tokens_index = 0;
 		bool operator <(const parser_depth& depth)
 		{
-			if(ebnf_level <= depth.ebnf_level &&
-			   current_rule <= depth.current_rule &&
-			   current_token < depth.current_token && 
+			if(//ebnf_level <= depth.ebnf_level &&
+			   //current_rule <= depth.current_rule &&
+			//current_token < depth.current_token && 
 			   input_tokens_index < depth.input_tokens_index)
 			{
 				return true;
@@ -120,6 +120,7 @@ class parser_depth
 };
 
 parser_depth old_depth;
+parser_depth old_successful_depth;
 
 statement* parser::empty_file()
 {
@@ -127,11 +128,24 @@ statement* parser::empty_file()
 	
 	displayError(fName, -1,0,"unable to proceed file", false);
 	displayError(fName, -1,0,"dumping stack : ", false);
+	old_successful_depth.print();
 	old_depth.print();
 	std::cerr  << "i can no recognize token[" << old_depth.input_tokens_index << "] : " << input_tokens->at(old_depth.input_tokens_index).value <<  std::endl;
-	for(uint32_t i =0; i < working_tokens->size(); i++)
+	std::cerr  << "on this line : " <<  std::endl;
+
+	int errorLine = input_tokens->at(old_depth.input_tokens_index).lineNumber;
+
+	for(uint32_t i =0; i < tokens->size(); i++)
 	{
-		cerr << working_tokens->at(i).value << endl;
+		if(tokens->at(i).lineNumber == errorLine)
+		{
+			std::cerr << tokens->at(i).value;
+		}
+	}
+	std::cerr << std::endl;
+	//for(uint32_t i =0; i < working_tokens->size(); i++)
+	{
+		//cerr << working_tokens->at(i).value << endl;
 	}
 	
 	displayError(fName, -1,0,"Quiting");
@@ -214,6 +228,10 @@ int parser::printEBNF()
 				else if(ebnf_token.tokenType == EXPANSION_TOKEN)
 				{
 					cerr << "<" << ebnf_token.expansion << ">";
+				}
+				else if(ebnf_token.tokenType == CORE_OP_TOKEN)
+				{
+					cerr << "<CORE_OPERATOR>";
 				}
 				else if(ebnf_token.tokenType == SINGLE_OP_TOKEN)
 				{
@@ -360,17 +378,20 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		
 		for (uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 		{
-			if(*input_tokens_index >= depth.input_tokens_index)
-			{
-				depth.input_tokens_index = *input_tokens_index;
-			}
-
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 			int token_old_index = *input_tokens_index; // used for ONLY_ONE rules
 			
 			/** process the invidual token first */
 
 			result.first = 1; /** initial value assumes error , prove otherwise */
+
+			
+			depth.current_token = k;
+
+			if(*input_tokens_index > depth.input_tokens_index)
+			{
+				depth.input_tokens_index = *input_tokens_index;
+			}
 
 			if(ebnf_token.tokenType == DATATTYPE_TOKEN)
 			{
@@ -390,10 +411,13 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				//cerr << input_tokens->at(*input_tokens_index).value << ":" <<  ebnf_token.expansion << endl << flush;
 				// do regex stuff
-				std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
-				if (std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
+				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value))
 				{
-					result.first = 0;
+					std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
+					if (std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
+					{
+						result.first = 0;
+					}
 				}
 			}
 			else if(ebnf_token.tokenType == EXPANSION_TOKEN)
@@ -423,7 +447,16 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
 			{
-				if(isImmediate(input_tokens->at(*input_tokens_index)))
+				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) &&
+				    isImmediate(input_tokens->at(*input_tokens_index)))
+				{
+					result.first = 0;
+				}
+			}
+			else if(ebnf_token.tokenType == KEYWORD_TOKEN)
+			{
+				if(DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) &&
+				    input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
 				{
 					result.first = 0;
 				}
@@ -439,12 +472,16 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				displayError(" ERROR : unknown grammar token type");
 			}
-
-			depth.current_token = k;
-
-			
+				
 			if(result.first == 0)
 			{
+
+				if(old_successful_depth < depth)
+				{
+					old_successful_depth = depth;
+					std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+				}
+
 				#if PARSER_EBNF_SHOW_TRACE == 1
 				cerr << string(EBNF_level*2, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => success " << endl << flush;
 				#endif
@@ -491,6 +528,11 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else
 			{
+				if(old_depth < depth)
+				{
+					old_depth = depth;
+					std::cerr << "Update fail map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+				}	
 				#if PARSER_EBNF_SHOW_TRACE == 1
 				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
 				#endif
@@ -575,14 +617,6 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		}
 	}
 
-	if (result.first != 0)
-	{
-		if(old_depth < depth)
-		{
-			old_depth = depth;
-		}
-	}
-
 	EBNF_level--;
 	working_tokens = current_working_tokens;
 	this->input_tokens = current_input_tokens;
@@ -658,7 +692,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  }}};
 
 	/** the with statement */
-	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",TERMINAL_TOKEN},
+	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN},
 														   {"include-statement-body",EXPANSION_TOKEN}}}};
 														   
 	EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"include-statement-package",EXPANSION_TOKEN},
@@ -666,39 +700,39 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 								 
 	EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z0-9]+",REGEX_TOKEN},
 																   {"include-statement-subpackage",EXPANSION_TOKEN}}}};
-	EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",TERMINAL_TOKEN},
+	EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",KEYWORD_TOKEN},
 																	    	{"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
 																   
 	EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
 	
 	/** the extern statement */
-	EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"extern",TERMINAL_TOKEN},
+	EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"extern",KEYWORD_TOKEN},
 														   {"string",DATATTYPE_TOKEN},
-														   {"endextern",TERMINAL_TOKEN}}}};
+														   {"endextern",KEYWORD_TOKEN}}}};
 
 	/** the link statement */
 	EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"(link)|(slink)",REGEX_TOKEN},
 														   {"string",DATATTYPE_TOKEN}}}};
 
 	/** the distribute statement */
-	EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",TERMINAL_TOKEN},
+	EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",KEYWORD_TOKEN},
 												{";",TERMINAL_TOKEN}}}};
 												
 	/** the reset statement */
 	EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
-	EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",TERMINAL_TOKEN},
+	EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN},
 											   {"expression",EXPANSION_TOKEN}}},
-					{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",TERMINAL_TOKEN}}}};
+					{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}}}};
 	
 	/** the setnode statement */
-	EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",EXPANSION_TOKEN},
+	EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode-expr",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
-	EBNF["setnode"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",TERMINAL_TOKEN},
+	EBNF["setnode-expr"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN},
 											   {"expression",EXPANSION_TOKEN}}},
-					{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",TERMINAL_TOKEN}}}};
+					{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN}}}};
 	/** the struct statement */
-	EBNF["struct"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",TERMINAL_TOKEN},
+	EBNF["struct"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",KEYWORD_TOKEN},
 												{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 												{"struct-definition",EXPANSION_TOKEN}}}};
 												
@@ -710,7 +744,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	/** the for loop statement */
 	
-	EBNF["for-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"for",TERMINAL_TOKEN},
+	EBNF["for-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"for",KEYWORD_TOKEN},
 												  {"[",TERMINAL_TOKEN},
 												  {"loop-expression-declarator",EXPANSION_TOKEN},
 												  {"loop-expression-condition",EXPANSION_TOKEN},
@@ -742,7 +776,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 									{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",SINGLE_OP_TOKEN},
 															   {"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN}}}};
 	/** the if statement */
-	EBNF["if-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"if",TERMINAL_TOKEN},
+	EBNF["if-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"if",KEYWORD_TOKEN},
 												  {"[",TERMINAL_TOKEN},
 												  {"logical-expression",EXPANSION_TOKEN},
 												  {"]",TERMINAL_TOKEN},
@@ -752,28 +786,27 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  
 	EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"elseif-statement",EXPANSION_TOKEN}}}};
 	
-	EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",TERMINAL_TOKEN},
-														{"if",EXPANSION_TOKEN}}}};
+	EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",KEYWORD_TOKEN},
+														{"if-list",EXPANSION_TOKEN}}}};
 
 	EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"else-statement",EXPANSION_TOKEN}}}};
 	
-	EBNF["else-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",TERMINAL_TOKEN},
+	EBNF["else-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",KEYWORD_TOKEN},
 														{"compound-statement",EXPANSION_TOKEN}}}};
 	/** the while loop statement */
-	EBNF["while-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"while",TERMINAL_TOKEN},
+	EBNF["while-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"while",KEYWORD_TOKEN},
 												  {"[",TERMINAL_TOKEN},
-												  {"logical-expression",EXPANSION_TOKEN},
+												  //{"logical-expression",EXPANSION_TOKEN},
+												  {"expression",EXPANSION_TOKEN},
 												  {"]",TERMINAL_TOKEN},
 												  {"compound-statement",EXPANSION_TOKEN}}}};
-	/** variable */
 	
+	/** variable */
 	EBNF["variable"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 												   {"declaration-index-list",EXPANSION_TOKEN}}}};
 												   
 												   
 	/** the variables declaration list */
-	
-	
 	EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN},
 														   {"declaration-statement",EXPANSION_TOKEN}}}};
 	
@@ -794,13 +827,13 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 														   {"declaration-value-list",EXPANSION_TOKEN},
 														   {";",TERMINAL_TOKEN}}}};
 														   
-	EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"backprop",TERMINAL_TOKEN}}}}; // should not be ok with nodist...
+	EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
 																		  
-	EBNF["declaration-dist-specifiers-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"channel",TERMINAL_TOKEN}}},
-												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"recurrent",TERMINAL_TOKEN}}},
-												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"nodist",TERMINAL_TOKEN}}}};
+	EBNF["declaration-dist-specifiers-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"channel",KEYWORD_TOKEN}}},
+												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"recurrent",KEYWORD_TOKEN}}},
+												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"nodist",KEYWORD_TOKEN}}}};
 																	  
-	EBNF["declaration-global-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"global",TERMINAL_TOKEN}}}};
+	EBNF["declaration-global-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"global",KEYWORD_TOKEN}}}};
 	
 	EBNF["declaration-datatype-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"declaration-datatype",EXPANSION_TOKEN}}}};
 	
@@ -865,7 +898,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													{"expression",EXPANSION_TOKEN}}},
 						   {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN}}}};
 	/** the thread statement */
-	EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread",TERMINAL_TOKEN},
+	EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread",KEYWORD_TOKEN},
 													 {"function-call",EXPANSION_TOKEN}}}};
 	
 	/** the function statement */
@@ -899,9 +932,9 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													        {"}",TERMINAL_TOKEN}}}};
 	/** return statement */
 	
-	EBNF["return-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"return",TERMINAL_TOKEN},
+	EBNF["return-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"return",KEYWORD_TOKEN},
 													{"expression-statement",EXPANSION_TOKEN}}},
-						   {GRAMMAR_TOKEN_AND_ARRAY,{{"return",TERMINAL_TOKEN},
+						   {GRAMMAR_TOKEN_AND_ARRAY,{{"return",KEYWORD_TOKEN},
 													{";",TERMINAL_TOKEN}}}};
 	/* nop statement */
 	EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{";",TERMINAL_TOKEN}}}};
@@ -2592,25 +2625,15 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 
 statement* parser::parseExpressionStatement()
 {
-	
-	cerr << "ALL" << endl;
-	for(uint32_t i =0; i < working_tokens->size(); i++)
-	{
-		cerr <<  working_tokens->at(i).value << endl;
-	}
-	
 	statement* result = NULL;
 	
 	if(working_tokens->at(working_tokens->size()-1).value == ";")
 	{
-		//popToken();
-		result = parseOpStatement(0, working_tokens->size()-2,
-								  "-2", scope, parentStatement);
+		result = parseOpStatement(0, working_tokens->size()-2, "-2", scope, parentStatement);
 	}
 	else
 	{
-		result = parseOpStatement(0, working_tokens->size()-1,
-								  "-2", scope, parentStatement);
+		result = parseOpStatement(0, working_tokens->size()-1, "-2", scope, parentStatement);
 	}
 	
 	return result;
@@ -2620,7 +2643,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 									const string& stmtType, const int& scopeLevel, statement* caller, 
 									idInfo* parent, const string& parentOp)
 {
-	int plevel =0; // percedence levels
+	int plevel =0; // precedence levels
 	
 	string classID = "";
 	
@@ -2725,33 +2748,16 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				std::cerr << "Set op to : " << opstatement->op << std::endl;
 				
 				if(i != from) /** not a prefix operator like ++x */
-				{
-					std::cerr << "parsing left statement !" << std::endl;
-					for (auto x = from; x < i; x++)
-					{
-						std::cerr << "TOKEN : " << getToken(x).value << std::endl;
-					}
-					
+				{	
 					opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
-					std::cerr << "done parsing left statement !" << std::endl;
-					
-					
 				}
-				
-				
+								
 				if(i<=to)
-					{
-						to -= i+1;
-					}
-					from = 0;
-					std::cerr << "POPING : " << getToken(0).value << std::endl;
-					popToken(); /** pop the op token */
-
-					cerr << "AFTER" << from << ":" << to << endl << flush;
-					for (auto x = 0; x < to+1; x++)
-					{
-						std::cerr << "TOKEN : " << getToken(x).value << std::endl;
-					}
+				{
+					to -= i+1;
+				}
+				from = 0;
+				popToken(); /** pop the op token */
 
 				idInfo* id = NULL;
 				// should we loop inside to get the term ?
@@ -2789,10 +2795,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				}
 				else if(to > -1)
 				{
-					std::cerr << "parse right" << std::endl;
-					std::cerr << from << ":" << to << std::endl;
 					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement);
-					std::cerr << "done parse right" << std::endl;
 				}
 				
 				if(opstatement->left)
@@ -2821,7 +2824,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"Missing right operand");
 					}
 					
-					//FIXme
+					//FIXME:
 					/*else if (caller && caller->statementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opstatement->type) && opstatement->op != "::"  )
 					{
 						cerr  << opstatement->op << endl;
@@ -2849,7 +2852,6 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				{
 					if(opstatement->op == "@")
 					{
-						displayError("finding node address");
 						//construct node address statement
 						// should we loop inside to get the term ?
 						statement* res = findTreeNode(opstatement->right, tStatement);
@@ -2859,6 +2861,12 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 						if(res)
 						{
 							rightId  = ((termStatment*)res)->id;
+							int isDistributed = findIDInfo(*rightId, DISTRIBUTED);
+							if(!isDistributed)
+							{
+								displayError(fName, getToken().lineNumber, getToken().columnNumber,getToken().value + " : can not use @ operator with a non-distributed variable");
+								//displayError("can not use @ operator with a non-distributed variable");
+							}
 						}
 						else
 						{
@@ -2890,19 +2898,11 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 							}				
 							else if(opstatement->right->statementType == tStatement)
 							{
-								 //opstatement->right->Array<distributingVariablesStatement*>* distStatements;
-								/*for (int32_t i=0; i < opstatement->right->distStatements->size(); i++)
-								{
-									cout << " IIIIIIIII :|" << i << endl;
-									opstatement->distStatements->push_back(opstatement->right->distStatements->at(i));
-								}*/
 								delete opstatement->right;
 								opstatement->right = NULL;
 								opstatement->op  = "";
 							}					
-							//stmt->left = stmt->right;
-							//stmt->right = NULL;
-							
+
 							if ( (parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opstatement->op == "")
 							{
 								idInfo* leftId = NULL;
@@ -3748,8 +3748,9 @@ int parser::extractSplitStatements(Array<statement*>* array, Array<statement*>* 
 }
 statement* parser::parseWhile()
 {
+	popToken(); //while
 	whileloop* While = new whileloop;
-	While->line = (tokens->at(index)).lineNumber;
+	While->line = getToken().lineNumber;
 	While->scope = scope;
 	
 	increaseScope(While);
@@ -3760,15 +3761,17 @@ statement* parser::parseWhile()
 	
 	addStatementDistributingVariables(While);
 	
+	
+	popToken();
 	RequireValue("{", "Expected { and not : ", true);
-	nextIndex();
-			
-	while (tokens->at(index).value != "}")
+	
+	popToken();
+	while (getToken().value != "}")
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		While->body->push_back(stmt);
-		nextIndex();
+		popToken();
 	}
 	
 	decreaseScope();

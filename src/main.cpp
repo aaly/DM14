@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 		displayInfo(" adding   ... [" + includePaths.at(i) + "]");
 		prser->addIncludePath(includePaths.at(i));
 	}
-	//prser->printEBNF();
+	prser->printEBNF();
 	prser->parse();
 	
 	
