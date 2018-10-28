@@ -177,11 +177,13 @@ class parser
 		statement*					parseDeclarationInternal(const string& terminal = ";");
 		statement*					parseFunctionCall();
 		statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
-		statement*					parseConditionalExpression(statement* stmt);
+		//statement*					parseConditionalExpression(statement* stmt);
 		statement*					parseForloop();
 		statement*					parseIF();
 		statement*					parseWhile();
 		statement*					parseCase();
+		statement*					parseMatrixIndex();
+		statement*					parseArrayIndex();
 		//DatatypeBase				parseClass();
 		statement*					parseExtern();
 		statement*					parseLink();

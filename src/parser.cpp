@@ -161,6 +161,7 @@ int parser::advance_EBNFindex(uint16_t steps)
 	{
 		if(*input_tokens_index < input_tokens->size())
 		{
+			cerr << "Pushing :  " << input_tokens->at(*input_tokens_index).value << endl;
 			pushToken(input_tokens->at(*input_tokens_index));
 			++*input_tokens_index;
 		}
@@ -178,6 +179,7 @@ int parser::deadvance_EBNFindex(uint16_t steps)
 	{
 		if(input_tokens->size())
 		{
+			cerr << "Removing :  " << working_tokens->at(working_tokens->size()-1).value << endl;
 			removeToken();
 			--*input_tokens_index;
 		}
@@ -681,7 +683,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
 												  {"reset-statement",EXPANSION_TOKEN},
 												  {"setnode-statement",EXPANSION_TOKEN},
-												  {"while-list",EXPANSION_TOKEN}, /** while [ cond ] { statements } */
+												  {"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { statements } */
 												  //{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
 												  //{"addparent-statement",EXPANSION_TOKEN},
 												  {"thread-list",EXPANSION_TOKEN},
@@ -694,15 +696,15 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	/** the with statement */
 	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN},
 														   {"include-statement-body",EXPANSION_TOKEN}}}};
-														   
+
 	EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"include-statement-package",EXPANSION_TOKEN},
 																{"include-statement-file",EXPANSION_TOKEN}}}};
-								 
+
 	EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z0-9]+",REGEX_TOKEN},
 																   {"include-statement-subpackage",EXPANSION_TOKEN}}}};
 	EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",KEYWORD_TOKEN},
 																	    	{"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
-																   
+
 	EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
 	
 	/** the extern statement */
@@ -764,10 +766,10 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 															 {".*",BINARY_OP_TOKEN},
 															 {"logical-expression-term",EXPANSION_TOKEN}}},
 								  {GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN}}}};
-															 
+
 	EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																 {".*",IMMEDIATE_TOKEN}}}};
-															 
+
 
 	EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"loop-expression-step",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
 	
@@ -783,7 +785,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"compound-statement",EXPANSION_TOKEN},
 												  {"elseif-list",EXPANSION_TOKEN},
 												  {"else-list",EXPANSION_TOKEN}}}};
-												  
+
 	EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"elseif-statement",EXPANSION_TOKEN}}}};
 	
 	EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",KEYWORD_TOKEN},
@@ -804,8 +806,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	/** variable */
 	EBNF["variable"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 												   {"declaration-index-list",EXPANSION_TOKEN}}}};
-												   
-												   
+
 	/** the variables declaration list */
 	EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN},
 														   {"declaration-statement",EXPANSION_TOKEN}}}};
@@ -826,36 +827,36 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 														   {"declaration-index-list",EXPANSION_TOKEN},
 														   {"declaration-value-list",EXPANSION_TOKEN},
 														   {";",TERMINAL_TOKEN}}}};
-														   
+
 	EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
-																		  
+
 	EBNF["declaration-dist-specifiers-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"channel",KEYWORD_TOKEN}}},
 												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"recurrent",KEYWORD_TOKEN}}},
 												{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"nodist",KEYWORD_TOKEN}}}};
-																	  
+
 	EBNF["declaration-global-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"global",KEYWORD_TOKEN}}}};
 	
 	EBNF["declaration-datatype-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"declaration-datatype",EXPANSION_TOKEN}}}};
 	
 	EBNF["declaration-datatype"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+[a-zA-Z_0-9]*",REGEX_TOKEN}}}};
 	
-																 
+
 	EBNF["declaration-index-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-index",EXPANSION_TOKEN}}}};
 	
-	EBNF["declaration-index"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"matrix-index",EXPANSION_TOKEN},
-														   {"array-index",EXPANSION_TOKEN}}}};
+	EBNF["declaration-index"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"matrix-index",EXPANSION_TOKEN, &parser::parseMatrixIndex},
+														   {"array-index",EXPANSION_TOKEN, &parser::parseArrayIndex}}}};
 
 	
 	EBNF["matrix-index"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"array-index",EXPANSION_TOKEN},
 													   {"array-index",EXPANSION_TOKEN}}}};
-																	   																   
+
 	EBNF["array-index"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[",TERMINAL_TOKEN},
 													  {"[0-9]+",REGEX_TOKEN},
 													  {"]",TERMINAL_TOKEN}}},
 							{GRAMMAR_TOKEN_AND_ARRAY ,{{"[",TERMINAL_TOKEN},
 													  {"variable",EXPANSION_TOKEN},
 													  {"]",TERMINAL_TOKEN}}}};
-																	   
+
 	
 	EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
 	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"=",TERMINAL_TOKEN},
@@ -879,6 +880,8 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN},
 													{";",TERMINAL_TOKEN}}}};
+
+	EBNF["expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
 		
 	EBNF["expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"SING_OP",SINGLE_OP_TOKEN},
 													{"variable",EXPANSION_TOKEN}}},
@@ -918,7 +921,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													        
 	EBNF["function-parameter-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-parameter",EXPANSION_TOKEN}}},
 									   {GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-extra-parameter",EXPANSION_TOKEN}}}};
-																  
+
 	EBNF["function-extra-parameter"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{",",TERMINAL_TOKEN},
 																  {"function-parameter-list",EXPANSION_TOKEN}}}};															  
 	
@@ -1257,8 +1260,7 @@ statement* parser::parseStatement(const std::string starting_rule)
 	
 	ebnfResult result = parseEBNF(working_tokens, starting_rule, working_tokens2);
 	retStmt = result.second;
-	
-
+	token errorToken = getToken(0);
 	for (uint32_t i =0; i < temp_input_tokens_index; i++)
 	{
 		popToken();
@@ -1266,11 +1268,13 @@ statement* parser::parseStatement(const std::string starting_rule)
 
 	delete working_tokens2;
 	input_tokens_index = temp_input_tokens_index_ptr;
-	
+
 	if (retStmt == NULL)
 	{
-		displayError(fName, getToken().lineNumber, getToken().columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + getToken().value);
+		displayError(fName, errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
 	}
+	
+	
 	
 	pushStatements = true;
 	
@@ -1288,6 +1292,32 @@ statement* parser::parseNOPStatement()
 	
 	return result;
 };
+
+statement* parser::parseMatrixIndex()
+{
+	//@TODO: need to handle 2nd or multiple diemnsions , have to implement in the AST first then parseDeclraration and ParseOpstatement...
+	popToken();
+	RequireValue("[", "Expected [ and not : ", true);
+	int from = 0;
+	int to = reachToken("]", false, true, false, true, true)-1;
+	statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
+	result->line = getToken().lineNumber;
+	popToken();
+	return result;
+}
+
+statement* parser::parseArrayIndex()
+{
+	popToken();
+	RequireValue("[", "Expected [ and not : ", true);
+	int from = 0;
+	int to = reachToken("]", false, true, false, true, true)-1;
+	statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
+	result->line = getToken().lineNumber;
+	popToken();
+	return result;
+};
+
 
 statement* parser::parseAddParent()
 {
@@ -2625,6 +2655,7 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 
 statement* parser::parseExpressionStatement()
 {
+	cerr << "parse expression statement" << endl;
 	statement* result = NULL;
 	
 	if(working_tokens->at(working_tokens->size()-1).value == ";")
@@ -2636,6 +2667,7 @@ statement* parser::parseExpressionStatement()
 		result = parseOpStatement(0, working_tokens->size()-1, "-2", scope, parentStatement);
 	}
 	
+	cerr << "done parse expression statement" << endl;
 	return result;
 }
 
@@ -3118,7 +3150,9 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
 				}
-				termstatement->arrayIndex = parseConditionalExpression(currentStatement);
+				//termstatement->arrayIndex = parseConditionalExpression(currentStatement);
+				//termstatement->arrayIndex = parseStatement("expression-list");
+				termstatement->arrayIndex = parseStatement("declaration-index-list");
 				aIndex = termstatement->arrayIndex;
 			}
 			
@@ -3472,7 +3506,7 @@ bool mapcode::setHeader(bool set)
 	return set;
 };
 
-statement* parser::parseConditionalExpression(statement* caller)
+/*statement* parser::parseConditionalExpression(statement* caller)
 {
 	popToken();
 	RequireValue("[", "Expected [ and not : ", true);
@@ -3482,7 +3516,7 @@ statement* parser::parseConditionalExpression(statement* caller)
 	result->line = getToken().lineNumber;
 	popToken();
 	return result;
-} 
+}*/
 
 int parser::increaseScope(statement* stmt)
 {
@@ -3572,31 +3606,43 @@ statement* parser::parseThread()
 	
 	return thread;
 }
+
+
+
+
+
 statement* parser::parseIF()
 {
 	// if [ cond ] { statements } else {}
+	popToken(); //if	
 	IF* If = new IF;
-	If->line = (tokens->at(index)).lineNumber;
+	If->line = getToken().lineNumber;
 	If->scope = scope;
 	
 	increaseScope(If);
-	
+
+
 	tmpScope = true;
-	If->condition = parseConditionalExpression(If);
+	popToken(); //[
+	currentStatement = If;
+	If->condition = parseStatement("expression-list");
 	tmpScope = false;
+	popToken(); //]
 	
-	addStatementDistributingVariables(If);
+	addStatementDistributingVariables(If);	
 	
+	popToken(); // {
 	RequireValue("{", "Expected { and not : ", true);
-	nextIndex();
-			
-	while (tokens->at(index).value != "}")
+
+
+	while (getToken().value != "}")
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		If->body->push_back(stmt);
-		nextIndex();
+		popToken();
 	}
+
 	
 	while ( peekToken("else") )
 	{
@@ -3611,7 +3657,9 @@ statement* parser::parseIF()
 			elseIf->scope = scope;
 			
 			tmpScope = true;
-			elseIf->condition = parseConditionalExpression(elseIf);
+			//elseIf->condition = parseConditionalExpression(elseIf);
+			currentStatement = elseIf;
+			elseIf->condition = parseStatement("expression-list");
 			tmpScope = false;
 			
 			//nextIndex();
@@ -3746,6 +3794,7 @@ int parser::extractSplitStatements(Array<statement*>* array, Array<statement*>* 
 	}
 	return array->size();
 }
+
 statement* parser::parseWhile()
 {
 	popToken(); //while
@@ -3756,16 +3805,19 @@ statement* parser::parseWhile()
 	increaseScope(While);
 	
 	tmpScope = true;
-	While->condition = parseConditionalExpression(While);
+	popToken(); //[
+	//While->condition = parseConditionalExpression(While);
+	currentStatement = While;
+	While->condition = parseStatement("expression-list");
 	tmpScope = false;
+	popToken(); //]
 	
 	addStatementDistributingVariables(While);
 	
 	
-	popToken();
+	popToken(); // {
 	RequireValue("{", "Expected { and not : ", true);
-	
-	popToken();
+
 	while (getToken().value != "}")
 	{
 		statement* stmt = parseStatement("statement");
@@ -3787,7 +3839,9 @@ statement* parser::parseCase()
 	
 	increaseScope(Case);
 	
-	Case->condition = parseConditionalExpression(Case);
+	//Case->condition = parseConditionalExpression(Case);
+	currentStatement = Case;
+	Case->condition = parseStatement("expression-list");
 	
 	addStatementDistributingVariables(Case);
 	
@@ -3798,7 +3852,9 @@ statement* parser::parseCase()
 		//nextIndex();
 		tmpScope = true;
 		statement* CCondition = NULL;
-		CCondition = parseConditionalExpression(CCondition);
+		//CCondition = parseConditionalExpression(CCondition);
+		currentStatement = CCondition;
+		CCondition = parseStatement("expression-list");
 		tmpScope = false;
 		
 		if (tokens->at(index).value == "}")
@@ -4997,6 +5053,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	{
 		decStatement->array = true;
 		popToken();
+		//@TODO: only int can be array ?
 		if (getToken().type == "int")
 		{
 			stringstream SS;
