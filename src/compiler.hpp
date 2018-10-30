@@ -74,6 +74,8 @@ class compiler
 		
 		int		writeDepedency(idInfo&, int);
 		void	printStatement(statement* stmt, int indent);
+
+		static bool compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2);
 		
 		
 	private:

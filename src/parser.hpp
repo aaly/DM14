@@ -45,10 +45,7 @@ class includePath
 		std::string library;
 		sourceFileType includeType;
 		
-		includePath()
-		{
-
-		}
+		includePath(){}
 
 		includePath(const std::string& package, const std::string& library, const includePath::sourceFileType includeType)
 		{
@@ -57,7 +54,15 @@ class includePath
 			this->includeType = includeType;
 		}
 
-		
+		bool operator==(const includePath& other) const
+	    {
+    	    if(package == other.package &&
+				library == other.library)
+			{
+			    return true;
+			}
+			return false;
+    	}
 };
 
 class mapcode
@@ -179,7 +184,7 @@ class parser
 		statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
 		//statement*					parseConditionalExpression(statement* stmt);
 		statement*					parseForloop();
-		statement*					parseIF();
+		statement*					parseIf();
 		statement*					parseWhile();
 		statement*					parseCase();
 		statement*					parseMatrixIndex();

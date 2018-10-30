@@ -679,14 +679,14 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
 												  {"link-statement",EXPANSION_TOKEN, &parser::parseLink},
 												  {"struct",EXPANSION_TOKEN, &parser::parseStruct},
-												  {"if-list",EXPANSION_TOKEN}, /** if [expr] {} else if[] {} else {} */
+												  {"if-list",EXPANSION_TOKEN, &parser::parseIf}, /** if [expr] {} else if[] {} else {} */
 												  {"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
-												  {"reset-statement",EXPANSION_TOKEN},
+												  {"reset-statement",EXPANSION_TOKEN, &parser::parseReset},
 												  {"setnode-statement",EXPANSION_TOKEN},
 												  {"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { statements } */
 												  //{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
 												  //{"addparent-statement",EXPANSION_TOKEN},
-												  {"thread-list",EXPANSION_TOKEN},
+												  {"thread-statement",EXPANSION_TOKEN, &parser::parseThread},
 												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 												  {"return-list",EXPANSION_TOKEN, &parser::parseReturn},
 												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
@@ -901,6 +901,10 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													{"expression",EXPANSION_TOKEN}}},
 						   {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN}}}};
 	/** the thread statement */
+
+	EBNF["thread-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread-list",EXPANSION_TOKEN},
+													 {";",TERMINAL_TOKEN}}}};
+
 	EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread",KEYWORD_TOKEN},
 													 {"function-call",EXPANSION_TOKEN}}}};
 	
@@ -1357,9 +1361,10 @@ statement* parser::parseSetNode()
 statement* parser::parseReset()
 {
 	resetStatement* rs = new resetStatement();
+	popToken(); // reset
 	if (!peekToken(";"))
 	{
-		nextIndex();
+		popToken();
 		int cindex = index;
 		rs->count = parseOpStatement(cindex, (reachToken(";", true, true, true, false, false) - 1), getType(index-1), 0, rs);
 	}
@@ -2078,7 +2083,6 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 
 	
 	popToken();
-
 	RequireType("identifier", "Invalid function declaration", false);
 	
 	funcInfo Funcinfo;
@@ -2120,6 +2124,10 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 				Funcinfo.parameters->push_back(pair<string,bool>(Id.type,stmt->value));
 			}
 		}
+	}
+	else
+	{
+		popToken(); // ->
 	}
 	
 	RequireValue("->", "Expected \"->\" and not "+getToken().value + " after function definition ", false);
@@ -3506,18 +3514,6 @@ bool mapcode::setHeader(bool set)
 	return set;
 };
 
-/*statement* parser::parseConditionalExpression(statement* caller)
-{
-	popToken();
-	RequireValue("[", "Expected [ and not : ", true);
-	int from = 0;
-	int to = reachToken("]", false, true, false, true, true)-1;
-	statement* result = parseOpStatement(from, to, "-2", 0, caller);
-	result->line = getToken().lineNumber;
-	popToken();
-	return result;
-}*/
-
 int parser::increaseScope(statement* stmt)
 {
 	if(stmt)
@@ -3536,20 +3532,20 @@ int parser::decreaseScope()
 
 statement* parser::parseThread()
 {
+	popToken(); //thread
 	threadStatement* thread = new threadStatement();
-	
 	currentStatement = thread;
-		
+
 	stringstream SS;
-	SS << (tokens->at(index)).columnNumber << (tokens->at(index)).lineNumber;	// Number of character on the current line
+	SS << getToken().columnNumber << getToken().lineNumber;	// Number of character on the current line
 	thread->Identifier = SS.str();
 	
 	if(parentStatement && (parentStatement->statementType ==  fLoop || parentStatement->statementType == wLoop))
 	{
-		displayWarning(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Thread call inside a loop ! careful ");
+		displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Thread call inside a loop ! careful ");
 	}
 	
-	nextIndex();
+	//popToken();
 	int from = index;
 	
 	statement* stmt = parseStatement("statement");
@@ -3608,10 +3604,7 @@ statement* parser::parseThread()
 }
 
 
-
-
-
-statement* parser::parseIF()
+statement* parser::parseIf()
 {
 	// if [ cond ] { statements } else {}
 	popToken(); //if	
@@ -3620,7 +3613,6 @@ statement* parser::parseIF()
 	If->scope = scope;
 	
 	increaseScope(If);
-
 
 	tmpScope = true;
 	popToken(); //[
@@ -3642,18 +3634,16 @@ statement* parser::parseIF()
 		If->body->push_back(stmt);
 		popToken();
 	}
-
 	
-	while ( peekToken("else") )
+	while (peekToken("else"))
 	{
-		nextIndex();
-		if ( peekToken("if") )
+		popToken(); //else
+		if (peekToken("if"))
 		{
-			nextIndex();
-			//nextIndex();
+			popToken(); //if
 			
 			IF* elseIf = new IF;
-			elseIf->line = (tokens->at(index)).lineNumber;
+			elseIf->line = getToken().lineNumber;
 			elseIf->scope = scope;
 			
 			tmpScope = true;
@@ -3662,31 +3652,31 @@ statement* parser::parseIF()
 			elseIf->condition = parseStatement("expression-list");
 			tmpScope = false;
 			
-			//nextIndex();
+			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
-			nextIndex();
 			
-			while (tokens->at(index).value != "}")
+			popToken();
+			while (getToken().value != "}")
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				elseIf->body->push_back(stmt);
-				nextIndex();
+				popToken();
 			}
 			If->elseIF->push_back(elseIf);
 		}
 		else
 		{
-			nextIndex();
+			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
-			nextIndex();
 			
-			while (tokens->at(index).value != "}")
+			popToken();
+			while (getToken().value != "}")
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				If->ELSE->push_back(stmt);
-				nextIndex();
+				popToken();
 			}
 		}
 		//nextIndex();

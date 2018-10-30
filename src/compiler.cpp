@@ -132,7 +132,6 @@ uint32_t compiler::addIncludePath(const std::string& path)
 int compiler::setgccPath(const std::string& gccpath)
 {
 	gccPath = gccpath;
-	
 	return 0;
 };
 
@@ -164,6 +163,34 @@ int compiler::writeLine(const std::string& output)
 	
 	return 0;
 };
+
+bool compiler::compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2)
+{
+	if(include1.package == include2.package &&
+		include1.library == include2.library)
+		{
+			cerr << include1.package << ":" << include2.package  << endl;
+			cerr << include1.library << ":" << include2.library  << endl;
+			cerr << "true" << endl;
+			return true;
+		}
+		cerr << include1.package << ":" << include2.package  << endl;
+		cerr << include1.library << ":" << include2.library  << endl;
+		cerr << "false" << endl;
+		return false;
+}
+
+void remove(std::vector<DM14::parser::includePath> &v)
+{
+	auto end = v.end();
+	for (auto it = v.begin(); it != end; ++it) {
+		end = std::remove(it + 1, end, *it);
+	}
+
+	v.erase(end, v.end());
+}
+
+
 
 int compiler::compile()
 {
@@ -251,7 +278,9 @@ int compiler::compile()
 			//incs.push_back(DM14::parser::includePath("core", "Node", DM14::parser::includePath::sourceFileType::LIBRARY));
 			incs.push_back(DM14::parser::includePath("core", "message", DM14::parser::includePath::sourceFileType::LIBRARY));
 			incs.push_back(DM14::parser::includePath("io", "string", DM14::parser::includePath::sourceFileType::LIBRARY));
-				
+
+			remove(incs);
+			
 			for (unsigned int i =0; i < incs.size(); i++)
 			{
 				std::string headerName;
@@ -376,7 +405,7 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	Array<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
+	std::vector<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
 	for (unsigned int i =0; i < incs.size(); i++)
