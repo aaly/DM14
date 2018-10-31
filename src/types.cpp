@@ -32,6 +32,7 @@ keywords.push_back("return");
 keywords.push_back("distribute");
 keywords.push_back("reset");
 keywords.push_back("addparent");
+keywords.push_back("struct");
 keywords.push_back("setnode");
 keywords.push_back("backprop");
 keywords.push_back("channel");

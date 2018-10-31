@@ -29,7 +29,7 @@ namespace DM14::parser
 {
 
 
-#define PARSER_EBNF_SHOW_TRACE 1
+#define PARSER_EBNF_SHOW_TRACE 0
 
 int parser::pushToken(token tok)
 {
@@ -397,8 +397,10 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 
 			if(ebnf_token.tokenType == DATATTYPE_TOKEN)
 			{
+				std::cerr << "!got type :  " << ebnf_token.expansion << std::endl;
 				if (input_tokens->at(*input_tokens_index).type == ebnf_token.expansion)
 				{
+					std::cerr << "got type :  " << ebnf_token.expansion << std::endl;
 					result.first = 0;
 				}
 			}
@@ -418,6 +420,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
 					if (std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
 					{
+						cerr << input_tokens->at(*input_tokens_index).value << "==" <<  ebnf_token.expansion << endl << flush;
 						result.first = 0;
 					}
 				}
@@ -512,7 +515,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					}
 
 					
-					//displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
+					displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 					//cerr << EBNF_level << endl << flush;
 					
 					result.second = (this->*ebnf_token.callback)();
@@ -674,11 +677,11 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
 
 	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
-												  {"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
+												  {"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
 												  {"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
 												  {"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
-												  {"link-statement",EXPANSION_TOKEN, &parser::parseLink},
-												  {"struct",EXPANSION_TOKEN, &parser::parseStruct},
+												  {"link-list",EXPANSION_TOKEN, &parser::parseLink},
+												  {"struct-list",EXPANSION_TOKEN, &parser::parseStruct},
 												  {"if-list",EXPANSION_TOKEN, &parser::parseIf}, /** if [expr] {} else if[] {} else {} */
 												  {"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
 												  {"reset-statement",EXPANSION_TOKEN, &parser::parseReset},
@@ -713,7 +716,12 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 														   {"endextern",KEYWORD_TOKEN}}}};
 
 	/** the link statement */
-	EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"(link)|(slink)",REGEX_TOKEN},
+	EBNF["link-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"link-statement",EXPANSION_TOKEN},
+														   {"slink-statement",EXPANSION_TOKEN}}}};
+
+	EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"link",KEYWORD_TOKEN},
+														   {"string",DATATTYPE_TOKEN}}}};
+	EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"slink",KEYWORD_TOKEN},
 														   {"string",DATATTYPE_TOKEN}}}};
 
 	/** the distribute statement */
@@ -734,15 +742,16 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 											   {"expression",EXPANSION_TOKEN}}},
 					{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN}}}};
 	/** the struct statement */
-	EBNF["struct"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",KEYWORD_TOKEN},
+	EBNF["struct-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",KEYWORD_TOKEN},
 												{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
-												{"struct-definition",EXPANSION_TOKEN}}}};
-												
-	EBNF["struct-definition"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{";",TERMINAL_TOKEN}}},
-								 {GRAMMAR_TOKEN_AND_ARRAY ,{{"{",TERMINAL_TOKEN},
+												{"struct-body",EXPANSION_TOKEN}}}};
+
+	EBNF["struct-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{";",TERMINAL_TOKEN},
+														   {"struct-definition",EXPANSION_TOKEN}}}};											
+	EBNF["struct-definition"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"{",TERMINAL_TOKEN},
 														    {"struct-declaration-list",EXPANSION_TOKEN},
 														    {"}",TERMINAL_TOKEN}}}};
-	EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE_ARRAY ,{{"declaration-list",EXPANSION_TOKEN}}}};
+	EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN}}}};
 	
 	/** the for loop statement */
 	
@@ -2024,7 +2033,6 @@ statement* parser::parseForloop()
 	}
 	
 	popToken();
-
 	decreaseScope();
 		
 	return floop;
@@ -3688,37 +3696,22 @@ statement* parser::parseIf()
 
 statement* parser::parseStruct()
 {
-	nextIndex();
+	popToken(); //struct
 	
 	DatatypeBase Struct;
 	//Struct.templateNames = templateNames;
 	
-	if((tokens->at(index)).type != "identifier")
-	{
-		displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"expected struct identifier");
-	}
-	else
-	{
-		
-		Struct.setID((tokens->at(index)).value);
-	}
+	popToken(); // id
+	Struct.setID(getToken().value);
 	
-	nextIndex();
+	popToken();
 	RequireValue("{", "Expected { and not : ", true);
-	nextIndex();
-	
-	//FIX the wile condition
-	while((tokens->at(index)).value != "}")
+
+	while(!peekToken("}"))
 	{
-		
-		if((tokens->at(index)).type != "identifier")
-		{
-			displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"expected struct member identifier");
-		}
-		declareStatement* stmt = (declareStatement*)parseDeclaration();
-		
-		//extract members ....
-		
+		declareStatement* stmt = (declareStatement*)parseStatement("statement");
+		//declareStatement* stmt = (declareStatement*)parseDeclaration();
+		//extract members ....	
 		for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
 		{
 			funcInfo finfo;
@@ -3728,11 +3721,13 @@ statement* parser::parseStruct()
 			finfo.name = stmt->identifiers->at(i).name;
 			Struct.memberVariables.push_back(finfo);
 		}
-		nextIndex();
+		//popToken();
 	}
 	
-	//nextIndex();
+	popToken();	
 	RequireValue("}", "Expected } and not : ", true);
+
+	std::cerr << "Done struct" << std::endl << std::flush;
 
 	Struct.addOperator("=");
 	Struct.addOperator(".");
@@ -3742,7 +3737,9 @@ statement* parser::parseStruct()
 	datatypes.push_back(Struct);
 	mapcodeDatatypes.push_back(Struct);
 	
-	return NULL;
+	//return new NOPStatement;
+	//return nullptr;
+	return (statement*)this;
 }
 
 statement* parser::parseExtern()
