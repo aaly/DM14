@@ -26,6 +26,7 @@ keywords.push_back("while");
 keywords.push_back("for");
 keywords.push_back("case");
 keywords.push_back("if");
+keywords.push_back("else");
 keywords.push_back("break");
 keywords.push_back("continue");
 keywords.push_back("return");
@@ -50,12 +51,12 @@ keywords.push_back("global");
 
 Operators.push_back(make_pair("\\",GENERALOPERATOR));
 Operators.push_back(make_pair(">",BINOPERATOR));
-Operators.push_back(make_pair(">>",GENERALOPERATOR));
+Operators.push_back(make_pair(">>",BINOPERATOR));
 Operators.push_back(make_pair("<",BINOPERATOR));
-Operators.push_back(make_pair("<<",GENERALOPERATOR));
+Operators.push_back(make_pair("<<",BINOPERATOR));
 Operators.push_back(make_pair("<-",GENERALOPERATOR));
-Operators.push_back(make_pair("->",GENERALOPERATOR));
-Operators.push_back(make_pair(".",GENERALOPERATOR));
+Operators.push_back(make_pair("->",BINOPERATOR));
+Operators.push_back(make_pair(".",BINOPERATOR));
 Operators.push_back(make_pair("?",GENERALOPERATOR));
 Operators.push_back(make_pair("~",GENERALOPERATOR));
 Operators.push_back(make_pair(":",GENERALOPERATOR));
@@ -94,10 +95,7 @@ Operators.push_back(make_pair("::",BINOPERATOR));
 Operators.push_back(make_pair("%",BINOPERATOR));
 Operators.push_back(make_pair("++",SINGLEOPERATOR));
 Operators.push_back(make_pair("--",SINGLEOPERATOR));
-//Operators.push_back(make_pair("@",SINGLEOPERATOR));
-//Operators.push_back(make_pair("@",BINOPERATOR));
 Operators.push_back(make_pair("@",COREOPERATOR));
-//Operators.push_back(make_pair("@",GENERALOPERATOR));
 
 
 
@@ -272,14 +270,14 @@ return 0;
 
 bool isWhiteSpace(const char& ch)
 {
-	return ( (ch == ' ' || ch == '\t') ? true : false );
+	return ((ch == ' ' || ch == '\t') ? true : false );
 };
 
 
 bool isNewLine(const char& ch)
 {
 	//FIX105 add peek for /r/n for windows ?
-	return ( (ch == '\n' || ch == '\r') ? true : false );
+	return ((ch == '\n' || ch == '\r') ? true : false );
 };
 
 bool isWhite(const char& ch)
@@ -289,27 +287,27 @@ bool isWhite(const char& ch)
 
 bool isNumber(const char& ch)
 {
-	return ( ( ch >= '0' ) &&  ( ch <= '9' ) ? true : false);
+	return (( ch >= '0' ) &&  ( ch <= '9' ) ? true : false);
 };
 
 bool isLetter(const char& ch)
 {
 	Op.clear();
 	Op = ch;
-	return ( ( !isNewLine(ch) && !isWhiteSpace(ch) && !isNumber(ch) && !isOperator(Op)) ? true : false);
+	return (( !isNewLine(ch) && !isWhiteSpace(ch) && !isNumber(ch) && !isOperator(Op)) ? true : false);
 };
 
 bool isString(const string& str)
 {
 	
-	return ( ( !isOperator(str) && !isKeyword(str) && !isDataType(str) ) ? true : false);
+	return (( !isOperator(str) && !isKeyword(str) && !isDataType(str)) ? true : false);
 };
 
 bool isKeyword(const string& str)
 {
-	for ( unsigned int i =0; i<keywords.size(); i++ )
+	for (unsigned int i =0; i<keywords.size(); i++)
 	{
-		if ( str == keywords.at(i) )
+		if (str == keywords.at(i) )
 		{
 			return true;
 		}
@@ -320,7 +318,7 @@ bool isKeyword(const string& str)
 
 bool isDataType(const string& type)
 {
-	for ( unsigned int i = 0; i<datatypes.size(); i++ )
+	for (unsigned int i = 0; i<datatypes.size(); i++)
 	{
 		if (datatypes.at(i).typeID == type)
 		{
@@ -353,9 +351,9 @@ bool isDataType(const string& type)
 
 bool isbinOperator(const string& str)
 {
-	for ( unsigned int i =0; i < Operators.size(); i++ )
+	for (unsigned int i =0; i < Operators.size(); i++)
 	{
-		if ( str == Operators.at(i).first)
+		if (str == Operators.at(i).first)
 		{
 			if(Operators.at(i).second == BINOPERATOR)
 			{
@@ -368,9 +366,9 @@ bool isbinOperator(const string& str)
 
 bool isSingleOperator(const string& str)
 {
-	for ( unsigned int i =0; i < Operators.size(); i++ )
+	for (unsigned int i =0; i < Operators.size(); i++)
 	{
-		if ( str == Operators.at(i).first )
+		if (str == Operators.at(i).first)
 		{
 			if(Operators.at(i).second == SINGLEOPERATOR)
 			{
@@ -384,7 +382,7 @@ bool isSingleOperator(const string& str)
 
 bool isCoreOperator(const string& str)
 {
-	for ( unsigned int i =0; i < Operators.size(); i++ )
+	for (unsigned int i =0; i < Operators.size(); i++)
 	{
 		if ( str == Operators.at(i).first )
 		{

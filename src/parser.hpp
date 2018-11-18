@@ -104,6 +104,7 @@ typedef enum
 	EXPANSION_TOKEN,
 	SINGLE_OP_TOKEN,
 	CORE_OP_TOKEN,
+	OP_TOKEN,
 	BINARY_OP_TOKEN,
 	IMMEDIATE_TOKEN,
 	KEYWORD_TOKEN,
@@ -146,7 +147,7 @@ typedef struct
 }
 grammar_rule_t;
 
-typedef std::unordered_map <std::string, std::vector<grammar_rule_t> > EBNF_map_t;
+typedef std::map <std::string, std::vector<grammar_rule_t>> EBNF_map_t;
 
 typedef std::pair<int, statement*> ebnfResult;
 
@@ -179,7 +180,7 @@ class parser
 		statement*					parseFunction();
 		statement*					parseStruct();
 		statement*					parseDeclaration();
-		statement*					parseDeclarationInternal(const string& terminal = ";");
+		statement*					parseDeclarationInternal();
 		statement*					parseFunctionCall();
 		statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
 		//statement*					parseConditionalExpression(statement* stmt);
@@ -192,10 +193,12 @@ class parser
 		//DatatypeBase				parseClass();
 		statement*					parseExtern();
 		statement*					parseLink();
-		statement*					parseStatement(const std::string starting_rule);
+		statement*					parseStatement(const std::string starting_rule, parser_callback custom_callback = nullptr);
 		statement*					parseDistribute();
 		statement*					parseReset();
 		statement*					parseSetNode();
+		statement*					parseContinue();
+		statement*					parseBreak();
 		statement*					parseAddParent();
 		statement*					parseThread();
 		statement*					parseExpressionStatement();
@@ -210,6 +213,7 @@ class parser
 		int							reachToken(const string&,const bool&, const bool&, const bool&, const bool&, const bool&);
 		bool						peekToken(const string&);
 		token						peekToken(const int&);
+		std::string 				getOpStatementType(std::string stmtType, const std::string& classID);
 		
 		int extractSplitStatements(Array<statement*>* array, Array<statement*>* splitStatements);
 		
@@ -294,6 +298,7 @@ class parser
 			int removeToken();
 			Array<token> tokens_stack;
 			token popToken();
+			token popToken(const uint32_t index);
 			token getToken();
 			token getToken(const uint32_t index);
 
@@ -356,6 +361,10 @@ class parser
 			
 			long parseCClass(scanner* scner, uint32_t start, const Array<string>& templateName);
 			funcInfo parseCFunction(scanner* scner, uint32_t start, const DatatypeBase& parentClass);
+
+			bool restore(std::vector<token>*);
+			std::vector<token>* extract(int32_t from, int32_t to);
+			//std::vector<token>* extract_temp_vector;
 
 
 };

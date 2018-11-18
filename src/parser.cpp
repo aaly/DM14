@@ -21,14 +21,10 @@ to accomplish some goals.
 @TODO: xa["x"] = 10; if xa is a map only .... and map key type is "x"
 */
 
-
 #include "parser.hpp"
-
 
 namespace DM14::parser
 {
-
-
 #define PARSER_EBNF_SHOW_TRACE 0
 
 int parser::pushToken(token tok)
@@ -38,6 +34,23 @@ int parser::pushToken(token tok)
 		working_tokens->push_back(tok);
 	}
 	return working_tokens->size();
+}
+
+
+token parser::popToken(const uint32_t index)
+{
+	if(working_tokens->size() > 0)
+	{
+		current_token = working_tokens->at(index);
+		working_tokens->remove(index);
+	}
+	else
+	{
+		displayError("Empty pop !!!");
+		current_token = token();
+	}
+	
+	return current_token;
 }
 
 token parser::popToken()
@@ -161,7 +174,7 @@ int parser::advance_EBNFindex(uint16_t steps)
 	{
 		if(*input_tokens_index < input_tokens->size())
 		{
-			cerr << "Pushing :  " << input_tokens->at(*input_tokens_index).value << endl;
+			//cerr << "Pushing :  " << input_tokens->at(*input_tokens_index).value << endl;
 			pushToken(input_tokens->at(*input_tokens_index));
 			++*input_tokens_index;
 		}
@@ -179,7 +192,7 @@ int parser::deadvance_EBNFindex(uint16_t steps)
 	{
 		if(input_tokens->size())
 		{
-			cerr << "Removing :  " << working_tokens->at(working_tokens->size()-1).value << endl;
+			//cerr << "Removing :  " << working_tokens->at(working_tokens->size()-1).value << endl;
 			removeToken();
 			--*input_tokens_index;
 		}
@@ -384,7 +397,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			int token_old_index = *input_tokens_index; // used for ONLY_ONE rules
 			
 			/** process the invidual token first */
-
+			ebnfResult previous_result = result;
 			result.first = 1; /** initial value assumes error , prove otherwise */
 
 			
@@ -397,10 +410,8 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 
 			if(ebnf_token.tokenType == DATATTYPE_TOKEN)
 			{
-				std::cerr << "!got type :  " << ebnf_token.expansion << std::endl;
 				if (input_tokens->at(*input_tokens_index).type == ebnf_token.expansion)
 				{
-					std::cerr << "got type :  " << ebnf_token.expansion << std::endl;
 					result.first = 0;
 				}
 			}
@@ -420,7 +431,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
 					if (std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
 					{
-						cerr << input_tokens->at(*input_tokens_index).value << "==" <<  ebnf_token.expansion << endl << flush;
+						//cerr << input_tokens->at(*input_tokens_index).value << "==" <<  ebnf_token.expansion << endl << flush;
 						result.first = 0;
 					}
 				}
@@ -452,9 +463,11 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
 			{
+				//cerr << "IMMEDIATE?? :::::::::::::: " << input_tokens->at(*input_tokens_index).value << endl;
 				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) &&
 				    isImmediate(input_tokens->at(*input_tokens_index)))
 				{
+					//cerr << "IMMEDIATE :::::::::::::: " << input_tokens->at(*input_tokens_index).value << endl;
 					result.first = 0;
 				}
 			}
@@ -473,6 +486,14 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					result.first = 0;
 				}
 			}
+			else if(ebnf_token.tokenType == OP_TOKEN)
+			{
+				if(DM14::types::isOperator(input_tokens->at(*input_tokens_index).value) &&
+					input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
+				{
+					result.first = 0;
+				}
+			}
 			else
 			{
 				displayError(" ERROR : unknown grammar token type");
@@ -484,7 +505,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(old_successful_depth < depth)
 				{
 					old_successful_depth = depth;
-					std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+					//std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
 				}
 
 				#if PARSER_EBNF_SHOW_TRACE == 1
@@ -498,11 +519,11 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				
 				if(ebnf_token.tokenType == EXPANSION_TOKEN && ebnf_token.callback && verify_only == false)
 				{
-					for(uint32_t i =0; i < working_tokens->size(); i++)
+					/*for(uint32_t i =0; i < working_tokens->size(); i++)
 					{
 						cerr << "|||" << working_tokens->at(i).value << endl;
-					}
-					
+					}*/
+
 					Array<token> tempTokenStack;
 					for(uint32_t i =0; i < old_tokens_size; i++)
 					{
@@ -528,7 +549,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					for(uint32_t i =0; i < tempTokenStack.size(); i++)
 					{
 						pushToken(tempTokenStack.at(i));
-					}					
+					}
 				}
 			}
 			else
@@ -536,13 +557,19 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(old_depth < depth)
 				{
 					old_depth = depth;
-					std::cerr << "Update fail map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+					//std::cerr << "Update fail map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
 				}	
 				#if PARSER_EBNF_SHOW_TRACE == 1
 				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
 				#endif
 				int diff = *input_tokens_index - token_old_index;
 				deadvance_EBNFindex(diff);
+			}
+
+
+			if (*input_tokens_index >= input_tokens->size()) // break the zero or more cycle
+			{
+				continue_searching_rules = false;
 			}
 			
 			/** process the current grammar rule type*/
@@ -575,11 +602,12 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				if(result.first == 0)
 				{
+					previous_result = result;
 					--k;
 				}
 				else
 				{
-					result.first= 0;
+					result = previous_result;
 					continue_searching_rules = false;
 				}
 			}
@@ -587,11 +615,12 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			{
 				if(result.first == 0)
 				{
+					previous_result = result;
 					--k;
 				}
 				else
 				{
-					result.first = 0;
+					result = previous_result;
 					continue_searching_rules = false;
 				}
 			}
@@ -605,6 +634,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				{
 					continue_searching_rules = false;
 				}
+				//continue_searching_rules = false;
 				break;
 			}
 			else
@@ -692,8 +722,10 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 												  {"thread-statement",EXPANSION_TOKEN, &parser::parseThread},
 												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 												  {"return-list",EXPANSION_TOKEN, &parser::parseReturn},
-												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
+												  {"break-statement",EXPANSION_TOKEN, &parser::parseBreak},
+												  {"continue-statement",EXPANSION_TOKEN, &parser::parseContinue},
 												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
+												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
 												  }}};
 
 	/** the with statement */
@@ -727,19 +759,27 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	/** the distribute statement */
 	EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",KEYWORD_TOKEN},
 												{";",TERMINAL_TOKEN}}}};
+
+	/** the break statement */
+	EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"break",KEYWORD_TOKEN},
+												{";",TERMINAL_TOKEN}}}};
+
+	/** the continue statement */
+	EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"continue",KEYWORD_TOKEN},
+												{";",TERMINAL_TOKEN}}}};
 												
 	/** the reset statement */
 	EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
 	EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN},
-											   {"expression",EXPANSION_TOKEN}}},
+											   {"full-expression-list",EXPANSION_TOKEN}}},
 					{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}}}};
 	
 	/** the setnode statement */
 	EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode-expr",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
 	EBNF["setnode-expr"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN},
-											   {"expression",EXPANSION_TOKEN}}},
+											   {"full-expression-list",EXPANSION_TOKEN}}},
 					{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN}}}};
 	/** the struct statement */
 	EBNF["struct-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",KEYWORD_TOKEN},
@@ -766,7 +806,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
 																	{";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 																	
-	EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"logical-expression-list",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+	EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
 																   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 	
 	EBNF["logical-expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression",EXPANSION_TOKEN},
@@ -779,17 +819,13 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																 {".*",IMMEDIATE_TOKEN}}}};
 
+	EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+																   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 
-	EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"loop-expression-step",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
-	
-	EBNF["loop-expression-step"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
-															   {".*",SINGLE_OP_TOKEN}}},
-									{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",SINGLE_OP_TOKEN},
-															   {"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN}}}};
 	/** the if statement */
 	EBNF["if-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"if",KEYWORD_TOKEN},
 												  {"[",TERMINAL_TOKEN},
-												  {"logical-expression",EXPANSION_TOKEN},
+												  {"full-expression-list",EXPANSION_TOKEN},
 												  {"]",TERMINAL_TOKEN},
 												  {"compound-statement",EXPANSION_TOKEN},
 												  {"elseif-list",EXPANSION_TOKEN},
@@ -797,18 +833,18 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 
 	EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"elseif-statement",EXPANSION_TOKEN}}}};
 	
-	EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",KEYWORD_TOKEN},
+	EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"else",KEYWORD_TOKEN},
 														{"if-list",EXPANSION_TOKEN}}}};
 
 	EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"else-statement",EXPANSION_TOKEN}}}};
 	
-	EBNF["else-statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"else",KEYWORD_TOKEN},
+	EBNF["else-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"else",KEYWORD_TOKEN},
 														{"compound-statement",EXPANSION_TOKEN}}}};
 	/** the while loop statement */
 	EBNF["while-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"while",KEYWORD_TOKEN},
 												  {"[",TERMINAL_TOKEN},
 												  //{"logical-expression",EXPANSION_TOKEN},
-												  {"expression",EXPANSION_TOKEN},
+												  {"full-expression-list",EXPANSION_TOKEN},
 												  {"]",TERMINAL_TOKEN},
 												  {"compound-statement",EXPANSION_TOKEN}}}};
 	
@@ -818,7 +854,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 
 	/** the variables declaration list */
 	EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN},
-														   {"declaration-statement",EXPANSION_TOKEN}}}};
+														{"declaration-statement",EXPANSION_TOKEN}}}};
 	
 	EBNF["declaration-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 														   {"declaration-dataflow-specifier",EXPANSION_TOKEN},
@@ -827,15 +863,9 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 														   {"declaration-datatype-list",EXPANSION_TOKEN},
 														   {"declaration-index-list",EXPANSION_TOKEN},
 														   {"declaration-value-list",EXPANSION_TOKEN}}}};
-														   													   
-	EBNF["declaration-full-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
-														   {"declaration-dataflow-specifier",EXPANSION_TOKEN},
-														   {"declaration-dist-specifiers-list",EXPANSION_TOKEN},
-														   {"declaration-global-specifier",EXPANSION_TOKEN},
-														   {"declaration-datatype-list",EXPANSION_TOKEN},
-														   {"declaration-index-list",EXPANSION_TOKEN},
-														   {"declaration-value-list",EXPANSION_TOKEN},
-														   {";",TERMINAL_TOKEN}}}};
+
+	EBNF["declaration-full-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"declaration-statement",EXPANSION_TOKEN},
+																	{";",TERMINAL_TOKEN}}}};
 
 	EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
 
@@ -869,7 +899,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
 	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"=",TERMINAL_TOKEN},
-															{"expression",EXPANSION_TOKEN}}}};
+															{"expression-list",EXPANSION_TOKEN}}}};
 
 	/** the function call statement */
 	
@@ -883,32 +913,43 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	
 	EBNF["function-call-arguments-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"function-call-arguments",EXPANSION_TOKEN}}}};
 	
-	EBNF["function-call-arguments"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN},
+	EBNF["function-call-arguments"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"full-expression-list",EXPANSION_TOKEN},
 																 {",",TERMINAL_TOKEN}}},
-									   {GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN}}}};
+									   {GRAMMAR_TOKEN_AND_ARRAY,{{"full-expression-list",EXPANSION_TOKEN}}}};
 	
-	EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression",EXPANSION_TOKEN},
-													{";",TERMINAL_TOKEN}}}};
+	EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-list",EXPANSION_TOKEN},
+													{";",TERMINAL_TOKEN, &parser::parseExpressionStatement}}}};
 
-	EBNF["expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
-		
-	EBNF["expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"SING_OP",SINGLE_OP_TOKEN},
-													{"variable",EXPANSION_TOKEN}}},
-						{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
-													{"variable",EXPANSION_TOKEN}}},
-						{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
-													{"IMMEDIATE",IMMEDIATE_TOKEN}}},
-						  {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN},
+	EBNF["expression-list"] = {{GRAMMAR_TOKEN_ONE_MORE_ARRAY ,{{"full-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
+
+	EBNF["full-expression-list"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"big-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement},
+													{"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
+													
+	EBNF["big-expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-types",EXPANSION_TOKEN},
+													{"BIN_OP",BINARY_OP_TOKEN},
+													{"expression-types",EXPANSION_TOKEN}}}};
+	EBNF["expression-types"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"big-expression",EXPANSION_TOKEN},
+													{"expression",EXPANSION_TOKEN}}}};
+	EBNF["big-expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"(",OP_TOKEN},
+													{"big-expression-list",EXPANSION_TOKEN},
+													{")",OP_TOKEN}}}};
+	EBNF["expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"(",OP_TOKEN},
+													{"expression",EXPANSION_TOKEN},
+													{")",OP_TOKEN}}},
+							{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN},
+													{"BIN_OP",BINARY_OP_TOKEN},
+													{"expression-types",EXPANSION_TOKEN}}},
+							{GRAMMAR_TOKEN_AND_ARRAY,{{"SING_OP",SINGLE_OP_TOKEN},
+													{"expression-extend",EXPANSION_TOKEN}}},
+							{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
+													{"expression-extend",EXPANSION_TOKEN}}},
+						  	{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN},
 													{"SING_OP",SINGLE_OP_TOKEN}}},
-						  {GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN}}},
-						  {GRAMMAR_TOKEN_AND_ARRAY,{{"IMMEDIATE",IMMEDIATE_TOKEN}}},
-						  {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN},
-													{"BIN_OP",BINARY_OP_TOKEN},
-													{"expression",EXPANSION_TOKEN}}},
-						  {GRAMMAR_TOKEN_AND_ARRAY,{{"IMMEDIATE",IMMEDIATE_TOKEN},
-													{"BIN_OP",BINARY_OP_TOKEN},
-													{"expression",EXPANSION_TOKEN}}},
-						   {GRAMMAR_TOKEN_AND_ARRAY,{{"variable",EXPANSION_TOKEN}}}};
+							{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN}}}};
+
+	EBNF["expression-extend"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"function-call",EXPANSION_TOKEN},
+														 {"variable",EXPANSION_TOKEN},
+						   								  {"IMMEDIATE",IMMEDIATE_TOKEN}}}};
 	/** the thread statement */
 
 	EBNF["thread-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread-list",EXPANSION_TOKEN},
@@ -931,12 +972,13 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 													        {"->",TERMINAL_TOKEN},
 													        {"function-return",EXPANSION_TOKEN},
 													        {")",TERMINAL_TOKEN}}}};
-													        
-	EBNF["function-parameter-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-parameter",EXPANSION_TOKEN}}},
-									   {GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-extra-parameter",EXPANSION_TOKEN}}}};
+
+	EBNF["function-parameter-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-parameters",EXPANSION_TOKEN}}}};
+	EBNF["function-parameters"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"function-parameter",EXPANSION_TOKEN}}},
+									{GRAMMAR_TOKEN_AND_ARRAY ,{{"function-extra-parameter",EXPANSION_TOKEN}}}};
 
 	EBNF["function-extra-parameter"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{",",TERMINAL_TOKEN},
-																  {"function-parameter-list",EXPANSION_TOKEN}}}};															  
+																  {"function-parameter",EXPANSION_TOKEN}}}};															  
 	
 	EBNF["function-parameter"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 														    {"declaration-datatype-list",EXPANSION_TOKEN}}}};
@@ -967,6 +1009,16 @@ parser::~parser()
 	delete diststatementTemp;
 	//delete ExternCodes;
 };
+
+statement* parser::parseContinue()
+{
+	return new continueStatement();
+}
+
+statement* parser::parseBreak()
+{
+	return new breakStatement();
+}
 
 int	parser::parse()
 {
@@ -1249,16 +1301,19 @@ statement* parser::parseReturn()
 	
 	if (!peekToken(";"))
 	{
-		returnstatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
+		//returnstatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
+		returnstatement->retValue = parseStatement("statement");
 	}
-
-	popToken();
-	RequireValue(";","exptected ; and not:", true);
+	else
+	{
+		popToken();
+		RequireValue(";","exptected ; and not:", true);
+	}
 
 	return returnstatement;
 }
 
-statement* parser::parseStatement(const std::string starting_rule)
+statement* parser::parseStatement(const std::string starting_rule, parser_callback custom_callback)
 {
 	statement* retStmt = NULL;
 	increaseScope(retStmt);
@@ -1268,26 +1323,47 @@ statement* parser::parseStatement(const std::string starting_rule)
 	int *temp_input_tokens_index_ptr = input_tokens_index;
 	int temp_input_tokens_index = 0;
 	input_tokens_index = &temp_input_tokens_index;
-	Array<token>* working_tokens2 = new Array<token>();
+	Array<token>* output_tokens = new Array<token>();
 	int working_tokens_size_before = working_tokens->size();
 	
-	ebnfResult result = parseEBNF(working_tokens, starting_rule, working_tokens2);
-	retStmt = result.second;
+	ebnfResult result = parseEBNF(working_tokens, starting_rule, output_tokens, custom_callback != nullptr ? true : false);
+	
 	token errorToken = getToken(0);
-	for (uint32_t i =0; i < temp_input_tokens_index; i++)
+	
+	if(custom_callback != nullptr)
 	{
-		popToken();
+		Array<token>* current_working_tokens = working_tokens;
+		working_tokens = output_tokens;
+		auto output_size = output_tokens->size();
+		retStmt = (this->*custom_callback)();
+		working_tokens = current_working_tokens;
+		for (; output_tokens->size() > 0;)
+		{
+			output_tokens->remove(0);
+		}
+
+		for (; output_size > 0;)
+		{
+			output_size--;
+			popToken();
+		}
+	}
+	else
+	{
+		retStmt = result.second;
+		for(uint32_t i =0; i < temp_input_tokens_index; i++)
+		{
+			popToken();
+		}
 	}
 
-	delete working_tokens2;
+	delete output_tokens;
 	input_tokens_index = temp_input_tokens_index_ptr;
 
-	if (retStmt == NULL)
+	if (retStmt == nullptr)
 	{
 		displayError(fName, errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
 	}
-	
-	
 	
 	pushStatements = true;
 	
@@ -1799,7 +1875,9 @@ int parser::pushModifiedGlobal(idInfo& id)
 
 statement* parser::parseFunctionCall()
 {
+	cerr << "parsing function call" << endl;
 	statement* result = parseFunctionCallInternal(true, "", "");
+	cerr << "end : " << getToken().value << endl;
 	return result;
 }
 
@@ -1832,64 +1910,30 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	}
 	else /** we have parameters ! */
 	{
-		int plevel = 1;
-		int counter = 0;
-		while (++counter)
+
+		while(!peekToken(")"))
 		{
-			if (getToken(counter).value == "(")
+			//TODO: FIX 
+			/*if(terminated)
 			{
-				plevel++;
+				//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
+				parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
 			}
-			else if (getToken(counter).value == ")")
+			else
 			{
-				
-				plevel--;
-				
-				if(plevel ==0)
-				{
-					statement* parameter = nullptr;
-					if(terminated)
-					{
-						//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-						parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
-					}
-					else
-					{
-						//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-						parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
-					}
-					funcCall->parameters->push_back(parameter);
-					parameters->push_back(parameter->type);
-				
-					popToken();
-					break;
-				}
-			}
-			else if (getToken(counter).value == ",")
+				//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+				parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
+			}*/
+			statement* parameter = parseStatement("full-expression-list");
+			funcCall->parameters->push_back(parameter);
+			parameters->push_back(parameter->type);
+			if(peekToken(","))
 			{
-				if (plevel==1)
-				{		
-					if(counter > 1)
-					{
-						if(terminated)
-						{
-							//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-							funcCall->parameters->push_back(parseOpStatement(0, counter-1, "-2", 0, funcCall));
-						}
-						else
-						{
-							//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-							funcCall->parameters->push_back( parseOpStatement(0, counter-1, "-2", 0, currentStatement));
-						}
-						parameters->push_back((funcCall->parameters->at(funcCall->parameters->size()-1))->type);
-						
-						counter = 0;
-						popToken();
-					}
-					continue;
-				}
+				popToken();
 			}
 		}
+
+		popToken(); // )
 	}
 	
 	bool error = true;
@@ -1917,7 +1961,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 		}
 		if (error)
 		{
-			displayError(fName, getToken().lineNumber, getToken().columnNumber,"Parameters error for function call : " + funcCall->name);
+			displayError(fName, getToken().lineNumber, getToken().columnNumber,"1Parameters error for function call : " + funcCall->name);
 		}
 		funcCall->type = currentFunction.returnIDType;
 	}
@@ -1927,11 +1971,18 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 		{
 			if(getFunc(funcCall->name, classID).name.size())
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"return type error [" + returnType + "] for function call : " + funcCall->name);
+				for (uint32_t i =0; i < parameters->size(); i++)
+				{
+					cerr << "parameter: " << parameters->at(0) << endl;
+				}
+				cerr << "SIZE :" << parameters->size() << endl;
+				cerr << "Return type :" << returnType << endl;
+				
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"2Parameters error for function call : " + funcCall->name);
 			}
 			else
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"Parameters error for function call : " + funcCall->name);
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"return type error [" + returnType + "] for function call : [" + funcCall->name + "] expected : " + getFunc(funcCall->name, classID).returnType);
 			}
 		}
 		funcCall->type = getFunc(funcCall->name, parameters, returnType, classID).returnType;
@@ -2070,12 +2121,6 @@ int parser::addStatementDistributingVariables(statement* stmt)
 
 statement* parser::parseFunction() // add functions prototypes to userFunctions Array too :)
 {
-	cerr << "PARSING FUNC" << endl;
-	for (uint32_t i =0; i < working_tokens->size(); i++)
-	{
-		cerr << working_tokens->at(i).value << endl;
-	}
-		
 	// always keep global ids
 	Array<idInfo>* tmpIdentifiers = identifiers;
 	identifiers			= new Array<idInfo>;
@@ -2108,16 +2153,19 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		
 	popToken();
 	RequireValue("(", "Expected \"(\" and not "+ getToken().value + " after function definition ", false);
-		
-	//if (popToken().value != "->")
+
 	if (!peekToken("->"))
 	{
 		while (getToken().value != "->")
 		{
-			//FIX 102
+			//TODO: FIX 102
 			// should make a Array of declaration statements and add the statements to it, for the compiler to parse them
 			// with their initialized values ?
-			declareStatement* stmt = (declareStatement*)parseDeclarationInternal("->");
+			//declareStatement* stmt = (declareStatement*)parseDeclarationInternal("->");
+			//declareStatement* stmt = (declareStatement*)parseStatement("statement");
+			
+			declareStatement* stmt = (declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+			
 			stmt->line = getToken().lineNumber;
 			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
@@ -2131,6 +2179,15 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 				currentFunction.parameters->push_back(Id);
 				Funcinfo.parameters->push_back(pair<string,bool>(Id.type,stmt->value));
 			}
+			
+			if(peekToken(","))
+			{
+				popToken();
+			}
+			else if(peekToken("->"))
+			{
+				popToken();
+			}
 		}
 	}
 	else
@@ -2139,7 +2196,6 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	}
 	
 	RequireValue("->", "Expected \"->\" and not "+getToken().value + " after function definition ", false);
-
 	
 	if (peekToken(")"))
 	{
@@ -2151,7 +2207,10 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	{	
 		while (getToken().value != ")")
 		{
-			declareStatement* stmt = (declareStatement*)parseDeclarationInternal(")");
+			//declareStatement* stmt = (declareStatement*)parseDeclarationInternal();
+			declareStatement* stmt = (declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+			popToken();
+			RequireValue(")", "Expected ) and not "+getToken().value + " after function definition ", false);
 			stmt->line = getToken().lineNumber;
 			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
@@ -2234,66 +2293,65 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		while (!peekToken("}"))
 		{
 			statement* stmt = parseStatement("statement");
-			
-			if(stmt != NULL)
-			{
-				if (stmt->statementType == dStatement)
-				{
-					
-					if (((declareStatement*)stmt)->Initilazed)
-					{
-						declareStatement* decStatement = ((declareStatement*)stmt);
-						statement* value = decStatement->value;
-						decStatement->value = NULL;
-						//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
-						declarations->push_back(decStatement);
-						//functionStatementsCount++;
-						for (uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
-						{
-							//functionStatementsCount++;
-							//fix add type and scope ....
-							operationalStatement* os = new operationalStatement();
-							os->left = new termStatment(decStatement->identifiers->at(i).name);
-							os->op = "=";
-							os->right = value;
-							os->type = stmt->type;
-							os->scope = ((declareStatement*)decStatement)->scope;
-							idInfo id(decStatement->identifiers->at(i).name, os->scope, os->type, NULL);
-							id.distributedScope = distributedScope;
-							id.backProp = (bool)findIDInfo(id, BACKPROB);
-							id.recurrent = (bool)findIDInfo(id, RECURRENT);
-							id.channel = (bool)findIDInfo(id, CHANNEL);
-							id.array = (bool)findIDInfo(id, ARRAY);
-							id.noblock = (bool)findIDInfo(id, NOBLOCK);
-							id.distributed = (bool)findIDInfo(id, DISTRIBUTED);
-							id.type = (bool)findIDInfo(id, TYPE);
-							
-							currentStatement = os;
 
-							pushModified(os->op, id);
-							currentFunction.body->push_back(os);
-							functionStatementsCount++;
-						}
-						
-						statement* stmt2 = currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size()));
-						stmt2->distStatements = stmt->distStatements;
-						stmt->distStatements.clear();
-					}
-					else
+			if(stmt == NULL)
+			{
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"error parsing function : "+Funcinfo.name);
+			}
+
+			if (stmt->statementType == dStatement)
+			{
+				if (((declareStatement*)stmt)->Initilazed && !((declareStatement*)stmt)->global)
+				{
+					declareStatement* decStatement = ((declareStatement*)stmt);
+					statement* value = decStatement->value;
+					decStatement->value = NULL;
+					//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
+					declarations->push_back(decStatement);
+					//functionStatementsCount++;
+					for (uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
 					{
-						declarations->push_back(stmt);
-						//functionStatementsCount++;
+						//fix add type and scope ....
+						operationalStatement* os = new operationalStatement();
+						os->left = new termStatment(decStatement->identifiers->at(i).name);
+						os->op = "=";
+						os->right = value;
+						os->type = stmt->type;
+						os->scope = ((declareStatement*)decStatement)->scope;
+
+						idInfo id(decStatement->identifiers->at(i).name, os->scope, os->type, NULL);
+						id.distributedScope = distributedScope;
+						id.backProp = (bool)findIDInfo(id, BACKPROB);
+						id.recurrent = (bool)findIDInfo(id, RECURRENT);
+						id.channel = (bool)findIDInfo(id, CHANNEL);
+						id.array = (bool)findIDInfo(id, ARRAY);
+						id.noblock = (bool)findIDInfo(id, NOBLOCK);
+						id.distributed = (bool)findIDInfo(id, DISTRIBUTED);
+						id.type = (bool)findIDInfo(id, TYPE);
+						currentStatement = os;
+						pushModified(os->op, id);
+
+						currentFunction.body->push_back(os);
+						functionStatementsCount++;
 					}
+					
+					statement* stmt2 = currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size()));
+					stmt2->distStatements = stmt->distStatements;
+					stmt->distStatements.clear();
 				}
 				else
 				{
-					if (stmt->statementType == rStatement)
-					{
-						currentFunction.body->clearQueue();
-					}
-					currentFunction.body->push_back(stmt);
-					functionStatementsCount++;
+					declarations->push_back(stmt);
 				}
+			}
+			else
+			{
+				if (stmt->statementType == rStatement)
+				{
+					currentFunction.body->clearQueue();
+				}
+				currentFunction.body->push_back(stmt);
+				functionStatementsCount++;
 			}
 		}
 
@@ -2358,7 +2416,6 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	increaseScope(NULL);
 	distributedScope = 0;
 	functionStatementsCount = 0;
-	
 	return NULL;
 };
 
@@ -2575,7 +2632,6 @@ bool parser::isImmediate(const token& tok)
 		tok.type == "char"||
 		tok.type == "bool")
 	{
-		std::cerr << tok.value << " Is immediate  : " << tok.type << std::endl;
 		return true;
 	}
 	return false;
@@ -2672,7 +2728,7 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 statement* parser::parseExpressionStatement()
 {
 	cerr << "parse expression statement" << endl;
-	statement* result = NULL;
+	statement* result = nullptr;
 	
 	if(working_tokens->at(working_tokens->size()-1).value == ";")
 	{
@@ -2682,11 +2738,91 @@ statement* parser::parseExpressionStatement()
 	{
 		result = parseOpStatement(0, working_tokens->size()-1, "-2", scope, parentStatement);
 	}
-	
-	cerr << "done parse expression statement" << endl;
+	cerr << "DONE parse expression statement" << endl;
+
 	return result;
 }
 
+
+std::string parser::getOpStatementType(std::string stmtType, const std::string& classID)
+{
+	std::string type;
+
+	if (stmtType == "NIL")
+	{
+		displayError(fName, getToken().lineNumber, getToken().columnNumber,"Wrong type variable : " + getToken().value);
+	}
+	else if (stmtType == "-2")
+	{
+		if(isFunction(getToken(0).value, true, classID)) /// function, set to it's return type
+		{
+			type  = getFunc(getToken(0).value, classID).returnType;
+		}
+		else if (DM14::types::isDataType(getToken(0).value)) /// if it is  datatype, use it as the statement type
+		{
+			type  = getToken(0).value;
+		}		
+		else if (getToken(0).type == "identifier") // if identifier, then use it's type
+		{
+			type  = findIDType(idInfo(getToken(0).value, 0, "", NULL), classID);
+		}
+		else if (isImmediate(getToken(0)) ) /// use immediate type
+		{
+			type  = getToken(0).type;
+		}
+		/*else if ((DM14::types::isSingleOperator(getToken(0).value) || getToken(0).value == "@") && 0 < to)
+		{
+			if (isImmediate(getToken(0+1)))
+			{
+				type  = getToken(0+1).type;
+			}
+			else if (getToken(0+1).type == "identifier" )
+			{
+				type  = findIDType(idInfo(getToken(0+1).value, 0, "", NULL), classID);
+			}
+			else
+			{
+				displayError(fName, getToken(0).lineNumber,getToken(0).columnNumber,"Did not expect "+ getToken(0).value);
+			}
+		}
+		else
+		{
+			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"Did not expect "+ getToken(0).value);
+		}*/
+	}
+	else
+	{
+		type  = stmtType;
+	}
+
+	return type;
+}
+
+bool parser::restore(std::vector<token>* extract_temp_vector)
+{
+	bool result = true;
+
+	for(uint32_t i =0; i < extract_temp_vector->size(); i++)
+	{
+		pushToken(extract_temp_vector->at(i));
+	}
+	delete extract_temp_vector;
+	return result;
+}
+std::vector<token>* parser::extract(int32_t from, int32_t to)
+{
+	std::vector<token>*  extract_temp_vector = new std::vector<token>();
+	for (uint32_t i = 0; i < from; i++)
+	{
+		extract_temp_vector->push_back(popToken());
+	}
+
+	for (uint32_t i = to+1, current_size = working_tokens->size(); i < current_size; i++)
+	{
+		extract_temp_vector->push_back(popToken(to+1));
+	}
+	return extract_temp_vector;
+}
 statement* parser::parseOpStatement(int32_t from, int32_t to, 
 									const string& stmtType, const int& scopeLevel, statement* caller, 
 									idInfo* parent, const string& parentOp)
@@ -2700,6 +2836,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		classID = parent->type;
 	}
 	
+	bool removeBigParenthes = true;
 	
 	// [ overall check for (s and )s
 	for ( int32_t i= from; i <= to ; i++ )
@@ -2711,6 +2848,14 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		else if (getToken(i).value == ")" )
 		{
 			--plevel;
+		}
+
+		if(plevel == 0)
+		{
+			if (i < to)
+			{
+				removeBigParenthes=false;
+			}
 		}
 	}
 	
@@ -2724,34 +2869,11 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	}
 	
 	// big (..) statement
-	if(getToken(from).value == "("  && getToken(to).value == ")")
+	if(getToken(from).value == "("  && getToken(to).value == ")" && removeBigParenthes)
 	{
-		plevel = 0;
-		bool bigStatement = true;
-		for ( int32_t i= from; i <= to ; i++ )
-		{
-			if (getToken(i).value == "(" )
-			{
-				++plevel;
-			}
-			else if (getToken(i).value == ")" )
-			{
-				--plevel;
-			}
-			
-			if(plevel == 0 && i < to)
-			{
-				bigStatement = false;
-				break;
-			}
-		}
-		
-		if(bigStatement)
-		{
-			popToken();
-			statement* stmt =  parseOpStatement(from, to-2, stmtType, scopeLevel+1, caller);
-			popToken();
-		}
+		popToken();
+		working_tokens->remove(working_tokens->size()-1);
+		return parseOpStatement(0, to-2, stmtType, scopeLevel+1, caller);
 	}
 	// ]
 	
@@ -2762,20 +2884,20 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	opstatement->line = getToken().lineNumber;
 	opstatement->scope = scope;
 	opstatement->scopeLevel = scopeLevel;
-		
+	
+	if(caller)
+	{
+		currentStatement = caller;
+	}
+	else
+	{
+		currentStatement = opstatement;
+	}
+
 	// [ split the opstatement to left and right if there is an operator ;)
 	plevel= 0;
 	for (int32_t i = from; i <= to; i++ )
 	{
-		if(caller)
-		{
-			currentStatement = caller;
-		}
-		else
-		{
-			currentStatement = opstatement;
-		}
-	
 		if (getToken(i).value == "(")
 		{
 			plevel++;
@@ -2791,22 +2913,28 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 		{
 			if ((getToken(i).type == "operator") &&
 			    !(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
-			{		
+			{
 				opstatement->op = getToken(i).value;
-				std::cerr << "Set op to : " << opstatement->op << std::endl;
-				
 				if(i != from) /** not a prefix operator like ++x */
-				{	
+				{
+					auto* temp = extract(from, i-1);
 					opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
+					restore(temp);
+					if(opstatement->left->type.size())
+					{
+						opstatement->type = opstatement->left->type;
+					}
 				}
-								
+		
 				if(i<=to)
 				{
 					to -= i+1;
+					i=0;
 				}
 				from = 0;
+				
 				popToken(); /** pop the op token */
-
+		
 				idInfo* id = NULL;
 				// should we loop inside to get the term ?
 				statement* res = findTreeNode(opstatement->left, tStatement);
@@ -2820,16 +2948,17 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				{
 					if(!id)
 					{
-						displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"false class member !");
+						displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"false class member !");
 					}
 					
-					if(i == to)
+					if(i == to &&
+						 to > 0)
 					{
-						displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"incmplemete data member access !");
+						displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"incomplete data member access at " +  getToken(i).value);
 					}
-
 					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement, id);
 					opstatement->left->type = opstatement->right->type;
+					opstatement->type = opstatement->right->type;
 					
 					//statement* res = findTreeNode(opstatement->right, tStatement);
 					//idInfo* rightID  = ((termStatment*)res)->id;
@@ -2843,23 +2972,19 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				}
 				else if(to > -1)
 				{
-					opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement);
+					opstatement->right = parseOpStatement(from, to, opstatement->type == "" ? stmtType : opstatement->type, opstatement->scopeLevel, currentStatement);
+					if(!opstatement->left)
+					{
+						opstatement->type = opstatement->right->type;
+					}
 				}
 				
-				if(opstatement->left)
-				{
-					opstatement->type = opstatement->left->type;
-				}
-				else if(opstatement->right)
-				{
-					opstatement->type = opstatement->right->type;
-				}
-				else
+				if(opstatement->type.size() == 0)
 				{
 					displayError("could not determine statement type");
 				}
 								
-				if (DM14::types::isbinOperator(opstatement->op))
+				if (DM14::types::isbinOperator(opstatement->op) && to > -1)
 				{
 					if(opstatement->op == "==" || opstatement->op == "||" || opstatement->op == ">" || opstatement->op == ">"
 					 || opstatement->op == ">=" || opstatement->op == "<=" || opstatement->op == "&&")
@@ -2882,6 +3007,8 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					}*/
 					else if (!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
 					{
+						if(opstatement->left)
+						cerr << "left type :" << opstatement->left->type << endl;
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
 					
@@ -3014,59 +3141,33 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	}
 	// ]
 	
-	if(to == -1)
+
+
+	if(getToken(0).value.size() == 0)// consumed all tokens !
 	{
+		displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"Internal parser error !");
 		return opstatement;
 	}
+
 	/** proceed to real statement */
 	/** [ find statement type */
+	string type = getOpStatementType(stmtType, classID);
+	//if(type.size() && !opstatement->type.size())
+	if(type == "")
+	{
+		displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"unable to determine statement type "+ getToken(0).value);
+	}
 
-	if (stmtType == "NIL")
+	if(stmtType!="-2" && stmtType != type)
 	{
-		displayError(fName, getToken().lineNumber, getToken().columnNumber,"Wrong type variable : " + getToken().value);
+		displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"types mismatch ! "+ getToken(0).value);
 	}
-	else if (stmtType == "-2")
+
+	opstatement->type = type;
+
+	if(to == -1 || getToken(0).value.size() == 0)// consumed all tokens !
 	{
-		if(isFunction(getToken(from).value, true, classID))
-		{
-			opstatement->type  = getFunc(getToken(from).value, classID).returnType;
-		}
-		else if (DM14::types::isDataType(getToken(from).value))
-		{
-			opstatement->type  = getToken(from).value;
-		}		
-		else if (getToken(from).type == "identifier")
-		{
-			std::cerr << "We have identifier statement" << std::endl;
-			opstatement->type  = findIDType(idInfo(getToken(from).value, 0, "", NULL), classID);
-		}
-		else if (isImmediate(getToken(from)) )
-		{
-			opstatement->type  = getToken(from).type;
-		}
-		else if ((DM14::types::isSingleOperator(getToken(from).value) || getToken(from).value == "@") && from < to)
-		{
-			if (isImmediate(getToken(from+1)) )
-			{
-				opstatement->type  = getToken(from+1).type;
-			}
-			else if (getToken(from+1).type == "identifier" )
-			{
-				opstatement->type  = findIDType(idInfo(getToken(from+1).value, 0, "", NULL), classID);
-			}
-			else
-			{
-				displayError(fName, getToken(from).lineNumber,getToken(from).columnNumber,"Did not expect "+ getToken(from).value);
-			}
-		}
-		else
-		{
-			displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"Did not expect "+ getToken(from).value);
-		}
-	}
-	else
-	{
-		opstatement->type  = stmtType;
+		return opstatement;
 	}
 	
 	// ]
@@ -3104,17 +3205,15 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			{
 				stmt = parseFunctionCallInternal(false, opstatement->type);
 			}
-			delete opstatement;
 			stmt->distStatements = opstatement->distStatements;
+			delete opstatement;
 			return stmt;
 		}
 		// variable !
 		else
 		{
-			
 			popToken();
 			string variableName = getToken().value;
-			
 			
 			if (DM14::types::isDataType(variableName))
 			{
@@ -3156,12 +3255,8 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			termstatement->identifier = true;
 			termstatement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
 
-			
-			std::cerr << "array Variable statement : " << getToken().value << std::endl;
-
 			if (getToken(0).value == "[")
 			{
-				std::cerr << "array Variable statement2" << std::endl;
 				if (!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
@@ -3171,9 +3266,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				termstatement->arrayIndex = parseStatement("declaration-index-list");
 				aIndex = termstatement->arrayIndex;
 			}
-			
-			std::cerr << "array Variable statement3 : " << getToken(0).value << std::endl;
-				
+							
 			index = origiIndex;
 
 			//idInfo* id = new idInfo(termstatement->term, opstatement->scope, opstatement->type, aIndex);
@@ -3303,7 +3396,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 		if(!DM14::types::classHasMemberFunction(classID, funcID))
 		{
 			return funcInfo();
-		}	
+		}
 		
 		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
@@ -3313,7 +3406,10 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 				{
 					if (datatypes.at(i).memberFunctions.at(k).returnType != returnType && returnType.size())
 					{
-						continue;
+						if (!DM14::types::hasTypeValue(returnType, datatypes.at(i).memberFunctions.at(k).returnType))
+						{
+							continue;
+						}
 					}
 					
 					if(datatypes.at(i).memberFunctions.at(k).name == funcID)
@@ -3323,10 +3419,12 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 							return datatypes.at(i).memberFunctions.at(k);
 						}
 						
-						for ( uint32_t f = 0, l =0; f < datatypes.at(i).memberFunctions.at(k).parameters->size() && l < mparameters->size(); f++, l++)
+						for (uint32_t l =0; l < mparameters->size(); l++)
 						{
-							if(mparameters->at(l) != datatypes.at(i).memberFunctions.at(k).parameters->at(f).first)
+							if(mparameters->at(l) != datatypes.at(i).memberFunctions.at(k).parameters->at(l).first)
 							{
+								cerr << mparameters->at(l) << ":" << datatypes.at(i).memberFunctions.at(k).parameters->at(l).first << endl;
+								cerr << datatypes.at(i).memberFunctions.at(k).name << ":" <<  funcID << endl;
 								break;
 							}
 							
@@ -3337,7 +3435,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 									finfo = datatypes.at(i).memberFunctions.at(k);
 									break;
 								}
-								else if(datatypes.at(i).memberFunctions.at(k).parameters->at(f+1).second)
+								else if(datatypes.at(i).memberFunctions.at(k).parameters->at(l+1).second)
 								{
 									finfo = datatypes.at(i).memberFunctions.at(k);
 									break;
@@ -3363,7 +3461,10 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 		{
 			if (functionsInfo->at(i).returnType != returnType && returnType.size())
 			{
-				continue;
+				if (!DM14::types::hasTypeValue(returnType, functionsInfo->at(i).returnType))
+				{
+					continue;
+				}
 			}
 			
 			if ((functionsInfo->at(i)).name == funcID)
@@ -3552,31 +3653,28 @@ statement* parser::parseThread()
 	{
 		displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Thread call inside a loop ! careful ");
 	}
+	//@TODO: fix checking the parameters to be global only
 	
-	//popToken();
-	int from = index;
-	
-	statement* stmt = parseStatement("statement");
-	
-	for (int32_t i= from; i <= index; i++)
+	/*
+	for (int32_t i= 0; i < working_tokens->size(); i++)
 	{
-		string parent = "";
+		string parent;
 		
-		if(i-2 >= tokens->size())
+		if(getToken(1).value == ".")
 		{
-			if(peekToken(i-1).value == ".")
-			{
-				parent = peekToken(i-2).value;
-			}
+			parent = getToken(0).value;
 		}
+		
 		
 		if (tokens->at(i).type == "identifier" && findID(tokens->at(i).value, parent).name.size() && !findIDInfo(idInfo((tokens->at(i)).value, 0, "", NULL), GLOBAL))
 		{
-			displayError(fName, (tokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"Only global variables are allowed to be passed to a thread call ! , " + tokens->at(i).value + " is not global");
+			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"Only global variables are allowed to be passed to a thread call ! , " + getToken(0).value + " is not global");
 		}
 	}
+
+	statement* stmt = parseStatement("statement");
 	
-	//FIX if parameters are not global or immediates, give error
+	//@TODO: FIX if parameters are not global or immediates, give error
 	if(stmt->statementType == oStatement)
 	{
 		//fix also consider parameters to be unique identidier
@@ -3594,10 +3692,6 @@ statement* parser::parseThread()
 		thread->returnType = ((functionCall*)stmt)->type;
 		thread->functioncall = stmt;
 	}
-	else
-	{
-		displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Expected a function call !");
-	}
 	
 	if(stmt->distStatements.size())
 	{
@@ -3605,9 +3699,7 @@ statement* parser::parseThread()
 	}
 	
 	thread->type = stmt->type;
-	
-	//thread->funcinfo = ??;
-	
+	*/
 	return thread;
 }
 
@@ -3625,7 +3717,9 @@ statement* parser::parseIf()
 	tmpScope = true;
 	popToken(); //[
 	currentStatement = If;
+	
 	If->condition = parseStatement("expression-list");
+	
 	tmpScope = false;
 	popToken(); //]
 	
@@ -3635,14 +3729,15 @@ statement* parser::parseIf()
 	RequireValue("{", "Expected { and not : ", true);
 
 
-	while (getToken().value != "}")
+	//while (getToken().value != "}")
+	while (!peekToken("}"))
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		If->body->push_back(stmt);
-		popToken();
 	}
-	
+	popToken(); // }
+
 	while (peekToken("else"))
 	{
 		popToken(); //else
@@ -3653,24 +3748,25 @@ statement* parser::parseIf()
 			IF* elseIf = new IF;
 			elseIf->line = getToken().lineNumber;
 			elseIf->scope = scope;
-			
+
 			tmpScope = true;
-			//elseIf->condition = parseConditionalExpression(elseIf);
+			popToken(); //[
 			currentStatement = elseIf;
 			elseIf->condition = parseStatement("expression-list");
 			tmpScope = false;
+			popToken(); //]
 			
 			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
 			
-			popToken();
-			while (getToken().value != "}")
+			while (!peekToken("}"))
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				elseIf->body->push_back(stmt);
-				popToken();
+				
 			}
+			popToken(); //}
 			If->elseIF->push_back(elseIf);
 		}
 		else
@@ -3678,14 +3774,14 @@ statement* parser::parseIf()
 			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
 			
-			popToken();
-			while (getToken().value != "}")
+			while (!peekToken("}"))
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
 				If->ELSE->push_back(stmt);
-				popToken();
+				
 			}
+			popToken(); // }
 		}
 		//nextIndex();
 	}
@@ -3726,8 +3822,6 @@ statement* parser::parseStruct()
 	
 	popToken();	
 	RequireValue("}", "Expected } and not : ", true);
-
-	std::cerr << "Done struct" << std::endl << std::flush;
 
 	Struct.addOperator("=");
 	Struct.addOperator(".");
@@ -3793,7 +3887,6 @@ statement* parser::parseWhile()
 	
 	tmpScope = true;
 	popToken(); //[
-	//While->condition = parseConditionalExpression(While);
 	currentStatement = While;
 	While->condition = parseStatement("expression-list");
 	tmpScope = false;
@@ -3805,13 +3898,14 @@ statement* parser::parseWhile()
 	popToken(); // {
 	RequireValue("{", "Expected { and not : ", true);
 
-	while (getToken().value != "}")
+	while (!peekToken("}"))
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
 		While->body->push_back(stmt);
-		popToken();
+		
 	}
+	popToken(); // }
 	
 	decreaseScope();
 	
@@ -4247,7 +4341,7 @@ int parser::mapFunctions(const string& package, const string& library)
 		else if (DM14::types::isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
 		{
 			funcInfo finfo = parseCFunction(scner, i, DatatypeBase());
-			
+			cerr << "||" << finfo.name << ":" << finfo.returnType << endl;
 			if(finfo.name.size())
 			{
 				functionsInfo->push_back(finfo);
@@ -4370,6 +4464,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 			else
 			{
 				funcInfo finfo = parseCFunction(scner, i, CClass);
+				
 				i = finfo.classifier;
 				finfo.classifier = classifier;
 				if(finfo.type == DM14::types::types::DATAMEMBER)
@@ -4565,7 +4660,6 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		break;
 	}
 	
-	
 	if(Enum)
 	{
 		DatatypeBase CUSTOMENUM;
@@ -4755,11 +4849,17 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 			else if (mapTokens->at(k).value == "=")
 			{
 				//funcinfo.parameters->remove(funcinfo.parameters->size()-1);
+
 				funcinfo.parameters->at(funcinfo.parameters->size()-1).second = true;;
 				init = true;
 			}
 			else
 			{
+				if (mapTokens->at(k).value == "::")
+				{
+					funcinfo.parameters->remove(funcinfo.parameters->size()-1);
+				}
+
 				if(init)
 				{
 					continue;
@@ -4910,11 +5010,14 @@ idInfo parser::findID(const string& ID, const string& parentID)
 
 statement* parser::parseDeclaration()
 {
-	statement* result = parseDeclarationInternal(";");
+	statement* result = parseDeclarationInternal();
+	popToken();
+	RequireValue(";", "Expected ; and not ", true);
 	return result;
 }
 
-statement* parser::parseDeclarationInternal(const string& terminal)
+
+statement* parser::parseDeclarationInternal()
 {
 	popToken();
 	declareStatement* decStatement = new declareStatement;
@@ -4976,8 +5079,6 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	
 	while(true)
 	{
-				cerr << "EEEEEEEEEEEEEEEEEEEEEEE 2" << getToken().value << endl;
-
 		if (getToken().value == "noblock" )
 		{
 			decStatement->noblock = true;
@@ -4986,7 +5087,6 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 		{
 			decStatement->recurrent=true;
 		}
-		
 		else if (getToken().value == "backprop" )
 		{
 			decStatement->backProp=true;
@@ -5033,11 +5133,12 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	decStatement->classtype = DM14::types::isClass(decStatement->type);
 	decStatement->array = false;
 		
-	popToken();
+	
 	
 	/** array index */
-	if (getToken().value == "[" )
+	if (peekToken("["))
 	{
+		popToken(); // [
 		decStatement->array = true;
 		popToken();
 		//@TODO: only int can be array ?
@@ -5055,11 +5156,12 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 			decStatement->size = 0;
 			RequireValue("]", "Expected ] and not ", true);
 		}
-		popToken();
+		
 
 		/** second array index == a matrix */
-		if (getToken().value == "[" )
+		if (peekToken("["))
 		{
+			popToken();
 			decStatement->array = true;
 			popToken();
 			if (getToken().type == "int")
@@ -5081,26 +5183,29 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	}
 
 
-	if (getToken().value == "(")
+	
+	if (peekToken("("))
 	{
+		popToken();
 		int to = reachToken(")", true, true, false, false, true);
 		//decStatement->value = parseOpStatement(*working_tokens_index, to-1, decStatement->type, 0, decStatement);
 		decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
 		reachToken(")", true, true, true, false, true);
-		popToken();
-		RequireValue(terminal, "Expected " + terminal + " and not ", true);
+		//popToken();
+		//RequireValue(terminal, "Expected " + terminal + " and not ", true);
 		decStatement->Initilazed = true;
 	}
-	else if (getToken().value == "=" )
+	else if (peekToken("="))
 	{
-		/* FIX: fix the array list initilization or atleast review */
+		popToken();
+		/* TODO: FIX: fix the array list initialization or atleast review */
 		if(peekToken("{"))
 		{
 			popToken();
 			
 			if (!decStatement->array)
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber,"This varaible is not an array");
+				displayError(fName, getToken().lineNumber, getToken().columnNumber,"This variable is not an array");
 			}
 			
 			int plevel = 1;
@@ -5121,7 +5226,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 						if(0 != from)
 						{
 							//decStatement->values.push_back(parseOpStatement(from, *working_tokens_index - 1, "-2", 0, decStatement));
-							decStatement->values.push_back(parseOpStatement(from, - 1, "-2", 0, decStatement));
+							decStatement->values.push_back(parseOpStatement(from, - 1, decStatement->type, 0, decStatement));
 						}
 						break;
 					}
@@ -5134,7 +5239,7 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 						if(0 != from)
 						{
 							//decStatement->values.push_back(parseOpStatement(from, *working_tokens_index-1, "-2", 0, decStatement));
-							decStatement->values.push_back(parseOpStatement(from, -1, "-2", 0, decStatement));
+							decStatement->values.push_back(parseOpStatement(from, -1, decStatement->type, 0, decStatement));
 							//from = *working_tokens_index+1;
 							from = 1;
 						}
@@ -5206,10 +5311,21 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 			decStatement->Initilazed = false;
 		}
 		else
-		{			
-			int to = reachToken(terminal, true, true, false, false, false);
-			decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
-			reachToken(terminal, true, true, true, false, false);
+		{
+			//int to = reachToken(terminal, true, true, false, false, false);
+			//decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
+			//reachToken(terminal, true, true, true, false, false);
+            //decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
+			decStatement->value = parseStatement("expression-list", &parser::parseExpressionStatement);
+
+			if(decStatement->value->type != decStatement->type)
+			{
+				if (!DM14::types::hasTypeValue(decStatement->type, decStatement->value->type))
+				{
+					// error on type
+					displayError(fName, -1,0,"wrong value type for declaration value", false);
+				}
+			}
 			
 			if(decStatement->global)
 			{
@@ -5241,8 +5357,8 @@ statement* parser::parseDeclarationInternal(const string& terminal)
 	}
 	else
 	{
-		cerr << "VAL :" << getToken().value.size() << endl;
-		RequireValue(terminal, "Expected " + terminal + " and not ", true);
+		//cerr << "VAL :" << getToken().value.size() << endl;
+		//RequireValue(terminal, "Expected " + terminal + " and not ", true);
 		decStatement->Initilazed = false;
 		decStatement->value = NULL;
 	}

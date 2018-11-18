@@ -12,7 +12,7 @@ File::File()
 	
 };
 
-File::File(const string& path)
+File::File(const std::string& path)
 {
 	open(path);
 };
@@ -22,7 +22,7 @@ File::~File()
 	
 };
 
-int File::open(const string& path)
+int File::open(const std::string& path)
 {
 	fileStream.open(path.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
 	return fileStream.is_open();
@@ -34,14 +34,14 @@ int File::close()
 	return fileStream.is_open();
 };
 
-string File::readLine()
+std::string File::readLine()
 {
-	string buffer;
+	std::string buffer;
 	getline(fileStream, buffer);
 	return buffer;
 };
 
-int File::writeLine(string& line)
+int File::writeLine(std::string& line)
 {
 	return 0;
 };

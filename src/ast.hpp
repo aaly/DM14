@@ -51,7 +51,7 @@ class funcInfo
 		int				clear();
 		string 			name;
 		string 			returnType;
-		Array< pair<string, bool> >*	parameters;
+		Array<pair<string, bool>>*	parameters;
 		bool			protoType;
 		bool			noAutism;
 		int				type;
@@ -129,6 +129,19 @@ class emptyStatement : public statement
 	public:
 		emptyStatement();
 };
+
+class breakStatement : public statement
+{
+	public:
+		breakStatement();
+};
+
+class continueStatement : public statement
+{
+	public:
+		continueStatement();
+};
+
 
 class distributingVariablesStatement : public statement
 {
@@ -365,11 +378,6 @@ class EXTERN : public statement
 };*/
 
 
-enum grammarTerminals
-{
-	
-};
-
 enum grammarNonTerminals
 {
 	iStatement = 1,			/**< Include Statement */
@@ -392,7 +400,10 @@ enum grammarNonTerminals
 	SNStatement,			/**< Set Node statement */
 	EXTERNStatement, 		/**< Extern Statement */
 	THREADStatement, 		/**< Thread Statement */
-	NOPSTATEMENT			/**< nop statement */
+	NOPSTATEMENT,			/**< nop statement */
+	BREAKSTATEMENT,			/**< break statement */
+	CONTINUESTATEMENT,		/**< continue statement */
+
 };
 
 class ast_function

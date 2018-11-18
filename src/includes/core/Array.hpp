@@ -138,6 +138,7 @@ template <class T> class Array : public std::vector<T>
 			appendAfterList.clear();
 			return 0;
 		};
+
 		/*
 		T& at(size_t n)
 		{

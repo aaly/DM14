@@ -19,9 +19,13 @@ double Tan(const double&);
 double Power (const double&, const double&);
 
 double Square (const double&);
+float Sqrtf(float x);
 
 int	Random();
 int	randomSeed(int&);
 
 
+
+int Absoulte(const int& j);
+float FAbsoulte(const float& j);
 #endif

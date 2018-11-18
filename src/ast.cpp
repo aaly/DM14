@@ -40,6 +40,16 @@ with::~with()
 }
 
 
+breakStatement::breakStatement()
+{
+	statementType = BREAKSTATEMENT;
+}
+
+continueStatement::continueStatement()
+{
+	statementType = CONTINUESTATEMENT;
+}
+
 NOPStatement::NOPStatement()
 {
 	statementType = NOPSTATEMENT;
