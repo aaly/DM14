@@ -84,18 +84,18 @@ class compiler
 		std::iostream*			outStream;
 		bool					compileStatic;
 		double					Version;
-		std::string					IncludesDir;
-		std::string					gccPath;
-		std::string					fName;
-		std::fstream					srcFile;
-		std::fstream					m14FileDefs;
-		Array<parser::mapcode>*						mapCodes;
+		std::string				IncludesDir;
+		std::string				gccPath;
+		std::string				fName;
+		std::fstream			srcFile;
+		std::fstream			m14FileDefs;
+		Array<parser::mapcode>*	mapCodes;
 		//Array < pair<string, int> >*		nodesModifiers;
 		
 		int						index; // index of mapCodes ( current file )	
 		unsigned int			fIndex;// function index
 		
-		Array<std::string>			dVariablesNames;
+		Array<std::string>		dVariablesNames;
 		int						dVariablesCount;
 		int						currentNode;
 		

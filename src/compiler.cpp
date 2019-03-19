@@ -164,26 +164,21 @@ int compiler::writeLine(const std::string& output)
 	return 0;
 };
 
-bool compiler::compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2)
+/*bool compiler::compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2)
 {
 	if(include1.package == include2.package &&
 		include1.library == include2.library)
 		{
-			cerr << include1.package << ":" << include2.package  << endl;
-			cerr << include1.library << ":" << include2.library  << endl;
-			cerr << "true" << endl;
 			return true;
 		}
-		cerr << include1.package << ":" << include2.package  << endl;
-		cerr << include1.library << ":" << include2.library  << endl;
-		cerr << "false" << endl;
 		return false;
-}
+}*/
 
-void remove(std::vector<DM14::parser::includePath> &v)
+void cleanIncludes(std::vector<DM14::parser::includePath> &v)
 {
 	auto end = v.end();
-	for (auto it = v.begin(); it != end; ++it) {
+	for (auto it = v.begin(); it != end; ++it)
+	{
 		end = std::remove(it + 1, end, *it);
 	}
 
@@ -199,8 +194,8 @@ int compiler::compile()
 	m14FileDefs << "#ifndef __DM14HEADER_HPP" << std::endl;
 	m14FileDefs << "#define __DM14HEADER_HPP" << std::endl;
 	m14FileDefs << "#include <core" + pathSeperator + "M14Helper.hpp>" << std::endl;
-	m14FileDefs << "unsigned int M14RESETCOUNTER = 0;" << std::endl;
-	//m14FileDefs << "map<string, unsigned int> _DM14VARIABLESMAP;" << endl;
+	m14FileDefs << "uint32_t M14RESETCOUNTER = 0;" << std::endl;
+	//m14FileDefs << "map<string, uint32_t> _DM14VARIABLESMAP;" << endl;
 	//m14FileDefs << "string SERVINGIP;" << endl;
 	//m14FileDefs << "int SERVINGPORT;" << endl;
 	//m14FileDefs << "string PARENTIP;" << endl;
@@ -237,7 +232,7 @@ int compiler::compile()
 		
 		std::string headrmacroname = "";
 		
-		for(unsigned int i =0; i<fName.size(); i++)
+		for(uint32_t i =0; i<fName.size(); i++)
 		{
 			if(fName.at(i) != '.')
 			{
@@ -279,9 +274,9 @@ int compiler::compile()
 			incs.push_back(DM14::parser::includePath("core", "message", DM14::parser::includePath::sourceFileType::LIBRARY));
 			incs.push_back(DM14::parser::includePath("io", "string", DM14::parser::includePath::sourceFileType::LIBRARY));
 
-			remove(incs);
+			cleanIncludes(incs);
 			
-			for (unsigned int i =0; i < incs.size(); i++)
+			for (uint32_t i =0; i < incs.size(); i++)
 			{
 				std::string headerName;
 
@@ -329,10 +324,10 @@ int compiler::compile()
 			
 			// FIXME 1022, only add m14main if this map has main function ?
 			
-			for (unsigned int k =0; k <  (mapCodes->at(index)).linkLibs->size(); k++ )
+			for (uint32_t k =0; k <  (mapCodes->at(index)).linkLibs->size(); k++ )
 			{
 				bool cont = false;
-				for (unsigned int i =k+1; i < (mapCodes->at(index)).linkLibs->size(); i++)
+				for (uint32_t i =k+1; i < (mapCodes->at(index)).linkLibs->size(); i++)
 				{
 					if ( ((Link*)mapCodes->at(index).linkLibs->at(i))->libs == ((Link*)mapCodes->at(index).linkLibs->at(k))->libs)
 					{
@@ -354,7 +349,7 @@ int compiler::compile()
 				{
 					com += " -l";
 					com += ((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
-					/*for (unsigned int l =0; l < ((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
+					/*for (uint32_t l =0; l < ((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
 					{
 						if ( ((Link*)mapCodes->at(index).libs->at(k))->libs.at(l) == ',')
 						{
@@ -408,7 +403,7 @@ int compiler::compileIncludes()
 	std::vector<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
-	for (unsigned int i =0; i < incs.size(); i++)
+	for (uint32_t i =0; i < incs.size(); i++)
 	{
 		if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
 		{
@@ -482,11 +477,11 @@ int compiler::compileDistributeNodes()
 
 int compiler::compileGlobalStructs()
 {
-	for (unsigned int i =0; i < (mapCodes->at(index)).dataTypes.size(); i++)
+	for (uint32_t i =0; i < (mapCodes->at(index)).dataTypes.size(); i++)
 	{
 		writeLine("struct " + (mapCodes->at(index)).dataTypes.at(i).typeID);
 		writeLine("{");
-		for (unsigned int k =0; k < (mapCodes->at(index)).dataTypes.at(i).memberVariables.size(); k++)
+		for (uint32_t k =0; k < (mapCodes->at(index)).dataTypes.at(i).memberVariables.size(); k++)
 		{
 			writeLine((mapCodes->at(index)).dataTypes.at(i).memberVariables.at(k).returnType + " " +
 					  (mapCodes->at(index)).dataTypes.at(i).memberVariables.at(k).name + ";");
@@ -499,9 +494,9 @@ int compiler::compileGlobalStructs()
 
 int compiler::compileGlobalDeclarations()
 {
-	for (unsigned int i =0; i < (mapCodes->at(index)).globalDeclarations.size(); i++)
+	for (uint32_t i =0; i < mapCodes->at(index).globalDeclarations.size(); i++)
 	{
-		compileDecStatement((mapCodes->at(index)).globalDeclarations.at(i), true);
+		compileDecStatement(mapCodes->at(index).globalDeclarations.at(i), true);
 	}
 	return 0;
 };
@@ -547,7 +542,7 @@ int compiler::compileFunction()
 		write((funcs->at(fIndex)).name+"(");
 		// function paramenters
 		
-		for ( unsigned int k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
+		for (uint32_t k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
 		{
 			write( ((funcs->at(fIndex)).parameters->at(k)).type +" "+((funcs->at(fIndex)).parameters->at(k)).name);
 			if ( k !=  (funcs->at(fIndex)).parameters->size()-1)
@@ -603,7 +598,7 @@ int compiler::compileFunction()
 			
 		}
 		
-		for ( unsigned int k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
+		for (uint32_t k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
 		{
 			//if ((funcs->at(fIndex)).name == "main")
 			//{
@@ -636,21 +631,21 @@ int compiler::compileFunction()
 			writeLine(";");
 			if (!(mapCodes->at(index)).isHeader())
 			{
-				if ( (funcs->at(fIndex)).name == "main")
+				if ((funcs->at(fIndex)).name == "main")
 				{
-					for ( unsigned int k =0; k < mapCodes->size(); k++)
+					for (uint32_t k =0; k < mapCodes->size(); k++)
 					{
-						for ( unsigned int l =0; l < mapCodes->at(k).globalDeclarations.size(); l++)
+						for (uint32_t l =0; l < mapCodes->at(k).globalDeclarations.size(); l++)
 						{
 							declareStatement* decStatement = (declareStatement*) mapCodes->at(k).globalDeclarations.at(l);
 							
-							for ( unsigned int f =0; f < decStatement->identifiers->size(); f++)
+							for (uint32_t f =0; f < decStatement->identifiers->size(); f++)
 							{
 								compileAddVector(mapCodes->at(k).globalDeclarations.at(l), decStatement->identifiers->at(f), true);
 							}
 						}
 						
-						for ( unsigned int l =0; l < mapCodes->at(k).globalDefinitions.size(); l++)
+						for (uint32_t l =0; l < mapCodes->at(k).globalDefinitions.size(); l++)
 						{
 							compileInsider(mapCodes->at(k).globalDefinitions.at(l));
 							writeLine(";");
@@ -667,7 +662,7 @@ int compiler::compileFunction()
 		// loop through function statements
 		//writeLine("goto "+(funcs->at(fIndex)).name+"__nodeindex__"+";");
 		//writeLine("begin"+(funcs->at(fIndex)).name+":;");
-		for ( unsigned int k=0; k < (funcs->at(fIndex)).body->size(); k++ )
+		for (uint32_t k=0; k < (funcs->at(fIndex)).body->size(); k++ )
 		{
 			//cout~ <<"Stmt:" << k << ";" << (funcs->at(fIndex)).body->size() << endl;
 			compileInsider((funcs->at(fIndex)).body->at(k));
@@ -714,7 +709,7 @@ int compiler::compileFunction()
 			writeLine("Distributed.nodesMaximum = __M14MAXIMUMNODES;");
 			//writeLine("node.setCapacity(__M14MAXIMUMVARSCOUNT);");
 			writeLine("Distributed.setCapacity(__M14DIRECTVARSCOUNT);");
-			//writeLine("_DM14VARIABLESMAP = new map<string, unsigned int>();");
+			//writeLine("_DM14VARIABLESMAP = new map<string, uint32_t>();");
 			//writeLine("initLocalVectorMap();");
 			//writeLine("node.setServer(SERVINGIP, SERVINGPORT, 60);");
 			//writeLine("node.addParent(PARENTIP,PARENTORT);");
@@ -736,7 +731,7 @@ int	compiler::compileNodeSelector(ast_function& fun)
 	writeLine("switch (Distributed.nodeNumber)");
 	writeLine("{");
 	std::stringstream SS;
-	for (unsigned int k =0; k < fun.functionNodes.size(); k++)
+	for (uint32_t k =0; k < fun.functionNodes.size(); k++)
 	{
 		SS << k+1;
 		write("case "+SS.str());
@@ -784,7 +779,7 @@ int compiler::compileForLoop(statement*& stmt)
 	forloop* ForLoop = (forloop*)stmt;
 
 	write("for (");
-	for (unsigned int i =0; i < ForLoop->fromCondition->size(); i++)
+	for (uint32_t i =0; i < ForLoop->fromCondition->size(); i++)
 	{
 		compileInsider(ForLoop->fromCondition->at(i));
 		if (i < ForLoop->fromCondition->size()-1)
@@ -794,7 +789,7 @@ int compiler::compileForLoop(statement*& stmt)
 	}
 	
 	write(";");
-	for (unsigned int i =0; i < ForLoop->toCondition->size(); i++)
+	for (uint32_t i =0; i < ForLoop->toCondition->size(); i++)
 	{
 		compileInsider(ForLoop->toCondition->at(i));
 		if (i < ForLoop->toCondition->size()-1)
@@ -805,7 +800,7 @@ int compiler::compileForLoop(statement*& stmt)
 
 	
 	write(";");
-	for (unsigned int i =0; i < ForLoop->stepCondition->size(); i++)
+	for (uint32_t i =0; i < ForLoop->stepCondition->size(); i++)
 	{
 		compileInsider(ForLoop->stepCondition->at(i));
 		if (i < ForLoop->stepCondition->size()-1)
@@ -818,7 +813,7 @@ int compiler::compileForLoop(statement*& stmt)
 	// open for loop body
 	writeLine("{");
 	// loop through the body
-	for ( unsigned int i =0; i < ForLoop->body->size(); i++ )
+	for (uint32_t i =0; i < ForLoop->body->size(); i++ )
 	{
 		compileInsider(ForLoop->body->at(i));
 		writeLine(";");
@@ -839,7 +834,7 @@ int compiler::compileWhileLoop(statement*& stmt)
 	// open for loop body
 	writeLine("{");
 	// loop through the body
-	for ( unsigned int i =0; i < WhileLoop->body->size(); i++ )
+	for (uint32_t i =0; i < WhileLoop->body->size(); i++ )
 	{
 		compileInsider(WhileLoop->body->at(i));
 		writeLine(";");
@@ -853,6 +848,7 @@ bool compiler::isCompilingMain()
 {
 	return compilingMain;
 }
+
 int compiler::compileDecStatement(statement*& stmt, const bool global)
 {
 	bool tscope = tmpScope;
@@ -867,7 +863,7 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 	
 	if(!tmpScope && decStatement->distributed)
 	{
-		for ( unsigned int i = 0; i < decStatement->identifiers->size() ;i++ )
+		for (uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
 		{
 			//write("_DM14VARIABLESMAP[\"");
 			//writeLine(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + decStatement->identifiers->at(i) +"\"]=_DM14VARIABLESMAP.size();");
@@ -879,7 +875,7 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 				{
 					std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);
 					
-					for ( unsigned int k = 0; k < classVars.size() ; k++ )
+					for (uint32_t k = 0; k < classVars.size() ; k++ )
 					{
 						if(classVars.at(k).classifier == DM14::types::CLASSIFIER::PUBLIC)
 						{
@@ -894,7 +890,7 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 	}
 	
 
-	for ( unsigned int i = 0; i < decStatement->identifiers->size() ;i++ )
+	for (uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
 	{
 		//declareStatement* decStatement = (declareStatement*)stmt;
 		
@@ -1071,12 +1067,12 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 			{
 				std::stringstream SS;
 				SS <<  decStatement->size;
-				writeLine("for (unsigned int i =0; i < " + SS.str() + "; i++)");
+				writeLine("for (uint32_t i =0; i < " + SS.str() + "; i++)");
 				writeLine("{");
 			}
 			
 			std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);	
-			for ( unsigned int k = 0; k < classVars.size() ; k++ )
+			for (uint32_t k = 0; k < classVars.size() ; k++ )
 			{
 				if(classVars.at(k).classifier != DM14::types::CLASSIFIER::PUBLIC)
 				{
@@ -1280,9 +1276,9 @@ int compiler::compileFunctionCall(statement*& stmt)
 	
 	if (funCall->functionType == DM14::types::types::USERFUNCTION)
 	{
-		for (unsigned int i =0; i < mapCodes->size() && funCall->functionType != DM14::types::types::BUILTINFUNCTION; i++)
+		for (uint32_t i =0; i < mapCodes->size() && funCall->functionType != DM14::types::types::BUILTINFUNCTION; i++)
 		{
-			for ( unsigned int x =0; x < (mapCodes->at(i)).getFunctions()->size(); x++)
+			for (uint32_t x =0; x < (mapCodes->at(i)).getFunctions()->size(); x++)
 			{
 				if ( (mapCodes->at(i)).getFunctions()->at(x).name == funCall->name  )
 				{
@@ -1304,7 +1300,7 @@ int compiler::compileFunctionCall(statement*& stmt)
 	}
 	
 	// function parameters
-	for ( unsigned int i=0; i < funCall->parameters->size(); i++)
+	for (uint32_t i=0; i < funCall->parameters->size(); i++)
 	{
 		//srcFile << funCall->parameters->at(i);
 		compileInsider(funCall->parameters->at(i));
@@ -1326,7 +1322,7 @@ int compiler::compileIF(statement*& stmt)
 	writeLine(" )");
 	writeLine("{");
 	
-	for ( unsigned int i =0; i < IFstatement->body->size(); i++ )
+	for (uint32_t i =0; i < IFstatement->body->size(); i++ )
 	{
 		compileInsider(IFstatement->body->at(i));
 		writeLine(";");
@@ -1334,7 +1330,7 @@ int compiler::compileIF(statement*& stmt)
 	
 	writeLine("}");
 	
-	for ( unsigned int i =0; i < IFstatement->elseIF->size(); i++ )
+	for (uint32_t i =0; i < IFstatement->elseIF->size(); i++ )
 	{
 		write("else ");
 		compileInsider(IFstatement->elseIF->at(i));
@@ -1345,7 +1341,7 @@ int compiler::compileIF(statement*& stmt)
 	{
 		writeLine("else");
 		writeLine("{");
-		for ( unsigned int i =0; i < IFstatement->ELSE->size(); i++ )
+		for (uint32_t i =0; i < IFstatement->ELSE->size(); i++ )
 		{
 			compileInsider(IFstatement->ELSE->at(i));
 			writeLine(";");
@@ -1374,7 +1370,7 @@ int compiler::compileCASE(statement*& stmt)
 		compileInsider((statement*&)IT->first);
 		writeLine(")");
 		writeLine("{");
-		for ( unsigned int i =0; i < IT->second.size(); i++ )
+		for (uint32_t i =0; i < IT->second.size(); i++ )
 		{
 			compileInsider(IT->second.at(i));
 			writeLine(";");
@@ -1405,7 +1401,7 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 		}
 	}
 	
-	for(unsigned int i =0; i < stmt->distStatements.size(); i++)
+	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
 	{
 		if ( (stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
 		{
@@ -1461,7 +1457,7 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 		stmt->splitStatements.remove(0);
 	}
 	
-	for(unsigned int i =0; i < stmt->distStatements.size(); i++)
+	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
 	{
 		if ( (stmt->distStatements.at(i))->type == distributingVariablesStatement::MODS)
 		{
@@ -1542,7 +1538,7 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 		}
 	}
 	
-	for (unsigned int i =0; i < dVariablesNames.size(); i++)
+	for (uint32_t i =0; i < dVariablesNames.size(); i++)
 	{
 		if (dVariablesNames.at(i) == name)
 		{
@@ -1555,7 +1551,7 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 	DatatypeBase dType =  DM14::types::findDataType(id.type);
 	if(dType.classType)
 	{
-		for(unsigned int i =0; i < dType.memberVariables.size(); i++)
+		for(uint32_t i =0; i < dType.memberVariables.size(); i++)
 		{
 			idInfo id2;
 			id2.name = dType.memberVariables.at(i).name;
@@ -1631,7 +1627,7 @@ int compiler::compileTerm(statement*& stmt)
 			{
 				stringstream SS;
 				//cout~ << "SIZE" << termstatement->size << endl;
-				for (unsigned int i =0; i < termstatement->size ; i++)
+				for (uint32_t i =0; i < termstatement->size ; i++)
 				{
 					SS << i;
 					compileDistributedVariable(id + SS.str());
@@ -1654,7 +1650,7 @@ int compiler::compileOuterExtern()
 		return 1;
 	}
 	
-	for (unsigned int i =0; i < (mapCodes->at(index)).ExternCodes->size(); i++)
+	for (uint32_t i =0; i < (mapCodes->at(index)).ExternCodes->size(); i++)
 	{
 		writeLine((mapCodes->at(index)).ExternCodes->at(i));
 	}

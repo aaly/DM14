@@ -5060,6 +5060,7 @@ statement* parser::parseDeclarationInternal()
 		
 		tempIdentifiers->push_back(idInfo(getToken().value, 0, "", NULL));	
 		decStatement->identifiers->push_back(idInfo(getToken().value, 0, "", NULL)) ;
+		cerr << "ID : " << getToken().value << endl;
 		if(!decStatement->tmpScope)
 		{
 			distributedVariablesCount++;
@@ -5109,11 +5110,11 @@ statement* parser::parseDeclarationInternal()
 				displayError(fName, getToken().lineNumber, getToken().columnNumber, "channel variable is not pure !?");
 			}
 
-			decStatement->channel=true;
+			decStatement->channel = true;
 		}
 		else if (getToken().value == "global" )
 		{
-			decStatement->global=true;
+			decStatement->global = true;
 		}
 		else
 		{
@@ -5422,6 +5423,7 @@ statement* parser::parseDeclarationInternal()
 	
 	if(decStatement->global)
 	{
+		cerr << "GLOBALLLLLLLLLLLLLL \n\n\n\n\n\n\n";
 		globalDeclarations.push_back(decStatement);
 	}
 	
