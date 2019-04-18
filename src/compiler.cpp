@@ -51,14 +51,14 @@ compiler::~compiler()
 {
   int i;
  
-  if( stmt != NULL )
+  if(stmt != NULL )
   {
 	if(stmt->statementType == oStatement)
 	{
-		printStatement( (operationalStatement*)stmt->right, spaces + 3 );
+		printStatement((operationalStatement*)stmt->right, spaces + 3 );
 	}
     
-    for( i = 0; i < spaces; i++ )
+    for(i = 0; i < spaces; i++ )
     {
 		cout <<' ';
 	}
@@ -81,18 +81,18 @@ void compiler::printStatement(statement* stmt, int indent)
             printStatement(((operationalStatement*)stmt)->left, indent+4);
         }
         
-        if (indent)
+        if(indent)
         {
             std::cout << std::setw(indent) << ' ';
         }
         
-        if (((operationalStatement*)stmt)->left)
+        if(((operationalStatement*)stmt)->left)
         {
 			std::cout<<" /\n" << std::setw(indent) << ' ';
 		}
 		
-		//std::cout<< ((operationalStatement*)stmt)->op << "\n ";
-		std::cout<< ((operationalStatement*)stmt)->op << "\n ";
+		//std::cout<<((operationalStatement*)stmt)->op << "\n ";
+		std::cout<<((operationalStatement*)stmt)->op << "\n ";
         
         if(((operationalStatement*)stmt)->right)
         {
@@ -102,7 +102,7 @@ void compiler::printStatement(statement* stmt, int indent)
     }
     else if(stmt != NULL && stmt->statementType == tStatement)
     {
-		std::cout<< ((termStatment*)stmt)->term << "\n ";
+		std::cout<<((termStatment*)stmt)->term << "\n ";
 	}
 }
 
@@ -177,7 +177,7 @@ int compiler::writeLine(const std::string& output)
 void cleanIncludes(std::vector<DM14::parser::includePath> &v)
 {
 	auto end = v.end();
-	for (auto it = v.begin(); it != end; ++it)
+	for(auto it = v.begin(); it != end; ++it)
 	{
 		end = std::remove(it + 1, end, *it);
 	}
@@ -189,7 +189,7 @@ void cleanIncludes(std::vector<DM14::parser::includePath> &v)
 
 int compiler::compile()
 {
-	// loop through mapCodes ( files ) and call other funcs to write src files
+	// loop through mapCodes(files ) and call other funcs to write src files
 	m14FileDefs.open("M14Defs.hpp", std::ios::out);
 	m14FileDefs << "#ifndef __DM14HEADER_HPP" << std::endl;
 	m14FileDefs << "#define __DM14HEADER_HPP" << std::endl;
@@ -204,21 +204,21 @@ int compiler::compile()
 	std::string com;
 	
 	cerr << "SIZE : " << mapCodes->size() << endl;
-	for (uint32_t i =0; i < mapCodes->size(); i++)
+	for(uint32_t i =0; i < mapCodes->size(); i++)
 	{
 		bufferedOutput = "";
 		//mapCodes->at(i).Print();
 		index = i;
 		
-		nodesCount += (mapCodes->at(index)).nodesCount;
-		dVariablesCount += (mapCodes->at(index)).dVariablesCount;
+		nodesCount +=(mapCodes->at(index)).nodesCount;
+		dVariablesCount +=(mapCodes->at(index)).dVariablesCount;
 		
-		std::string fileName = (mapCodes->at(index)).getFileName() ;
+		std::string fileName =(mapCodes->at(index)).getFileName() ;
 		std::size_t splitPoint = fileName.find_last_of("/\\");
 		fileName = fileName.substr(splitPoint+1);
 
 		// get source file name
-		if ((mapCodes->at(index)).isHeader())
+		if((mapCodes->at(index)).isHeader())
 		{
 			fName = fileName + ".hpp";
 		}
@@ -241,7 +241,7 @@ int compiler::compile()
 		}
 		// loop through includes nad output them
 		
-		if ((mapCodes->at(index)).isHeader())
+		if((mapCodes->at(index)).isHeader())
 		{
 			writeLine("#ifndef "  + headrmacroname);
 			writeLine("#define " + headrmacroname);
@@ -252,7 +252,7 @@ int compiler::compile()
 		compileGlobalDeclarations();
 		compileFunction();
 		
-		if ((mapCodes->at(index)).isHeader())
+		if((mapCodes->at(index)).isHeader())
 		{
 			write("#endif ");
 		}
@@ -262,10 +262,10 @@ int compiler::compile()
 		outStream = NULL;
 		srcFile.close();
 		
-		if (!(mapCodes->at(index)).isHeader())
+		if(!(mapCodes->at(index)).isHeader())
 		{
 			com += "g++ " + fName;	
-			Array<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
+			Array<DM14::parser::includePath> incs =(mapCodes->at(index)).getIncludes();
 			
 			incs.push_back(DM14::parser::includePath("core", "common", DM14::parser::includePath::sourceFileType::LIBRARY));
 			incs.push_back(DM14::parser::includePath("core", "M14Helper", DM14::parser::includePath::sourceFileType::LIBRARY));
@@ -276,16 +276,16 @@ int compiler::compile()
 
 			cleanIncludes(incs);
 			
-			for (uint32_t i =0; i < incs.size(); i++)
+			for(uint32_t i =0; i < incs.size(); i++)
 			{
 				std::string headerName;
 
-				if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
+				if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 					//headerName = headerName.substr(headerName.find_last_of(pathSeperator));
 				}
-				else if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
+				else if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 				}
@@ -306,7 +306,7 @@ int compiler::compile()
 						}
 					}
 
-					if (!fullPath.size())
+					if(!fullPath.size())
 					{
 						displayError("Error not able to find unit : " +  incs.at(i).package + pathSeperator + incs.at(i).library  + ".cpp");
 						exit(1);
@@ -324,18 +324,18 @@ int compiler::compile()
 			
 			// FIXME 1022, only add m14main if this map has main function ?
 			
-			for (uint32_t k =0; k <  (mapCodes->at(index)).linkLibs->size(); k++ )
+			for(uint32_t k =0; k < (mapCodes->at(index)).linkLibs->size(); k++ )
 			{
 				bool cont = false;
-				for (uint32_t i =k+1; i < (mapCodes->at(index)).linkLibs->size(); i++)
+				for(uint32_t i =k+1; i <(mapCodes->at(index)).linkLibs->size(); i++)
 				{
-					if ( ((Link*)mapCodes->at(index).linkLibs->at(i))->libs == ((Link*)mapCodes->at(index).linkLibs->at(k))->libs)
+					if(((Link*)mapCodes->at(index).linkLibs->at(i))->libs ==((Link*)mapCodes->at(index).linkLibs->at(k))->libs)
 					{
 						 cont = true;
 					}
 				}
 				
-				if (cont)
+				if(cont)
 				{
 					continue;
 				}
@@ -343,21 +343,21 @@ int compiler::compile()
 				if(((Link*)mapCodes->at(index).linkLibs->at(k))->Static)
 				{
 					com += " ";
-					com += ((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
+					com +=((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
 				}
 				else
 				{
 					com += " -l";
-					com += ((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
-					/*for (uint32_t l =0; l < ((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
+					com +=((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
+					/*for(uint32_t l =0; l <((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
 					{
-						if ( ((Link*)mapCodes->at(index).libs->at(k))->libs.at(l) == ',')
+						if(((Link*)mapCodes->at(index).libs->at(k))->libs.at(l) == ',')
 						{
 							com += " -l";
 						}
 						else
 						{
-							com += ((Link*)mapCodes->at(index).libs->at(k))->libs.at(l);
+							com +=((Link*)mapCodes->at(index).libs->at(k))->libs.at(l);
 						}
 					}*/
 				}
@@ -383,7 +383,7 @@ int compiler::compile()
 	
 	displayDebug("Compiling : " + com);
 	int compilationResult = system(com.c_str());
-	if (compilationResult == 0)
+	if(compilationResult == 0)
 	{
 		displayInfo("Compiled Scucessfully");
 	}
@@ -400,12 +400,12 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	std::vector<DM14::parser::includePath> incs = (mapCodes->at(index)).getIncludes();
+	std::vector<DM14::parser::includePath> incs =(mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
-	for (uint32_t i =0; i < incs.size(); i++)
+	for(uint32_t i =0; i < incs.size(); i++)
 	{
-		if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
+		if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
 		{
 			headerName = incs.at(i).package + ".hpp";
 			if(headerName.find_last_of(pathSeperator) != std::string::npos)
@@ -413,7 +413,7 @@ int compiler::compileIncludes()
 				headerName = headerName.substr(headerName.find_last_of(pathSeperator)+1);
 			}
 		}
-		else if (incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
+		else if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
 		{
 			headerName = incs.at(i).package + ".hpp";
 		}
@@ -477,14 +477,14 @@ int compiler::compileDistributeNodes()
 
 int compiler::compileGlobalStructs()
 {
-	for (uint32_t i =0; i < (mapCodes->at(index)).dataTypes.size(); i++)
+	for(uint32_t i =0; i <(mapCodes->at(index)).dataTypes.size(); i++)
 	{
-		writeLine("struct " + (mapCodes->at(index)).dataTypes.at(i).typeID);
+		writeLine("struct " +(mapCodes->at(index)).dataTypes.at(i).typeID);
 		writeLine("{");
-		for (uint32_t k =0; k < (mapCodes->at(index)).dataTypes.at(i).memberVariables.size(); k++)
+		for(uint32_t k =0; k <(mapCodes->at(index)).dataTypes.at(i).memberVariables.size(); k++)
 		{
 			writeLine((mapCodes->at(index)).dataTypes.at(i).memberVariables.at(k).returnType + " " +
-					  (mapCodes->at(index)).dataTypes.at(i).memberVariables.at(k).name + ";");
+					 (mapCodes->at(index)).dataTypes.at(i).memberVariables.at(k).name + ";");
 			
 		}
 		writeLine("};");
@@ -494,7 +494,7 @@ int compiler::compileGlobalStructs()
 
 int compiler::compileGlobalDeclarations()
 {
-	for (uint32_t i =0; i < mapCodes->at(index).globalDeclarations.size(); i++)
+	for(uint32_t i =0; i < mapCodes->at(index).globalDeclarations.size(); i++)
 	{
 		compileDecStatement(mapCodes->at(index).globalDeclarations.at(i));
 	}
@@ -508,11 +508,11 @@ int compiler::compileFunction()
 	currentNode = 0;
 	//nodesModifiers = new Array < pair<string, int> >();
 	Array<ast_function>* funcs;
-	funcs = (mapCodes->at(index)).getFunctions();
+	funcs =(mapCodes->at(index)).getFunctions();
 	// push main to end
-	for (fIndex =0; fIndex < funcs->size(); fIndex++)
+	for(fIndex =0; fIndex < funcs->size(); fIndex++)
 	{
-		if ( (funcs->at(fIndex)).name == "main" )
+		if((funcs->at(fIndex)).name == "main" )
 		{
 			//FIX100
 			//funcs->swap(funcs->begin()+fIndex, funcs->end());
@@ -520,15 +520,15 @@ int compiler::compileFunction()
 	}
 	
 	// print all functions prototypes;
-	for (fIndex =0; fIndex < funcs->size(); fIndex++)
+	for(fIndex =0; fIndex < funcs->size(); fIndex++)
 	{
-		if ( (funcs->at(fIndex)).name == "main")
+		if((funcs->at(fIndex)).name == "main")
 		{
 			continue;
 		}
 		
 		//function type
-		if ( (funcs->at(fIndex)).returnIDType != "NIL" )
+		if((funcs->at(fIndex)).returnIDType != "NIL" )
 		{
 			write((funcs->at(fIndex)).returnIDType);
 			write(" ");
@@ -542,10 +542,10 @@ int compiler::compileFunction()
 		write((funcs->at(fIndex)).name+"(");
 		// function paramenters
 		
-		for (uint32_t k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
+		for(uint32_t k=0; k <(funcs->at(fIndex)).parameters->size(); k++ )
 		{
-			write( ((funcs->at(fIndex)).parameters->at(k)).type +" "+((funcs->at(fIndex)).parameters->at(k)).name);
-			if ( k !=  (funcs->at(fIndex)).parameters->size()-1)
+			write(((funcs->at(fIndex)).parameters->at(k)).type +" "+((funcs->at(fIndex)).parameters->at(k)).name);
+			if(k != (funcs->at(fIndex)).parameters->size()-1)
 			{
 				write(", ");
 			}
@@ -555,11 +555,11 @@ int compiler::compileFunction()
 	}
 	writeLine(" ");
 	
-	for (fIndex =0; fIndex < funcs->size(); fIndex++)
+	for(fIndex =0; fIndex < funcs->size(); fIndex++)
 	{
-		//cout << "COMPILING FUNC : " << (funcs->at(fIndex)).name << endl;
+		//cout << "COMPILING FUNC : " <<(funcs->at(fIndex)).name << endl;
 		//function type
-		if ( (funcs->at(fIndex)).returnIDType != "NIL" )
+		if((funcs->at(fIndex)).returnIDType != "NIL" )
 		{
 			write((funcs->at(fIndex)).returnIDType);
 			write(" ");
@@ -569,7 +569,7 @@ int compiler::compileFunction()
 			write("void ");
 		}
 		// function name
-		if ( (funcs->at(fIndex)).name == "main")
+		if((funcs->at(fIndex)).name == "main")
 		{
 			write("dm14Main(");
 			compilingMain = true;
@@ -581,16 +581,16 @@ int compiler::compileFunction()
 		}
 		
 		// function paramenters
-		if ((funcs->at(fIndex)).name == "main")
+		if((funcs->at(fIndex)).name == "main")
 		{
-			if ( (funcs->at(fIndex)).parameters->size() > 1)
+			if((funcs->at(fIndex)).parameters->size() > 1)
 			{
 				displayError((mapCodes->at(index)).getFileName(), -1, 0,"Main should have only one parameter of type string");
 			}
 			
-			if ( (funcs->at(fIndex)).parameters->size())
+			if((funcs->at(fIndex)).parameters->size())
 			{
-				if ( ((funcs->at(fIndex)).parameters->at(0)).type != "string" )
+				if(((funcs->at(fIndex)).parameters->at(0)).type != "string" )
 				{
 					displayError((mapCodes->at(index)).getFileName(), -1, 0,"Main should have only one parameter of type string");
 				}
@@ -598,22 +598,22 @@ int compiler::compileFunction()
 			
 		}
 		
-		for (uint32_t k=0; k < (funcs->at(fIndex)).parameters->size(); k++ )
+		for(uint32_t k=0; k <(funcs->at(fIndex)).parameters->size(); k++ )
 		{
-			//if ((funcs->at(fIndex)).name == "main")
+			//if((funcs->at(fIndex)).name == "main")
 			//{
 			//	displayWarning((mapCodes->at(index)).getFileName(), 0, 0,"Main should have no parameters !!!!");
 			//	break;
 			//}
 			
 			//compileDistributedVariable((funcs->at(fIndex)).parameters->at(k).name);
-			write( ((funcs->at(fIndex)).parameters->at(k)).type +" "+((funcs->at(fIndex)).parameters->at(k)).name);
-			if ( ((funcs->at(fIndex)).parameters->at(k)).value != "NIL" )
+			write(((funcs->at(fIndex)).parameters->at(k)).type +" "+((funcs->at(fIndex)).parameters->at(k)).name);
+			if(((funcs->at(fIndex)).parameters->at(k)).value != "NIL" )
 			{
 				//write("="+((funcs->at(fIndex)).parameters->at(k)).value);
 			}
 			
-			if ( k !=  (funcs->at(fIndex)).parameters->size()-1)
+			if(k != (funcs->at(fIndex)).parameters->size()-1)
 			{
 				write(", ");
 			}
@@ -623,36 +623,36 @@ int compiler::compileFunction()
 		// open function body 
 		writeLine("{");
 		//add the return variable
-		if( (funcs->at(fIndex)).returnID != "NIL" )
+		if((funcs->at(fIndex)).returnID != "NIL" )
 		{
 			write((funcs->at(fIndex)).returnIDType);
 			write(" ");
 			write((funcs->at(fIndex)).returnID);
 			writeLine(";");
-			if (!(mapCodes->at(index)).isHeader())
+			if(!(mapCodes->at(index)).isHeader())
 			{
-				if ((funcs->at(fIndex)).name == "main")
+				if((funcs->at(fIndex)).name == "main")
 				{
-					for (uint32_t k =0; k < mapCodes->size(); k++)
+					for(uint32_t k =0; k < mapCodes->size(); k++)
 					{
-						for (uint32_t l =0; l < mapCodes->at(k).globalDeclarations.size(); l++)
+						for(uint32_t l =0; l < mapCodes->at(k).globalDeclarations.size(); l++)
 						{
-							declareStatement* decStatement = (declareStatement*) mapCodes->at(k).globalDeclarations.at(l);
+							declareStatement* decStatement =(declareStatement*) mapCodes->at(k).globalDeclarations.at(l);
 							
-							for (uint32_t f =0; f < decStatement->identifiers->size(); f++)
+							for(uint32_t f =0; f < decStatement->identifiers->size(); f++)
 							{
 								compileAddVector(mapCodes->at(k).globalDeclarations.at(l), decStatement->identifiers->at(f), true);
 							}
 						}
 						
-						for (uint32_t l =0; l < mapCodes->at(k).globalDefinitions.size(); l++)
+						for(uint32_t l =0; l < mapCodes->at(k).globalDefinitions.size(); l++)
 						{
 							compileInsider(mapCodes->at(k).globalDefinitions.at(l));
 							writeLine(";");
 						}
 					}
 					
-					writeLine("Distributed.addVectorData<int>("+(funcs->at(fIndex)).name  + (funcs->at(fIndex)).returnID + ",-1, false, false, &" + (funcs->at(fIndex)).returnID + ", false, false, \"int\");");
+					writeLine("Distributed.addVectorData<int>("+(funcs->at(fIndex)).name  +(funcs->at(fIndex)).returnID + ",-1, false, false, &" +(funcs->at(fIndex)).returnID + ", false, false, \"int\");");
 					compileDistributedVariable(idInfo((funcs->at(fIndex)).returnID, 0, "", NULL));
 				}
 			}
@@ -661,9 +661,9 @@ int compiler::compileFunction()
 		// loop through function statements
 		//writeLine("goto "+(funcs->at(fIndex)).name+"__nodeindex__"+";");
 		//writeLine("begin"+(funcs->at(fIndex)).name+":;");
-		for (uint32_t k=0; k < (funcs->at(fIndex)).body->size(); k++ )
+		for(uint32_t k=0; k <(funcs->at(fIndex)).body->size(); k++ )
 		{
-			//cout~ <<"Stmt:" << k << ";" << (funcs->at(fIndex)).body->size() << endl;
+			//cout~ <<"Stmt:" << k << ";" <<(funcs->at(fIndex)).body->size() << endl;
 			compileInsider((funcs->at(fIndex)).body->at(k));
 			writeLine(";");
 			//fix1 not all statements need ; at the end, like the for loop
@@ -676,10 +676,10 @@ int compiler::compileFunction()
 		compileNodeSelector((funcs->at(fIndex)));
 		writeLine("end"+(funcs->at(fIndex)).name+":;");
 		
-		if ( (funcs->at(fIndex)).name == "main" )
+		if((funcs->at(fIndex)).name == "main" )
 		{
 			writeLine("Distributed.serve(true);");
-			if ( (mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
+			if((mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
 			{
 				//write("return ");
 				//write((mapCodes->at(index)).getFunctions()->at(fIndex).returnID);
@@ -698,12 +698,12 @@ int compiler::compileFunction()
 		writeLine("};");
 		writeLine("");
 		
-		if ( (funcs->at(fIndex)).name == "main" )
+		if((funcs->at(fIndex)).name == "main" )
 		{
-			writeLine("int main (int argc, char* argv[])");
+			writeLine("int main(int argc, char* argv[])");
 			writeLine("{");
-			//writeLine ("Node node;");
-			writeLine ("string mainParameters;");
+			//writeLine("Node node;");
+			writeLine("string mainParameters;");
 			writeLine("setArgs(argc, argv, Distributed, mainParameters);");
 			writeLine("Distributed.nodesMaximum = __M14MAXIMUMNODES;");
 			//writeLine("node.setCapacity(__M14MAXIMUMVARSCOUNT);");
@@ -714,7 +714,7 @@ int compiler::compileFunction()
 			//writeLine("node.addParent(PARENTIP,PARENTORT);");
 			writeLine("Distributed.startListener(false);");
 			write("return dm14Main(");
-			if ( (funcs->at(fIndex)).parameters->size())
+			if((funcs->at(fIndex)).parameters->size())
 			{
 				write("mainParameters");
 			}
@@ -727,10 +727,10 @@ int compiler::compileFunction()
 
 int	compiler::compileNodeSelector(ast_function& fun)
 {
-	writeLine("switch (Distributed.nodeNumber)");
+	writeLine("switch(Distributed.nodeNumber)");
 	writeLine("{");
 	std::stringstream SS;
-	for (uint32_t k =0; k < fun.functionNodes.size(); k++)
+	for(uint32_t k =0; k < fun.functionNodes.size(); k++)
 	{
 		SS << k+1;
 		write("case "+SS.str());
@@ -749,16 +749,16 @@ int	compiler::compileNodeSelector(ast_function& fun)
 
 int compiler::compileRetStatement(statement*& stmt)
 {
-	if ( (mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
+	if((mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
 	{
 		displayWarning("return statement in a distributed function !");
 		//writeLine("end"+(mapCodes->at(index)).getFunctions()->at(fIndex).name+":;");
 		//return 1;
 	}
 	
-	if( ((returnStatement*)stmt)->retValue != NULL)
+	if(((returnStatement*)stmt)->retValue != NULL)
 	{
-		write( (mapCodes->at(index)).getFunctions()->at(fIndex).returnID+ " = ");
+		write((mapCodes->at(index)).getFunctions()->at(fIndex).returnID+ " = ");
 		compileInsider(((returnStatement*)stmt)->retValue);
 		writeLine(";");
 	}
@@ -775,23 +775,23 @@ int compiler::compileRetStatement(statement*& stmt)
 
 int compiler::compileForLoop(statement*& stmt)
 {
-	forloop* ForLoop = (forloop*)stmt;
+	forloop* ForLoop =(forloop*)stmt;
 
-	write("for (");
-	for (uint32_t i =0; i < ForLoop->fromCondition->size(); i++)
+	write("for(");
+	for(uint32_t i =0; i < ForLoop->fromCondition->size(); i++)
 	{
 		compileInsider(ForLoop->fromCondition->at(i));
-		if (i < ForLoop->fromCondition->size()-1)
+		if(i < ForLoop->fromCondition->size()-1)
 		{
 			write(",");
 		}
 	}
 	
 	write(";");
-	for (uint32_t i =0; i < ForLoop->toCondition->size(); i++)
+	for(uint32_t i =0; i < ForLoop->toCondition->size(); i++)
 	{
 		compileInsider(ForLoop->toCondition->at(i));
-		if (i < ForLoop->toCondition->size()-1)
+		if(i < ForLoop->toCondition->size()-1)
 		{
 			write(",");
 		}
@@ -799,20 +799,20 @@ int compiler::compileForLoop(statement*& stmt)
 
 	
 	write(";");
-	for (uint32_t i =0; i < ForLoop->stepCondition->size(); i++)
+	for(uint32_t i =0; i < ForLoop->stepCondition->size(); i++)
 	{
 		compileInsider(ForLoop->stepCondition->at(i));
-		if (i < ForLoop->stepCondition->size()-1)
+		if(i < ForLoop->stepCondition->size()-1)
 		{
 			write(",");
 		}
 	}
 	writeLine(")");
-	////srcFile << "( int i = " << ForLoop->from << "; i < " << ForLoop->to << "; i++ )";
+	////srcFile << "(int i = " << ForLoop->from << "; i < " << ForLoop->to << "; i++ )";
 	// open for loop body
 	writeLine("{");
 	// loop through the body
-	for (uint32_t i =0; i < ForLoop->body->size(); i++ )
+	for(uint32_t i =0; i < ForLoop->body->size(); i++ )
 	{
 		compileInsider(ForLoop->body->at(i));
 		writeLine(";");
@@ -826,14 +826,14 @@ int compiler::compileForLoop(statement*& stmt)
 
 int compiler::compileWhileLoop(statement*& stmt)
 {
-	whileloop* WhileLoop = (whileloop*)stmt;
+	whileloop* WhileLoop =(whileloop*)stmt;
 	write("while(");
 	compileInsider(WhileLoop->condition);
 	writeLine(")");
 	// open for loop body
 	writeLine("{");
 	// loop through the body
-	for (uint32_t i =0; i < WhileLoop->body->size(); i++ )
+	for(uint32_t i =0; i < WhileLoop->body->size(); i++ )
 	{
 		compileInsider(WhileLoop->body->at(i));
 		writeLine(";");
@@ -856,7 +856,7 @@ int compiler::compileDecStatement(statement*& stmt)
 
 	//inline void Node::addVectorData(int var, int index, bool parray, bool pready, void* pvar, const string& ptype)
 	
-	declareStatement* decStatement = (declareStatement*)stmt;
+	declareStatement* decStatement =(declareStatement*)stmt;
 
 	const bool global = decStatement->global;
 	
@@ -864,11 +864,11 @@ int compiler::compileDecStatement(statement*& stmt)
 	
 	if(!tmpScope && decStatement->distributed)
 	{
-		for (uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
+		for(uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
 		{
 			//write("_DM14VARIABLESMAP[\"");
-			//writeLine(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + decStatement->identifiers->at(i) +"\"]=_DM14VARIABLESMAP.size();");
-			if (  isCompilingMain() || global)
+			//writeLine(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + decStatement->identifiers->at(i) +"\"]=_DM14VARIABLESMAP.size();");
+			if(isCompilingMain() || global)
 			{
 				compileDistributedVariable(decStatement->identifiers->at(i), decStatement->global);
 				
@@ -876,7 +876,7 @@ int compiler::compileDecStatement(statement*& stmt)
 				{
 					std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);
 					
-					for (uint32_t k = 0; k < classVars.size() ; k++ )
+					for(uint32_t k = 0; k < classVars.size() ; k++ )
 					{
 						if(classVars.at(k).classifier == DM14::types::CLASSIFIER::PUBLIC)
 						{
@@ -891,17 +891,17 @@ int compiler::compileDecStatement(statement*& stmt)
 	}
 	
 
-	for (uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
+	for(uint32_t i = 0; i < decStatement->identifiers->size() ;i++ )
 	{
-		//declareStatement* decStatement = (declareStatement*)stmt;
+		//declareStatement* decStatement =(declareStatement*)stmt;
 		
 		
-		if (decStatement->array)
+		if(decStatement->array)
 		{
 			write("Array<");
 		}
 		write(decStatement->type);
-		if (decStatement->array)
+		if(decStatement->array)
 		{
 			write(">*");
 		}
@@ -917,13 +917,13 @@ int compiler::compileDecStatement(statement*& stmt)
 		}
 				
 		
-		if (decStatement->value != NULL)
+		if(decStatement->value != NULL)
 		{
 			write(" = ");
 			compileInsider(decStatement->value);
 		}
 			
-		if (decStatement->array)
+		if(decStatement->array)
 		{
 			write(" = new Array<");
 			write(decStatement->type);
@@ -958,17 +958,17 @@ int compiler::compileDecStatement(statement*& stmt)
 
 int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool global)
 {
-	declareStatement* decStatement = (declareStatement*)stmt;
+	declareStatement* decStatement =(declareStatement*)stmt;
 
 	if(!decStatement->distributed)
 	{
 		return 1;
 	}
 	
-	if (!(mapCodes->at(index)).isHeader() && isCompilingMain())
+	if(!(mapCodes->at(index)).isHeader() && isCompilingMain())
 	{
 		//write("node.addVectorData<");
-		if (decStatement->array)
+		if(decStatement->array)
 		{
 			write("Distributed.addVectorArrayData< Array<");
 		}
@@ -977,8 +977,8 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 			write("Distributed.addVectorData<");
 		}
 		
-		write (decStatement->type);
-		if (decStatement->array)
+		write(decStatement->type);
+		if(decStatement->array)
 		{
 			write(" > ");
 		}
@@ -1068,12 +1068,12 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 			{
 				std::stringstream SS;
 				SS <<  decStatement->size;
-				writeLine("for (uint32_t i =0; i < " + SS.str() + "; i++)");
+				writeLine("for(uint32_t i =0; i < " + SS.str() + "; i++)");
 				writeLine("{");
 			}
 			
 			std::vector<funcInfo> classVars = DM14::types::getClassMemberVariables(decStatement->type);	
-			for (uint32_t k = 0; k < classVars.size() ; k++ )
+			for(uint32_t k = 0; k < classVars.size() ; k++ )
 			{
 				if(classVars.at(k).classifier != DM14::types::CLASSIFIER::PUBLIC)
 				{
@@ -1082,28 +1082,28 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 				
 				write("Distributed.addVectorClassData<");
 				
-				write (classVars.at(k).returnType);
+				write(classVars.at(k).returnType);
 				write(">(");
 				if(decStatement->global)
 				{
 					if(id.parent)
 					{
-						write( "_DM14GLOBALVAR" + id.parent->name + id.name + classVars.at(k).name);// + classVars.at(k).name);
+						write("_DM14GLOBALVAR" + id.parent->name + id.name + classVars.at(k).name);// + classVars.at(k).name);
 					}
 					else
 					{
-						write( "_DM14GLOBALVAR"  + id.name + classVars.at(k).name);// + classVars.at(k).name);
+						write("_DM14GLOBALVAR"  + id.name + classVars.at(k).name);// + classVars.at(k).name);
 					}
 				}
 				else
 				{
 					if(id.parent)
 					{
-						write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name);// + classVars.at(k).name);
+						write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name);// + classVars.at(k).name);
 					}
 					else
 					{
-						write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name);
+						write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name);
 					}
 					write(classVars.at(k).name);// + classVars.at(k).name);
 				}
@@ -1168,16 +1168,16 @@ int compiler::compileOpStatement(statement*& stmt)
 		return 0;
 	}
 	
-	operationalStatement* opStatement = (operationalStatement*)stmt;
+	operationalStatement* opStatement =(operationalStatement*)stmt;
 
-	if (opStatement->op == "@")
+	if(opStatement->op == "@")
 	{
 		
 		printStatement(stmt, 0);
 		if(!(operationalStatement*)opStatement->left)
 		{
-			termStatment* innerOp = (termStatment*)opStatement->right;
-			//if (innerOp->right) // node address
+			termStatment* innerOp =(termStatment*)opStatement->right;
+			//if(innerOp->right) // node address
 			write("Distributed.getLastActiveNode(");
 			write(generateDistributedVariableName(innerOp->id));
 			write(", -1)");
@@ -1190,7 +1190,7 @@ int compiler::compileOpStatement(statement*& stmt)
 	//write identifiers
 	bool bigStatement = false;
 	
-	if (opStatement->scopeLevel > scopeLevel)
+	if(opStatement->scopeLevel > scopeLevel)
 	{
 		bigStatement = true;
 		scopeLevel = opStatement->scopeLevel;
@@ -1201,16 +1201,16 @@ int compiler::compileOpStatement(statement*& stmt)
 		//write("(");
 	}
 	
-	if (opStatement->left != NULL)
+	if(opStatement->left != NULL)
 	{
-		if (opStatement->left->scopeLevel > scopeLevel)
+		if(opStatement->left->scopeLevel > scopeLevel)
 		{
 			write("(");
 		}
 	
 		compileInsider(opStatement->left);
 		
-		if (opStatement->left && opStatement->left->scopeLevel > scopeLevel)
+		if(opStatement->left && opStatement->left->scopeLevel > scopeLevel)
 		{
 			write(")");
 		}
@@ -1220,23 +1220,23 @@ int compiler::compileOpStatement(statement*& stmt)
 	
 	
 	//write right side
-	if (opStatement->right != NULL)
+	if(opStatement->right != NULL)
 	{
 		bool tt = false;
-		if (opStatement->right->scopeLevel > scopeLevel)
+		if(opStatement->right->scopeLevel > scopeLevel)
 		{
 			tt = true;
 			scopeLevel = opStatement->right->scopeLevel;
 		}
 		
-		if (tt)
+		if(tt)
 		{
 			write("(");
 		}
 		
 		compileInsider(opStatement->right);
 		
-		if (tt)
+		if(tt)
 		{
 			write(")");
 		}
@@ -1248,12 +1248,12 @@ int compiler::compileOpStatement(statement*& stmt)
 	}
 	
 	/*
-	if (opStatement->op == "@")
+	if(opStatement->op == "@")
 	{
 		if((operationalStatement*)opStatement->left)
 		{
-			//operationalStatement* innerOp = (operationalStatement*)((operationalStatement*)opStatement->right)->right;
-			//if (innerOp->right) // node address
+			//operationalStatement* innerOp =(operationalStatement*)((operationalStatement*)opStatement->right)->right;
+			//if(innerOp->right) // node address
 			write(";");
 			writeLine("Distributed.getLastActiveNode(");
 			compileInsider(opStatement->left);
@@ -1269,19 +1269,19 @@ int compiler::compileOpStatement(statement*& stmt)
 
 int compiler::compileFunctionCall(statement*& stmt)
 {
-	functionCall* funCall = (functionCall*)stmt;
+	functionCall* funCall =(functionCall*)stmt;
 	// function name
 	write(funCall->name);
 	write("(");
 	bool implemented = false;
 	
-	if (funCall->functionType == DM14::types::types::USERFUNCTION)
+	if(funCall->functionType == DM14::types::types::USERFUNCTION)
 	{
-		for (uint32_t i =0; i < mapCodes->size() && funCall->functionType != DM14::types::types::BUILTINFUNCTION; i++)
+		for(uint32_t i =0; i < mapCodes->size() && funCall->functionType != DM14::types::types::BUILTINFUNCTION; i++)
 		{
-			for (uint32_t x =0; x < (mapCodes->at(i)).getFunctions()->size(); x++)
+			for(uint32_t x =0; x <(mapCodes->at(i)).getFunctions()->size(); x++)
 			{
-				if ( (mapCodes->at(i)).getFunctions()->at(x).name == funCall->name  )
+				if((mapCodes->at(i)).getFunctions()->at(x).name == funCall->name  )
 				{
 					implemented = true;
 				}
@@ -1293,7 +1293,7 @@ int compiler::compileFunctionCall(statement*& stmt)
 		implemented = true;
 	}
 	
-	if (!implemented)
+	if(!implemented)
 	{
 		std::stringstream ss;
 		ss <<  funCall->line ;
@@ -1301,11 +1301,11 @@ int compiler::compileFunctionCall(statement*& stmt)
 	}
 	
 	// function parameters
-	for (uint32_t i=0; i < funCall->parameters->size(); i++)
+	for(uint32_t i=0; i < funCall->parameters->size(); i++)
 	{
 		//srcFile << funCall->parameters->at(i);
 		compileInsider(funCall->parameters->at(i));
-		if (i != (funCall->parameters->size() - 1 ) )
+		if(i !=(funCall->parameters->size() - 1 ) )
 		{
 			write(", ");
 		}
@@ -1316,14 +1316,14 @@ int compiler::compileFunctionCall(statement*& stmt)
 
 int compiler::compileIF(statement*& stmt)
 {
-	IF* IFstatement = (IF*)stmt;	
-	write("if ( ");
+	IF* IFstatement =(IF*)stmt;	
+	write("if(");
 	//compileOpStatement(IFstatement->condition);
 	compileInsider(IFstatement->condition);
 	writeLine(" )");
 	writeLine("{");
 	
-	for (uint32_t i =0; i < IFstatement->body->size(); i++ )
+	for(uint32_t i =0; i < IFstatement->body->size(); i++ )
 	{
 		compileInsider(IFstatement->body->at(i));
 		writeLine(";");
@@ -1331,18 +1331,18 @@ int compiler::compileIF(statement*& stmt)
 	
 	writeLine("}");
 	
-	for (uint32_t i =0; i < IFstatement->elseIF->size(); i++ )
+	for(uint32_t i =0; i < IFstatement->elseIF->size(); i++ )
 	{
 		write("else ");
 		compileInsider(IFstatement->elseIF->at(i));
 		//writeLine(";");
 	}
 	
-	if ( IFstatement->ELSE->size() != 0 )
+	if(IFstatement->ELSE->size() != 0 )
 	{
 		writeLine("else");
 		writeLine("{");
-		for (uint32_t i =0; i < IFstatement->ELSE->size(); i++ )
+		for(uint32_t i =0; i < IFstatement->ELSE->size(); i++ )
 		{
 			compileInsider(IFstatement->ELSE->at(i));
 			writeLine(";");
@@ -1354,24 +1354,24 @@ int compiler::compileIF(statement*& stmt)
 
 int compiler::compileCASE(statement*& stmt)
 {
-	CASE* CASEstatement = (CASE*)stmt;
+	CASE* CASEstatement =(CASE*)stmt;
 	map<statement*, Array<statement*> >::iterator IT;
-	for ( IT = CASEstatement->Body.begin(); IT != CASEstatement->Body.end(); ++IT )
+	for(IT = CASEstatement->Body.begin(); IT != CASEstatement->Body.end(); ++IT )
 	{
-		if ( IT == CASEstatement->Body.begin() )
+		if(IT == CASEstatement->Body.begin() )
 		{
-			write("if (");
+			write("if(");
 		}
 		else
 		{
-			write("else if (");
+			write("else if(");
 		}		
 		compileInsider(CASEstatement->condition);	
 		write(" == ");
 		compileInsider((statement*&)IT->first);
 		writeLine(")");
 		writeLine("{");
-		for (uint32_t i =0; i < IT->second.size(); i++ )
+		for(uint32_t i =0; i < IT->second.size(); i++ )
 		{
 			compileInsider(IT->second.at(i));
 			writeLine(";");
@@ -1383,7 +1383,7 @@ int compiler::compileCASE(statement*& stmt)
 
 int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overridedStream)
 {
-	if (stmt == NULL)
+	if(stmt == NULL)
 	{
 		return 0;
 	}
@@ -1404,39 +1404,39 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 	
 	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
 	{
-		if ( (stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
+		if((stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
 		{
-			compileDitributingVariables((statement*&)stmt->distStatements.at(i));
+			//compileDistributingVariables((statement*&)stmt->distStatements.at(i));
 			stmt->distStatements.erase(stmt->distStatements.begin()+i);
 			i--;
 			
 		}
 	}
 	
-	switch (stmt->statementType)
+	switch(stmt->statementType)
 	{
-		case rStatement	:		compileRetStatement(stmt);
-								break;
-		case dStatement :		compileDecStatement(stmt);
-								break;
-		case fCall :			compileFunctionCall(stmt);
-								break;
-		case fLoop :			compileForLoop(stmt);
-								break;
+		case rStatement	:	compileRetStatement(stmt);
+							break;
+		case dStatement :	compileDecStatement(stmt);
+							break;
+		case fCall :		compileFunctionCall(stmt);
+							break;
+		case fLoop :		compileForLoop(stmt);
+							break;
 		case IFStatement :		compileIF(stmt);
 								break;
 		case CASEStatement :	compileCASE(stmt);
 								break;
-		case oStatement :		compileOpStatement(stmt);
+		case oStatement :	compileOpStatement(stmt);
 								scopeLevel=0;
 								break;
 		case tStatement :  		compileTerm(stmt);
 								break;
-		case wLoop		:  		compileWhileLoop(stmt);
+		case wLoop	:  		compileWhileLoop(stmt);
 								break;
 		case DISTStatement:		compileDistribute(stmt);
 								break;
-		case dvStatement:		compileDitributingVariables(stmt);
+		case dvStatement:		compileDistributingVariables(stmt);
 								break;
 		case RESETStatement:	compileResetStatement(stmt);
 								break;
@@ -1448,7 +1448,7 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 								break;
 		case NOPSTATEMENT:		compileNOPStatement(stmt);
 								break;
-		default : return(-1);
+		default : return -1;
 	}
 	
 	
@@ -1460,10 +1460,10 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 	
 	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
 	{
-		if ( (stmt->distStatements.at(i))->type == distributingVariablesStatement::MODS)
+		if((stmt->distStatements.at(i))->type == distributingVariablesStatement::MODS)
 		{
 			writeLine(";");
-			compileDitributingVariables((statement*&)stmt->distStatements.at(i));
+			compileDistributingVariables((statement*&)stmt->distStatements.at(i));
 			stmt->distStatements.erase(stmt->distStatements.begin()+i);
 			i--;
 		}
@@ -1507,17 +1507,17 @@ string compiler::generateDistributedVariableName(idInfo* id)
 
 int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 {
-	 if ((mapCodes->at(index)).isHeader() && !global)
+	 if((mapCodes->at(index)).isHeader() && !global)
 	 {
 		 return 1;
 	 }
 	 
-	//string name = (mapCodes->at(index)).getFileName() + ( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id;
+	//string name =(mapCodes->at(index)).getFileName() +((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id;
 	string name;
 	
 	if(global)
 	{
-		//name = (mapCodes->at(index)).getFileName()+ id;
+		//name =(mapCodes->at(index)).getFileName()+ id;
 		if(id.parent)
 		{
 			name = "_DM14GLOBALVAR" + id.parent->name + id.name;
@@ -1531,17 +1531,17 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 	{
 		if(id.parent)
 		{
-			name = ( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name;
+			name =((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name;
 		}
 		else
 		{
-			name = ( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name;
+			name =((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name;
 		}
 	}
 	
-	for (uint32_t i =0; i < dVariablesNames.size(); i++)
+	for(uint32_t i =0; i < dVariablesNames.size(); i++)
 	{
-		if (dVariablesNames.at(i) == name)
+		if(dVariablesNames.at(i) == name)
 		{
 			return 0;
 		}
@@ -1568,18 +1568,18 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 
 int compiler::compileTerm(statement*& stmt)
 {
-	termStatment* termstatement = (termStatment*)stmt;
-	if (termstatement->term == "DM14FUNCTIONBEGIN")
+	termStatment* termstatement =(termStatment*)stmt;
+	if(termstatement->term == "DM14FUNCTIONBEGIN")
 	{
-		writeLine("goto "+( (mapCodes->at(index)).getFunctions()->at(fIndex)).name+"__nodeindex__"+";");
-		writeLine("begin"+( (mapCodes->at(index)).getFunctions()->at(fIndex)).name+":;");
+		writeLine("goto "+((mapCodes->at(index)).getFunctions()->at(fIndex)).name+"__nodeindex__"+";");
+		writeLine("begin"+((mapCodes->at(index)).getFunctions()->at(fIndex)).name+":;");
 		return 0;
 	}
 
 	if(DM14::types::isEnum(termstatement->term))
 	{
 		DatatypeBase dt = DM14::types::findDataType(termstatement->term);
-		if (dt.parents.size())
+		if(dt.parents.size())
 		{
 			write(dt.parents.at(0)+"::");
 		}
@@ -1588,7 +1588,7 @@ int compiler::compileTerm(statement*& stmt)
 	write(termstatement->term);
 	
 	
-	/*if (termstatement->arrayIndex != -1)
+	/*if(termstatement->arrayIndex != -1)
 	{
 		//cout~ << termstatement->term << ":" << termstatement->arrayIndex << endl;
 		srcFile << "->at(";
@@ -1598,7 +1598,7 @@ int compiler::compileTerm(statement*& stmt)
 		srcFile << ")";
 	}*/
 	
-	if (termstatement->arrayIndex != NULL)
+	if(termstatement->arrayIndex != NULL)
 	{
 		//cout~ << termstatement->term << ":" << termstatement->arrayIndex << endl;
 		write("->at(");
@@ -1606,20 +1606,20 @@ int compiler::compileTerm(statement*& stmt)
 		write(")");
 	}
 	
-	if (termstatement->identifier)
+	if(termstatement->identifier)
 	{
 		string id = termstatement->term;
 		
-		/*if ( termstatement->arrayIndex != -1)
+		/*if(termstatement->arrayIndex != -1)
 		{
 			stringstream SS;
 			SS << termstatement->arrayIndex;
 			id += SS.str();
 		}*/
 
-		if ( ((mapCodes->at(index)).getFunctions()->at(fIndex)).scope <= termstatement->scope)
+		if(((mapCodes->at(index)).getFunctions()->at(fIndex)).scope <= termstatement->scope)
 		{
-			/*if( ! tmpScope && declaringVars)
+			/*if(! tmpScope && declaringVars)
 			{
 				compileDistributedVariable(id);
 			}*/
@@ -1628,7 +1628,7 @@ int compiler::compileTerm(statement*& stmt)
 			{
 				stringstream SS;
 				//cout~ << "SIZE" << termstatement->size << endl;
-				for (uint32_t i =0; i < termstatement->size ; i++)
+				for(uint32_t i =0; i < termstatement->size ; i++)
 				{
 					SS << i;
 					compileDistributedVariable(id + SS.str());
@@ -1646,12 +1646,12 @@ int compiler::compileTerm(statement*& stmt)
 
 int compiler::compileOuterExtern()
 {
-	if (!(mapCodes->at(index)).ExternCodes)
+	if(!(mapCodes->at(index)).ExternCodes)
 	{
 		return 1;
 	}
 	
-	for (uint32_t i =0; i < (mapCodes->at(index)).ExternCodes->size(); i++)
+	for(uint32_t i =0; i <(mapCodes->at(index)).ExternCodes->size(); i++)
 	{
 		writeLine((mapCodes->at(index)).ExternCodes->at(i));
 	}
@@ -1661,26 +1661,26 @@ int compiler::compileOuterExtern()
 
 int compiler::compileThread(statement*& stmt)
 {
-	threadStatement* threadStmt = (threadStatement*)stmt;
+	threadStatement* threadStmt =(threadStatement*)stmt;
 	
 	string ID = "_DM14THREAD";
 	ID += threadStmt->classID + threadStmt->parentID + threadStmt->ID + threadStmt->Identifier;
 	
 	string functionID = "_DM14THREADFUNCTION";
-	functionID += (threadStmt->classID + threadStmt->parentID + threadStmt->ID);
+	functionID +=(threadStmt->classID + threadStmt->parentID + threadStmt->ID);
 	functionID +=  threadStmt->Identifier;
 	
-	writeLine( "threadMember* " +  ID + " = new threadMember();");
+	writeLine("threadMember* " +  ID + " = new threadMember();");
 	write(ID + "->start(" +  functionID + ",");
 	
 	if(threadStmt->classMember)
 	{
-		writeLine( "&" + threadStmt->parentID + ");");
+		writeLine("&" + threadStmt->parentID + ");");
 		m14FileDefs <<  threadStmt->returnType << " " << functionID << "(void*);" << std::endl;
 		
 		bufferedOutput +=  threadStmt->returnType + " " + functionID + "(void* caller)\n";
 		bufferedOutput += "{\n";
-		bufferedOutput += "return ((" +  threadStmt->classID + "*)caller)->";
+		bufferedOutput += "return((" +  threadStmt->classID + "*)caller)->";
 		std::stringstream SS;
 		compileInsider(threadStmt->functioncall, &SS, true);
 		bufferedOutput += SS.str();
@@ -1695,7 +1695,7 @@ int compiler::compileThread(statement*& stmt)
 		//bufferedOutput +=  threadStmt->returnType + " " + functionID + "()\n";
 		bufferedOutput +=  "void* " + functionID + "()\n";
 		bufferedOutput += "{\n";
-		//bufferedOutput += "return (void*)";
+		//bufferedOutput += "return(void*)";
 		std::stringstream SS;
 		compileInsider(threadStmt->functioncall, &SS, true);
 		bufferedOutput += SS.str();
@@ -1707,7 +1707,7 @@ int compiler::compileThread(statement*& stmt)
 
 int compiler::compileExtern(statement*& stmt)
 {
-	EXTERN* Extern = (EXTERN*)stmt;
+	EXTERN* Extern =(EXTERN*)stmt;
 	write("{" + Extern->body + "}");
 
 	return 0;
@@ -1717,7 +1717,7 @@ int compiler::compileExtern(statement*& stmt)
 int compiler::compileParentAddStatement(statement*& stmt)
 {
 	//cout~ << "ARENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" <<endl;
-	parentAddStatement* ap = (parentAddStatement*) stmt;
+	parentAddStatement* ap =(parentAddStatement*) stmt;
 	write("Distributed.addParent(");
 	compileInsider(ap->ip);
 	write(", ");
@@ -1735,7 +1735,7 @@ int compiler::compileNOPStatement(statement*& stmt)
 
 int compiler::compileSetNodeStatement(statement*& stmt)
 {
-	setNodeStatement* ns = (setNodeStatement*) stmt;
+	setNodeStatement* ns =(setNodeStatement*) stmt;
 	write("Distributed.changeNodeNumber(");
 	compileInsider(ns->node);
 	writeLine(");");
@@ -1743,27 +1743,27 @@ int compiler::compileSetNodeStatement(statement*& stmt)
 };
 
 
-int compiler::compileDitributingVariables(statement*& stmt)
+int compiler::compileDistributingVariables(statement*& stmt)
 {
-	if ((mapCodes->at(index)).isHeader())
+	if((mapCodes->at(index)).isHeader())
 	{
 		return 1;
 	}
 	 
 	//stringstream SS;
 
-	distributingVariablesStatement* dvstatement = (distributingVariablesStatement*)stmt;
-	//SS << ( (dvstatement->variable.type & dvstatement->variable.scope) + (int)dvstatement->variable.name.at(0));
+	distributingVariablesStatement* dvstatement =(distributingVariablesStatement*)stmt;
+	//SS <<((dvstatement->variable.type & dvstatement->variable.scope) +(int)dvstatement->variable.name.at(0));
 	if(dvstatement->type == distributingVariablesStatement::MODS)
 	{
 		//cout~ << "NEED1111:" << dvstatement->variables.at(i).name << ":" << dvstatement->variables.at(i).arrayIndex << endl;
 		write("Distributed.done<");
-		if (dvstatement->variable.array && (dvstatement->variable.arrayIndex == NULL))
+		if(dvstatement->variable.array &&(dvstatement->variable.arrayIndex == NULL))
 		{
 			write(" Array< ");
 		}
-		write (dvstatement->variable.type);
-		if (dvstatement->variable.array && (dvstatement->variable.arrayIndex == NULL) )
+		write(dvstatement->variable.type);
+		if(dvstatement->variable.array &&(dvstatement->variable.arrayIndex == NULL) )
 		{
 			write(" > ");
 		}
@@ -1774,26 +1774,26 @@ int compiler::compileDitributingVariables(statement*& stmt)
 		{
 			if(dvstatement->variable.parent)
 			{
-				write( "_DM14GLOBALVAR" +dvstatement->variable.parent->name +dvstatement->variable.name +",");
+				write("_DM14GLOBALVAR" +dvstatement->variable.parent->name +dvstatement->variable.name +",");
 			}
 			else
 			{
-				write( "_DM14GLOBALVAR" +dvstatement->variable.name +",");
+				write("_DM14GLOBALVAR" +dvstatement->variable.name +",");
 			}
 		}
 		else
 		{
 			if(dvstatement->variable.parent)
 			{
-				write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name +dvstatement->variable.parent->name +dvstatement->variable.name +",");
+				write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name +dvstatement->variable.parent->name +dvstatement->variable.name +",");
 			}
 			else
 			{
-				write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + dvstatement->variable.name +",");
+				write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + dvstatement->variable.name +",");
 			}
 		}
 	
-		if (dvstatement->variable.arrayIndex != NULL)
+		if(dvstatement->variable.arrayIndex != NULL)
 		{
 			compileInsider(dvstatement->variable.arrayIndex);
 		}
@@ -1811,7 +1811,7 @@ int compiler::compileDitributingVariables(statement*& stmt)
 		}
 		write(",");
 		
-		if (!dvstatement->variable.array || (dvstatement->variable.arrayIndex != NULL))
+		if(!dvstatement->variable.array ||(dvstatement->variable.arrayIndex != NULL))
 		{
 			write("&");
 		}
@@ -1829,7 +1829,7 @@ int compiler::compileDitributingVariables(statement*& stmt)
 			write(".");
 		}
 		write(dvstatement->variable.name);
-		if (dvstatement->variable.arrayIndex != NULL)
+		if(dvstatement->variable.arrayIndex != NULL)
 		{
 			write("->at(");
 			compileInsider(dvstatement->variable.arrayIndex);
@@ -1846,7 +1846,7 @@ int compiler::compileDitributingVariables(statement*& stmt)
 	{
 		if(dvstatement->variable.backProp)
 		{
-			if(currentNode == (mapCodes->at(index)).nodesCount || dvstatement->dependencyNode == -1)
+			if(currentNode ==(mapCodes->at(index)).nodesCount || dvstatement->dependencyNode == -1)
 			{
 				return 1;
 			}
@@ -1858,8 +1858,6 @@ int compiler::compileDitributingVariables(statement*& stmt)
 };
 
 
-
-
 int compiler::writeDepedency(idInfo& id, int node)
 {
 	if(node == -1)
@@ -1869,13 +1867,13 @@ int compiler::writeDepedency(idInfo& id, int node)
 	
 	std::stringstream SS;
 				
-	write( "Distributed.need<");
-	if (id.array && (id.arrayIndex == NULL))
+	write("Distributed.need<");
+	if(id.array &&(id.arrayIndex == NULL))
 	{
 		write(" Array< ");
 	}
-	write (id.type);
-	if (id.array && (id.arrayIndex == NULL))
+	write(id.type);
+	if(id.array &&(id.arrayIndex == NULL))
 	{
 		write(" > ");
 	}
@@ -1885,26 +1883,26 @@ int compiler::writeDepedency(idInfo& id, int node)
 	{
 		if(id.parent)
 		{
-			write( "_DM14GLOBALVAR" + id.parent->name +id.name +",");
+			write("_DM14GLOBALVAR" + id.parent->name +id.name +",");
 		}
 		else
 		{
-			write( "_DM14GLOBALVAR" + id.name +",");
+			write("_DM14GLOBALVAR" + id.name +",");
 		}
 	}
 	else
 	{
 		if(id.parent)
 		{
-			write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name +id.name +",");
+			write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name +id.name +",");
 		}
 		else
 		{
-			write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name +",");
+			write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name +",");
 		}
 	}
 	
-	if (id.arrayIndex != NULL)
+	if(id.arrayIndex != NULL)
 	{
 		compileInsider(id.arrayIndex);
 	}
@@ -1921,7 +1919,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 		
 	}
 	write(",");
-	if (!id.array && ! id.pointer)
+	if(!id.array && ! id.pointer)
 	{
 		write("false");	
 	}
@@ -1945,7 +1943,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 				
 	write("," + SS.str() + ",");
 				
-	//if (!id.array && ! id.pointer)
+	//if(!id.array && ! id.pointer)
 	{
 		write("&");	
 	}
@@ -1965,9 +1963,9 @@ int compiler::writeDepedency(idInfo& id, int node)
 						
 	write(id.name);
 			
-	if (id.arrayIndex != NULL)
+	if(id.arrayIndex != NULL)
 	{
-		write ("->at(");
+		write("->at(");
 		compileInsider(id.arrayIndex);
 		write(")");
 	}
@@ -1993,7 +1991,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 						
 	SS.str("");
 	SS.clear();	 
-	if (id.arrayIndex == NULL)
+	if(id.arrayIndex == NULL)
 	{
 		return 1;
 	}
@@ -2003,9 +2001,9 @@ int compiler::writeDepedency(idInfo& id, int node)
 
 int compiler::compileDistribute(statement*& stmt)
 {	
-	//distStatement* diststatement = (distStatement*)stmt;
-	std::string funcName = ((mapCodes->at(index)).getFunctions()->at(fIndex)).name;
-	if (funcName != "main")
+	//distStatement* diststatement =(distStatement*)stmt;
+	std::string funcName =((mapCodes->at(index)).getFunctions()->at(fIndex)).name;
+	if(funcName != "main")
 	{
 		displayError((mapCodes->at(index)).getFileName(), stmt->line,0,"Distribute statement outside main function, ignored.");
 		//return 0;
@@ -2022,13 +2020,13 @@ int compiler::compileDistribute(statement*& stmt)
 
 int compiler::compileResetStatement(statement*& stmt)
 {
-	resetStatement* rs = (resetStatement*) stmt;
-	write("if ( M14RESETCOUNTER != (");
+	resetStatement* rs =(resetStatement*) stmt;
+	write("if(M14RESETCOUNTER !=(");
 	compileInsider(rs->count);
 	writeLine(") )");
 	writeLine("{");
 	writeLine("M14RESETCOUNTER++;");
-	writeLine("goto " +  ((mapCodes->at(index)).getFunctions()->at(fIndex)).name +"__nodeindex__"+";");
+	writeLine("goto " + ((mapCodes->at(index)).getFunctions()->at(fIndex)).name +"__nodeindex__"+";");
 	writeLine("}");
 	return 0;
 };
