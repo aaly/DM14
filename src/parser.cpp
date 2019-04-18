@@ -706,27 +706,27 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",REGEX_TOKEN}}}};
 	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
 
-	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
-												  {"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
-												  {"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
-												  {"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
-												  {"link-list",EXPANSION_TOKEN, &parser::parseLink},
-												  {"struct-list",EXPANSION_TOKEN, &parser::parseStruct},
-												  {"if-list",EXPANSION_TOKEN, &parser::parseIf}, /** if [expr] {} else if[] {} else {} */
-												  {"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
-												  {"reset-statement",EXPANSION_TOKEN, &parser::parseReset},
-												  {"setnode-statement",EXPANSION_TOKEN},
-												  {"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { statements } */
-												  //{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
-												  //{"addparent-statement",EXPANSION_TOKEN},
-												  {"thread-statement",EXPANSION_TOKEN, &parser::parseThread},
-												  {"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
-												  {"return-list",EXPANSION_TOKEN, &parser::parseReturn},
-												  {"break-statement",EXPANSION_TOKEN, &parser::parseBreak},
-												  {"continue-statement",EXPANSION_TOKEN, &parser::parseContinue},
-												  {"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
-												  {"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
-												  }}};
+	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{  {"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
+							{"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
+							{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
+							{"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
+							{"link-list",EXPANSION_TOKEN, &parser::parseLink},
+							{"struct-list",EXPANSION_TOKEN, &parser::parseStruct},
+							{"if-list",EXPANSION_TOKEN, &parser::parseIf}, /** if [expr] {} else if[] {} else {} */
+							{"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
+							{"reset-statement",EXPANSION_TOKEN, &parser::parseReset},
+							{"setnode-statement",EXPANSION_TOKEN},
+							{"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { statements } */
+							//{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
+							//{"addparent-statement",EXPANSION_TOKEN},
+							{"thread-statement",EXPANSION_TOKEN, &parser::parseThread},
+							{"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
+							{"return-list",EXPANSION_TOKEN, &parser::parseReturn},
+							{"break-statement",EXPANSION_TOKEN, &parser::parseBreak},
+							{"continue-statement",EXPANSION_TOKEN, &parser::parseContinue},
+							{"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
+							{"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
+																  }}};
 
 	/** the with statement */
 	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN},
@@ -1209,17 +1209,27 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 				globalDefinitions.push_back(Parser.getMapCodes()->at(i).globalDefinitions.at(k));
 			}*/
 			
-			for(unsigned k =0; k < Parser.identifiers->size(); k++)
+			
+			for(const auto& identifier : *(Parser.identifiers))
 			{
-				if(Parser.identifiers->at(k).global)
+				if(identifier.global)
 				{
-					identifiers->push_back(Parser.identifiers->at(k));
+					identifiers->push_back(identifier);
 				}
 			}
-			
+
+			/*for(const auto& globalDeclaration : Parser.globalDeclarations)
+			{
+				//globalDeclarations.push_back(globalDeclaration);
+				for(const auto& identifier : globalDeclaration)
+				{
+					indetifiers->push_back(identifier)
+				}
+			}*/
+
 			//Parser.getMapCodes()->at(i).globalDeclarations = Array<statement*>();
 			mapCodes->push_back(Parser.getMapCodes()->at(i));
-			//mapCodes->at(mapCodes->size()-1).Print();
+		//mapCodes->at(mapCodes->size()-1).Print();
 		}
 		
 		for (uint32_t i =0; i< Parser.linkLibs->size(); i++)

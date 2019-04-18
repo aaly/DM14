@@ -154,7 +154,7 @@ int Node::setNodeNumber(const int& node)
 	return node;
 };
 
-int Node::requestObject(unsigned int var, int index, int nodeLevel)
+int Node::requestObject(uint32_t var, int index, int nodeLevel)
 {
 	nodeMessage message;
 	message.setType(Node::R_OBJECT_FROM_NODE);
@@ -167,7 +167,7 @@ int Node::requestObject(unsigned int var, int index, int nodeLevel)
 	return pushRequestMessage(message, false);
 };
 
-int Node::requestObject(unsigned int var, int index, string nodeAddress)
+int Node::requestObject(uint32_t var, int index, string nodeAddress)
 {
 	nodePeer* node = findNode(nodeAddress);	
 	
@@ -514,7 +514,7 @@ int Node::pushRequestMessage(nodeMessage& msg, const bool& insider)
 	return triggerEvents();
 }
 
-string Node::Serialize(int var, int index)
+string Node::Serialize(uint32_t var, int index)
 {
 	stringstream SS;
 	
@@ -573,7 +573,7 @@ string Node::Serialize(int var, int index)
 };
 
 
-int Node::deSerialize(int var, int index)
+int Node::deSerialize(uint32_t var, int index)
 {
 	stringstream SS;
 	string type = _DM14VARIABLESMAP.at(var).type;
@@ -648,7 +648,7 @@ int Node::deSerialize(int var, int index)
 
 
 
-string Node::getLastActiveNode(int var, int index)
+string Node::getLastActiveNode(uint32_t var, int index)
 {
 	//LocalDataVectoryEntry* variable = NULL;
 	

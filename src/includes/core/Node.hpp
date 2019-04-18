@@ -137,50 +137,50 @@ class Node
 		unsigned int	nodeNumber;
 		void*			listener(void* par);
 		bool 			dataVectorReady;
-		int				setCapacity(unsigned int n);
+		int			setCapacity(unsigned int n);
 		int 			setNodeNumber(const int& node);
-		int				changeNodeNumber(const int& node);
-		int				setNodeID(const string& name);
-		int				addNode(const string& address, const string& port, bool bootstrap);
+		int			changeNodeNumber(const int& node);
+		int			setNodeID(const string& name);
+		int			addNode(const string& address, const string& port, bool bootstrap);
 		int 			removeNode(nodePeer& node);
-		int				sendMessage(nodePeer* node, string* message);
+		int			sendMessage(nodePeer* node, string* message);
 		string			receiveMessage(nodePeer* node);
-		int				setServer(const string& address, const string& port, const int& clients);
-		int				startListener(bool);
-		int				serve(bool);
+		int			setServer(const string& address, const string& port, const int& clients);
+		int			startListener(bool);
+		int			serve(bool);
 		nodeThread		listenerThread;
 		nodeThread		listenerThread2;
-		int				nodesMaximum;
-		int				printNodes();
-		int				printNodesAddress();
-		int				updateNodes();
+		int			nodesMaximum;
+		int			printNodes();
+		int			printNodesAddress();
+		int			updateNodes();
 		nodePeer*		findNode(const string);
 		int 			Exit(int);
-		int				unmapVariable(unsigned int var, int index);
+		int			unmapVariable(uint32_t var, int index);
 		
-		int				pollOnSocket(int socketFD, uint32_t events);
-		int				pollOffSocket(int socketFD);
+		int			pollOnSocket(int socketFD, uint32_t events);
+		int			pollOffSocket(int socketFD);
 		int 			processMessages();
 		nodePeer*		findNodeByFd(int fd);
-		int				findNodeIndex(const string id);
-		int				triggerEvents();
-		int				appendRequestMessage(nodeMessage R);
+		int			findNodeIndex(const string id);
+		int			triggerEvents();
+		int			appendRequestMessage(nodeMessage R);
 		
 		
-		template<class T> void addVectorArrayData(int var, long index, bool parray, bool pready, void* pvar, bool	precurrent, bool pchannel,const string& ptype);
-		template<class T> void addVectorClassData(int var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype);
-		template<class T> void addVectorData(int var, long index, bool parray, bool pready, void* pvar, bool	precurrent, bool pchannel,const string& ptype);
+		template<class T> void addVectorArrayData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool	precurrent, bool pchannel,const string& ptype);
+		template<class T> void addVectorClassData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype);
+		template<class T> void addVectorData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool	precurrent, bool pchannel,const string& ptype);
 		
-		template<class T> void need(unsigned int var, int index, bool pointer, int node, T* variable, bool block, string nodeID ="");
-		template<class T> void done(int var, int index, void* pointer, string nodeID ="");
+		template<class T> void need(uint32_t var, int index, bool pointer, int node, T* variable, bool block, string nodeID ="");
+		template<class T> void done(uint32_t var, int index, void* pointer, string nodeID ="");
 		
 		
 		LocalDataVectoryEntryArray	_DM14VARIABLESMAP;
-		string						NodeID;
-		unsigned int				checkTicks;
-		string						getLastActiveNode(int var, int index);
-		int							requestObject(unsigned int var, int index, int nodeLevel);
-		int							requestObject(unsigned int var, int index, string nodeAddress);
+		string				NodeID;
+		unsigned int			checkTicks;
+		string				getLastActiveNode(uint32_t var, int index);
+		int				requestObject(uint32_t var, int index, int nodeLevel);
+		int				requestObject(uint32_t var, int index, string nodeAddress);
 		
 		
 		enum messageType
@@ -208,29 +208,29 @@ class Node
 		int		pushRequestMessage(nodeMessage& msg, const bool& insider = false);
 		int		handleRequest(nodeMessage& R);
 		int		sendVariable(unsigned long var, long index, nodePeer* node);
-		string	Serialize(int var, int index);
-		int		deSerialize(int var, int index);
+		string		Serialize(uint32_t var, int index);
+		int		deSerialize(uint32_t var, int index);
 		int		Log(string&);
-		long	getNodeIndex(nodePeer& node);
+		long		getNodeIndex(nodePeer& node);
 	
 
 		MessageTCPSocket	Self;
 		nodePeerArray		clients;
 		nodePeerArray		nodes;
 		nodeMessageArray	messagesQueue;
-		string				localIP;
-		string				bindPort;
-		int					clientsSize;
+		string			localIP;
+		string			bindPort;
+		int			clientsSize;
 		volatile bool		readready;
-		atomicBool			Serve;
-		int					pollTrigger[2];
-		int					EPollFD;
+		atomicBool		Serve;
+		int			pollTrigger[2];
+		int			EPollFD;
 		
 };
 
 
 
-template<class T> void Node::need(unsigned int var, int index, bool pointer, int node, T* variable, bool block, string nodeID)
+template<class T> void Node::need(uint32_t var, int index, bool pointer, int node, T* variable, bool block, string nodeID)
 {
 	LocalDataVectoryEntry* entry = NULL;
 	
@@ -316,7 +316,7 @@ template<class T> void Node::need(unsigned int var, int index, bool pointer, int
 }
 
 
-template<class T> void Node::done(int var, int index, void* pointer, string nodeID)
+template<class T> void Node::done(uint32_t var, int index, void* pointer, string nodeID)
 {
 	LocalDataVectoryEntry* variable = NULL;
 	if(index != -1)
@@ -353,7 +353,7 @@ template<class T> void Node::done(int var, int index, void* pointer, string node
 	triggerEvents();
 }
 
-template<class T> void Node::addVectorArrayData(int var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype)
+template<class T> void Node::addVectorArrayData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype)
 {
 	if(parray)
 	{
@@ -370,7 +370,7 @@ template<class T> void Node::addVectorArrayData(int var, long index, bool parray
 };
 
 
-template<class T> void Node::addVectorClassData(int var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype)
+template<class T> void Node::addVectorClassData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool pchannel, const string& ptype)
 {
 	if(_DM14VARIABLESMAP.size()-1 < var)
 	{
@@ -392,7 +392,7 @@ template<class T> void Node::addVectorClassData(int var, long index, bool parray
 	}
 };
 
-template<class T> void Node::addVectorData(int var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool	pchannel, const string& ptype)
+template<class T> void Node::addVectorData(uint32_t var, long index, bool parray, bool pready, void* pvar, bool precurrent, bool	pchannel, const string& ptype)
 {
 	if (index > -1)
 	{

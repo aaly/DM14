@@ -1,0 +1,3 @@
+* improve the sockets lye, maybe using zmq ?
+* for marshalling, use msgpack ?
+* for seriliaztion, use typeid like make all types into classes and have a string getType() {return typeid(this).name();}; ?

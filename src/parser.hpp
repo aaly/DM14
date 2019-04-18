@@ -311,7 +311,7 @@ class parser
 			int advance_EBNFindex(uint16_t steps = 1);
 			statement* empty_file();
 
-			idInfo*						getTopParent(idInfo*);
+			idInfo*					getTopParent(idInfo*);
 			Array<idInfo>*				identifiers;
 		
 			bool						globalNoDist;

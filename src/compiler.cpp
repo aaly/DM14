@@ -496,7 +496,7 @@ int compiler::compileGlobalDeclarations()
 {
 	for (uint32_t i =0; i < mapCodes->at(index).globalDeclarations.size(); i++)
 	{
-		compileDecStatement(mapCodes->at(index).globalDeclarations.at(i), true);
+		compileDecStatement(mapCodes->at(index).globalDeclarations.at(i));
 	}
 	return 0;
 };
@@ -652,12 +652,11 @@ int compiler::compileFunction()
 						}
 					}
 					
-					writeLine("Distributed.addVectorData<int>(" + (funcs->at(fIndex)).name  + (funcs->at(fIndex)).returnID + ",-1, false, false, &" + (funcs->at(fIndex)).returnID + ", false, false, \"int\");");
+					writeLine("Distributed.addVectorData<int>("+(funcs->at(fIndex)).name  + (funcs->at(fIndex)).returnID + ",-1, false, false, &" + (funcs->at(fIndex)).returnID + ", false, false, \"int\");");
 					compileDistributedVariable(idInfo((funcs->at(fIndex)).returnID, 0, "", NULL));
 				}
 			}
 		}
-		
 		
 		// loop through function statements
 		//writeLine("goto "+(funcs->at(fIndex)).name+"__nodeindex__"+";");
@@ -849,7 +848,7 @@ bool compiler::isCompilingMain()
 	return compilingMain;
 }
 
-int compiler::compileDecStatement(statement*& stmt, const bool global)
+int compiler::compileDecStatement(statement*& stmt)
 {
 	bool tscope = tmpScope;
 	bool dvars = declaringVars;
@@ -858,6 +857,8 @@ int compiler::compileDecStatement(statement*& stmt, const bool global)
 	//inline void Node::addVectorData(int var, int index, bool parray, bool pready, void* pvar, const string& ptype)
 	
 	declareStatement* decStatement = (declareStatement*)stmt;
+
+	const bool global = decStatement->global;
 	
 	tmpScope = decStatement->tmpScope;
 	
@@ -989,22 +990,22 @@ int compiler::compileAddVector(statement*& stmt, const idInfo& id, const bool gl
 		{
 			if(id.parent)
 			{
-				write( "_DM14GLOBALVAR" + id.parent->name + id.name);
+				write("_DM14GLOBALVAR" + id.parent->name + id.name);
 			}
 			else
 			{
-				write( "_DM14GLOBALVAR" + id.name);
+				write("_DM14GLOBALVAR" + id.name);
 			}
 		}
 		else
 		{
 			if(id.parent)
 			{
-				write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name);
+				write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.parent->name + id.name);
 			}
 			else
 			{
-				write(( (mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name);
+				write(((mapCodes->at(index)).getFunctions()->at(fIndex)).name + id.name);
 			}
 		}
 		

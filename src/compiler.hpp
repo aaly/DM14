@@ -52,7 +52,7 @@ class compiler
 		int 	compileWhileLoop(statement*&);
 		int 	compileDistribute(statement*&);
 		int 	compileDitributingVariables(statement*&);
-		int 	compileDecStatement(statement*&, const bool = false);
+		int 	compileDecStatement(statement*&);
 		int 	compileOpStatement(statement*&);
 		int 	compileFunctionCall(statement*&);
 		int		compileTerm(statement*&);
