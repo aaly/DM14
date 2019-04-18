@@ -210,20 +210,20 @@ int parser::printEBNF()
 {
 	EBNF_map_t::iterator it;
 
-	for ( it = EBNF.begin(); it != EBNF.end(); it++ )
+	for(it = EBNF.begin(); it != EBNF.end(); it++ )
 	{
 		string start_map_index = it->first;
 		cerr << "<" << start_map_index << "> ::=";
 		// loop over std::vector<grammar_token_array_t>
-		for (uint32_t i = 0; i < EBNF[start_map_index].size(); i++)
+		for(uint32_t i = 0; i < EBNF[start_map_index].size(); i++)
 		{
 			grammar_rule_t current_rule = EBNF[start_map_index].at(i);
-			if (current_rule.tokens.size() > 1)
+			if(current_rule.tokens.size() > 1)
 			{
 				cerr << " {";
 			}
 			
-			for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
+			for(uint32_t k = 0; k < current_rule.tokens.size(); k++)
 			{
 				EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 				
@@ -300,7 +300,7 @@ int parser::printEBNF()
 					//	cerr << string(EBNF_level, ' ') << " ERROR : unknown grammar rule type" << endl;
 				}
 			}
-			if (current_rule.tokens.size() > 1)
+			if(current_rule.tokens.size() > 1)
 			{
 				cerr << "}";
 			}
@@ -317,11 +317,11 @@ int parser::printEBNF()
 uint32_t parser::getLevelOfEBNFRule(const std::string rule, const std::string start)
 {
 	int32_t result = 0;
-	for (uint32_t i = 0; i < EBNF[start].size(); i++)
+	for(uint32_t i = 0; i < EBNF[start].size(); i++)
 	{
 		grammar_rule_t current_rule = EBNF[start].at(i);
 		
-		for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
+		for(uint32_t k = 0; k < current_rule.tokens.size(); k++)
 		{
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 
@@ -331,7 +331,7 @@ uint32_t parser::getLevelOfEBNFRule(const std::string rule, const std::string st
 			}
 		}
 
-		for (uint32_t k = 0; k < current_rule.tokens.size(); k++)
+		for(uint32_t k = 0; k < current_rule.tokens.size(); k++)
 		{
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 			uint32_t tmp = getLevelOfEBNFRule(rule, ebnf_token.expansion);
@@ -377,7 +377,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 
 
 	// loop over std::vector<grammar_token_array_t>
-	for (uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
+	for(uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
 		result.first = 0;
 		
@@ -391,7 +391,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 		int old_tokens_size = working_tokens->size(); // used for callbacks with only current rule pushed tokens
 		int rule_old_index = *input_tokens_index; // used for ONLY_ONE rules
 		
-		for (uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
+		for(uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 		{
 			EBNF_token_t ebnf_token = current_rule.tokens.at(k);
 			int token_old_index = *input_tokens_index; // used for ONLY_ONE rules
@@ -410,14 +410,14 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 
 			if(ebnf_token.tokenType == DATATTYPE_TOKEN)
 			{
-				if (input_tokens->at(*input_tokens_index).type == ebnf_token.expansion)
+				if(input_tokens->at(*input_tokens_index).type == ebnf_token.expansion)
 				{
 					result.first = 0;
 				}
 			}
 			else if(ebnf_token.tokenType == TERMINAL_TOKEN)
 			{
-				if (input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
+				if(input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
 				{
 					result.first = 0;
 				}
@@ -429,7 +429,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value))
 				{
 					std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
-					if (std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
+					if(std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
 					{
 						//cerr << input_tokens->at(*input_tokens_index).value << "==" <<  ebnf_token.expansion << endl << flush;
 						result.first = 0;
@@ -539,7 +539,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 					displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 					//cerr << EBNF_level << endl << flush;
 					
-					result.second = (this->*ebnf_token.callback)();
+					result.second =(this->*ebnf_token.callback)();
 					
 					if(pushStatements && result.second)
 					{
@@ -567,7 +567,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 
 
-			if (*input_tokens_index >= input_tokens->size()) // break the zero or more cycle
+			if(*input_tokens_index >= input_tokens->size()) // break the zero or more cycle
 			{
 				continue_searching_rules = false;
 			}
@@ -585,7 +585,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(result.first != 0)
 				{
 					#if PARSER_EBNF_SHOW_TRACE == 1
-					cerr << string(EBNF_level*4, ' ') << "ERROR : tokens do not (follow order/exist) in map : " << start_map_index << " rule : " << i << endl;
+					cerr << string(EBNF_level*4, ' ') << "ERROR : tokens do not(follow order/exist) in map : " << start_map_index << " rule : " << i << endl;
 					#endif 
 					//continue_searching_rules = false;
 					break;
@@ -660,7 +660,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 
 parser::parser(Array<token>* gtokens, const string& filename, const bool insider = true)
 {
-	if (gtokens ==NULL || gtokens->size() == 0)
+	if(gtokens ==NULL || gtokens->size() == 0)
 	{
 		displayError(filename, 0,0,"Internal parser error !!!, no tokens , maybe empty source file ?");
 	}
@@ -708,7 +708,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 
 	EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{  {"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
 							{"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
-							{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for (from -> to : step) { statements; } */
+							{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for(from -> to : step) { statements; } */
 							{"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
 							{"link-list",EXPANSION_TOKEN, &parser::parseLink},
 							{"struct-list",EXPANSION_TOKEN, &parser::parseStruct},
@@ -898,13 +898,11 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 
 	
 	EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
-	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"=",TERMINAL_TOKEN},
-															{"expression-list",EXPANSION_TOKEN}}}};
+	EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY , {{"=",TERMINAL_TOKEN}, {"expression-list",EXPANSION_TOKEN}}}};
 
 	/** the function call statement */
 	
-	EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN},
-													  {";",TERMINAL_TOKEN}}}};
+	EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
 													  
 	EBNF["function-call"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 															   {"(",TERMINAL_TOKEN},
@@ -1022,7 +1020,7 @@ statement* parser::parseBreak()
 
 int	parser::parse()
 {
-	if (!insider)
+	if(!insider)
 	{
 		parseIncludesInsider("core/DM14GLOBAL.m14", "", includePath::sourceFileType::FILE_DM14);
 	}
@@ -1041,21 +1039,21 @@ int	parser::parse()
 	}
 	cerr << "<<<<<<<<<< END " << endl << flush;
 	
-	for (uint32_t i =0; i < working_tokens->size(); i++)
+	for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
 		cerr << "Token:" << working_tokens->at(i).value << endl;
 	}
 
 	// check for the main function // errr no need for file include , the compiler is the one that should that
-	if (!Header)
+	if(!Header)
 	{
-		if (!isUserFunction("main", true))
+		if(!isUserFunction("main", true))
 		{
 			displayError(fName, -1, -1, "no main function defined !");
 		}
 		funcInfo fun = getFunc("main");
 		
-		if (fun.returnType != "int")
+		if(fun.returnType != "int")
 		{
 			displayError(fName, -1, -1, "Main function must return int");
 		}
@@ -1091,7 +1089,7 @@ statement* parser::parseIncludes()
 	string package = "";
 	string library = "";
 	includePath::sourceFileType includeType = includePath::sourceFileType::LIBRARY;
-	if (getToken().type != "string" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))//tokens->at(index).type != "datatype")
+	if(getToken().type != "string" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))//tokens->at(index).type != "datatype")
 	{
 		displayError(fName, getToken().lineNumber,getToken().columnNumber,"Expected Package name and not " + getToken().value );
 	}
@@ -1099,7 +1097,7 @@ statement* parser::parseIncludes()
 	if(getToken().type == "string")
 	{
 		
-		package = getToken().value.substr(1, (getToken().value.size() - 2 ));
+		package = getToken().value.substr(1,(getToken().value.size() - 2 ));
 		if(package.substr(package.size()-5) == ".m14")
 		{
 			includeType = includePath::sourceFileType::FILE_DM14;
@@ -1124,12 +1122,12 @@ statement* parser::parseIncludes()
 			RequireValue("use", "Expected \"Use\" and not ", true);
 			popToken();
 			
-			if (getToken().value != "*" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))// tokens->at(index).type != "datatype")
+			if(getToken().value != "*" && getToken().type != "identifier" && !DM14::types::isDataType(getToken().value))// tokens->at(index).type != "datatype")
 			{
 				displayError(fName, getToken().lineNumber,getToken().columnNumber,"Expected Package name");	
 			}
 			
-			if (getToken().value == "*" )
+			if(getToken().value == "*" )
 			{
 				library = package;
 			}
@@ -1166,7 +1164,7 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 
 	//includes.push_back(pair<string,string>(package,library));
 	includes.push_back(include);
-	if (includeType == includePath::sourceFileType::FILE_DM14 || includeType == includePath::sourceFileType::FILE_C)
+	if(includeType == includePath::sourceFileType::FILE_DM14 || includeType == includePath::sourceFileType::FILE_C)
 	{
 		string fullPath;
 		for(uint32_t i = 0; i < includePaths.size(); i++)
@@ -1232,16 +1230,16 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 		//mapCodes->at(mapCodes->size()-1).Print();
 		}
 		
-		for (uint32_t i =0; i< Parser.linkLibs->size(); i++)
+		for(uint32_t i =0; i< Parser.linkLibs->size(); i++)
 		{
 			linkLibs->push_back(Parser.linkLibs->at(i));
 		}
 	
-		for (uint32_t i =0; i< Parser.getIncludes().size(); i++)
+		for(uint32_t i =0; i< Parser.getIncludes().size(); i++)
 		{
 			bool push = true;
 			
-			for (uint32_t k =0; k< includes.size(); k++)
+			for(uint32_t k =0; k< includes.size(); k++)
 			{
 				if(Parser.getIncludes().at(i).package == includes.at(k).package &&
 					Parser.getIncludes().at(i).library == includes.at(k).library)
@@ -1258,7 +1256,7 @@ int parser::parseIncludesInsider(const string& package, const string& library, c
 		
 		// push new stuff
 
-		for (uint32_t i =0; i< Parser.functionsInfo->size(); i++)
+		for(uint32_t i =0; i< Parser.functionsInfo->size(); i++)
 		{
 			functionsInfo->push_back(Parser.functionsInfo->at(i));
 		}
@@ -1279,14 +1277,14 @@ statement* parser::parseLink()
 	Link* stmt = new Link();
 	
 	popToken();
-	if (getToken().value == "slink")
+	if(getToken().value == "slink")
 	{
 		stmt->Static = true;
 	}
 	
 	popToken();
 		
-	if (getToken().type != "string")
+	if(getToken().type != "string")
 	{
 		RequireType("string", "expected library identifier and not : ", true);
 	}
@@ -1309,7 +1307,7 @@ statement* parser::parseReturn()
 	returnstatement->line = getToken().lineNumber;
 	returnstatement->scope = scope;
 	
-	if (!peekToken(";"))
+	if(!peekToken(";"))
 	{
 		//returnstatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
 		returnstatement->retValue = parseStatement("statement");
@@ -1345,14 +1343,14 @@ statement* parser::parseStatement(const std::string starting_rule, parser_callba
 		Array<token>* current_working_tokens = working_tokens;
 		working_tokens = output_tokens;
 		auto output_size = output_tokens->size();
-		retStmt = (this->*custom_callback)();
+		retStmt =(this->*custom_callback)();
 		working_tokens = current_working_tokens;
-		for (; output_tokens->size() > 0;)
+		for(; output_tokens->size() > 0;)
 		{
 			output_tokens->remove(0);
 		}
 
-		for (; output_size > 0;)
+		for(; output_size > 0;)
 		{
 			output_size--;
 			popToken();
@@ -1370,7 +1368,7 @@ statement* parser::parseStatement(const std::string starting_rule, parser_callba
 	delete output_tokens;
 	input_tokens_index = temp_input_tokens_index_ptr;
 
-	if (retStmt == nullptr)
+	if(retStmt == nullptr)
 	{
 		displayError(fName, errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
 	}
@@ -1457,11 +1455,11 @@ statement* parser::parseReset()
 {
 	resetStatement* rs = new resetStatement();
 	popToken(); // reset
-	if (!peekToken(";"))
+	if(!peekToken(";"))
 	{
 		popToken();
 		int cindex = index;
-		rs->count = parseOpStatement(cindex, (reachToken(";", true, true, true, false, false) - 1), getType(index-1), 0, rs);
+		rs->count = parseOpStatement(cindex,(reachToken(";", true, true, true, false, false) - 1), getType(index-1), 0, rs);
 	}
 	return rs;
 };
@@ -1514,21 +1512,21 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	
-	if (id.name == currentFunction.returnID)
+	if(id.name == currentFunction.returnID)
 	{
 		return 1;
 	}
 	
 	for(uint32_t i = 0; i < currentFunction.parameters->size(); i++)
 	{
-		if( currentFunction.parameters->at(i).name == id.name &&
+		if(currentFunction.parameters->at(i).name == id.name &&
 			currentFunction.parameters->at(i).parent == id.parent)
 		{
 			return 1;
 		}
 	}	
 	
-	if (distributedScope == 0 && !id.backProp && !id.channel)
+	if(distributedScope == 0 && !id.backProp && !id.channel)
 	{
 		return 1;
 	}
@@ -1547,12 +1545,12 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	
-	if ( findIDInfo(id, SCOPE)-1 >  currentFunction.scope)
+	if(findIDInfo(id, SCOPE)-1 >  currentFunction.scope)
 	{
 		return 2;
 	}
 	
-	if (!id.distributed)
+	if(!id.distributed)
 	{
 		return 3;
 	}
@@ -1564,7 +1562,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// FIX109 a modified varaible in current scope, we dont need to receive it then.
-	for ( uint32_t i =0; i<distModifiedGlobal->size(); i++)
+	for(uint32_t i =0; i<distModifiedGlobal->size(); i++)
 	{
 		string listParentName;
 		
@@ -1574,14 +1572,14 @@ int parser::pushDependency(idInfo& id)
 			listParentName = distModifiedGlobal->at(i).parent->name;
 		}
 	
-		if (distModifiedGlobal->at(i).name == id.name &&
+		if(distModifiedGlobal->at(i).name == id.name &&
 			listParentName == parentName &&
 			distModifiedGlobal->at(i).distributedScope == id.distributedScope &&
 			distModifiedGlobal->at(i).scope <= id.scope)
 		{		
-			if (!id.array)
+			if(!id.array)
 			{
-				if (id.arrayIndex == NULL && !id.channel)
+				if(id.arrayIndex == NULL && !id.channel)
 				{
 					return 1;
 				}
@@ -1590,7 +1588,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we modified it before in this scope!
-	for ( uint32_t i =0; i<diststatementTemp->modifiedVariables->size(); i++)
+	for(uint32_t i =0; i<diststatementTemp->modifiedVariables->size(); i++)
 	{
 		string listParentName;
 		
@@ -1599,13 +1597,13 @@ int parser::pushDependency(idInfo& id)
 			listParentName = diststatementTemp->modifiedVariables->at(i).parent->name;
 		}
 		
-		if (diststatementTemp->modifiedVariables->at(i).name == id.name &&
+		if(diststatementTemp->modifiedVariables->at(i).name == id.name &&
 			listParentName == parentName &&
 			diststatementTemp->modifiedVariables->at(i).scope <= id.scope)
 		{
-			if (!id.array)
+			if(!id.array)
 			{
-				if (id.arrayIndex == NULL && !id.channel && !id.backProp && !id.noblock)
+				if(id.arrayIndex == NULL && !id.channel && !id.backProp && !id.noblock)
 				{
 					return 1;
 				}
@@ -1614,7 +1612,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we requested it before !
-	for ( uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+	for(uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
 	{
 		string listParentName;
 		
@@ -1623,13 +1621,13 @@ int parser::pushDependency(idInfo& id)
 			listParentName = diststatementTemp->dependenciesVariables->at(i).parent->name;
 		}
 		
-		if (diststatementTemp->dependenciesVariables->at(i).name == id.name &&
+		if(diststatementTemp->dependenciesVariables->at(i).name == id.name &&
 			listParentName == parentName &&
 			diststatementTemp->dependenciesVariables->at(i).scope <= id.scope)
 		{
-			if (!id.array)
+			if(!id.array)
 			{
-				if (id.arrayIndex == NULL && !id.channel && !id.backProp && !id.noblock)
+				if(id.arrayIndex == NULL && !id.channel && !id.backProp && !id.noblock)
 				{
 					return 1;
 				}
@@ -1638,7 +1636,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	// we already requested it before this statement !
-	for ( uint32_t i =0; i<currentStatement->distStatements.size(); i++)
+	for(uint32_t i =0; i<currentStatement->distStatements.size(); i++)
 	{
 		string listParentName;
 		
@@ -1647,12 +1645,12 @@ int parser::pushDependency(idInfo& id)
 			listParentName = currentStatement->distStatements.at(i)->variable.parent->name;
 		}
 		
-		if (currentStatement->distStatements.at(i)->variable.name == id.name &&
+		if(currentStatement->distStatements.at(i)->variable.name == id.name &&
 			listParentName== parentName &&
 			currentStatement->distStatements.at(i)->variable.scope <= id.scope)
 			//&& !id.requestAddress)
 		{
-			if (!id.array)
+			if(!id.array)
 			{
 				return 1;
 			}
@@ -1660,10 +1658,10 @@ int parser::pushDependency(idInfo& id)
 	}
 	
 	
-	if (DM14::types::isClass(id.type))
+	if(DM14::types::isClass(id.type))
 	{
 		DatatypeBase datatype = DM14::types::findDataType(id.type);
-		for (uint32_t i =0; i < datatype.memberVariables.size(); i++)
+		for(uint32_t i =0; i < datatype.memberVariables.size(); i++)
 		{
 			idInfo id2(id);
 			id2.name = datatype.memberVariables.at(i).name;
@@ -1687,7 +1685,7 @@ int parser::pushDependency(idInfo& id)
 	}
 	else
 	{
-		for ( int32_t i= distModifiedGlobal->size()-1; i >= 0; i--)
+		for(int32_t i= distModifiedGlobal->size()-1; i >= 0; i--)
 		{
 			
 			string listParentName = "";
@@ -1700,7 +1698,7 @@ int parser::pushDependency(idInfo& id)
 			//cout << "Name : " << distModifiedGlobal->at(i).name << ":" << id.name << endl;
 			//cout << "Parents : " << listParentName << ":" << parentName << endl;
 			//cout << "Parents : " << distModifiedGlobal->at(i).distributedScope << endl;
-			if (distModifiedGlobal->at(i).name == id.name &&
+			if(distModifiedGlobal->at(i).name == id.name &&
 				listParentName == parentName)
 			{
 				if(id.backProp && distModifiedGlobal->at(i).distributedScope <= id.distributedScope)
@@ -1749,14 +1747,14 @@ int parser::pushModified(const string& op, idInfo& id)
 	}
 	
 	
-	if (id.name == currentFunction.returnID || getTopParent(&id)->name == currentFunction.returnID)
+	if(id.name == currentFunction.returnID || getTopParent(&id)->name == currentFunction.returnID)
 	{
 		return 1;
 	}
 	
 	for(uint32_t i = 0; i < currentFunction.parameters->size(); i++)
 	{
-		if( currentFunction.parameters->at(i).name == id.name &&
+		if(currentFunction.parameters->at(i).name == id.name &&
 			currentFunction.parameters->at(i).parent == id.parent)
 		{
 			return 1;
@@ -1776,36 +1774,36 @@ int parser::pushModified(const string& op, idInfo& id)
 	
 	
 	
-	if ( findIDInfo(id, SCOPE)-1 >  currentFunction.scope)
+	if(findIDInfo(id, SCOPE)-1 >  currentFunction.scope)
 	{
 		return 2;
 	}
 	
-	if (!id.distributed)
+	if(!id.distributed)
 	{
 		return 3;
 	}
 	
 	//cout << "MOD:::::" << id.name << ":" << op << endl;
 	
-	if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "++" || op == "--")
+	if(op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "++" || op == "--")
 	{
 		
 		// also make sure it is not modified twice in the same op statement like : A = B + C(A), where C() will modify A
-		// use same code like below (for array index ? )
-		for ( uint32_t i =0; i< dvList->size(); i++)
+		// use same code like below(for array index ? )
+		for(uint32_t i =0; i< dvList->size(); i++)
 		{
 			if(id.channel || id.recurrent)
 			{
 				break;
 			}
 			
-			if  (((dvList->at(i))->type == distributingVariablesStatement::MODS) &&
-				 ((dvList->at(i))->variable.name == id.name) &&
-				 ((dvList->at(i))->variable.parent == id.parent) &&
-				 ((dvList->at(i))->variable.arrayIndex == NULL))
+			if (((dvList->at(i))->type == distributingVariablesStatement::MODS) &&
+				((dvList->at(i))->variable.name == id.name) &&
+				((dvList->at(i))->variable.parent == id.parent) &&
+				((dvList->at(i))->variable.arrayIndex == NULL))
 			{
-				if (!id.backProp && ((dvList->at(i))->variable.distributedScope != distributedScope))
+				if(!id.backProp &&((dvList->at(i))->variable.distributedScope != distributedScope))
 					
 				{
 					dvList->at(i)->type = -1;
@@ -1827,7 +1825,7 @@ int parser::pushModified(const string& op, idInfo& id)
 			pushDependency(id);
 		}
 		
-		for ( uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+		for(uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
 		{
 			
 			int sameParentArrayIndex = false;
@@ -1853,7 +1851,7 @@ int parser::pushModified(const string& op, idInfo& id)
 				listParentName = diststatementTemp->dependenciesVariables->at(i).parent->name;
 			}
 				
-			if (diststatementTemp->dependenciesVariables->at(i).name == id.name
+			if(diststatementTemp->dependenciesVariables->at(i).name == id.name
 //				&&diststatementTemp->dependenciesVariables->at(i).parent == id.parent)
 				&& parentName == listParentName
 				&& sameParentArrayIndex
@@ -1900,7 +1898,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	funcCall->name = getToken().value;
 	
 	
-	if (isUserFunction(getToken().value, true))
+	if(isUserFunction(getToken().value, true))
 	{
 		funcCall->functionType = DM14::types::types::USERFUNCTION;
 	}
@@ -1931,7 +1929,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 			}
 			else
 			{
-				//funcCall->parameters->push_back( parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
+				//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
 				parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
 			}*/
 			statement* parameter = parseStatement("full-expression-list");
@@ -1950,7 +1948,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 	
 	if(funcCall->name == currentFunction.name)
 	{
-		for (uint32_t i =0; i < currentFunction.parameters->size(); i++)
+		for(uint32_t i =0; i < currentFunction.parameters->size(); i++)
 		{
 			if(parameters->size()-1 <= i)
 			{
@@ -1969,7 +1967,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 				break;
 			}
 		}
-		if (error)
+		if(error)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber,"1Parameters error for function call : " + funcCall->name);
 		}
@@ -1981,7 +1979,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 		{
 			if(getFunc(funcCall->name, classID).name.size())
 			{
-				for (uint32_t i =0; i < parameters->size(); i++)
+				for(uint32_t i =0; i < parameters->size(); i++)
 				{
 					cerr << "parameter: " << parameters->at(0) << endl;
 				}
@@ -1998,7 +1996,7 @@ statement* parser::parseFunctionCallInternal(bool terminated,const string& retur
 		funcCall->type = getFunc(funcCall->name, parameters, returnType, classID).returnType;
 	}
 	
-	if (terminated)
+	if(terminated)
 	{
 		popToken();
 		RequireValue(";", "Expected ; and not ", true);
@@ -2028,12 +2026,12 @@ statement* parser::parseForloop()
 		//statement* stmt =  parseDeclarationInternal(";");
 		statement* stmt =  parseStatement("loop-expression-declarator");
 		stmt->line = getToken().lineNumber;
-		if (stmt->statementType != dStatement && stmt->statementType != eStatement)
+		if(stmt->statementType != dStatement && stmt->statementType != eStatement)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected declaration statement");
 		}
 		
-		if (stmt->statementType == dStatement)
+		if(stmt->statementType == dStatement)
 		{
 			floop->fromCondition->push_back(stmt);
 		}
@@ -2045,12 +2043,12 @@ statement* parser::parseForloop()
 	{
 		statement* stmt= parseStatement("loop-expression-condition");
 		stmt->line = getToken().lineNumber;
-		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
+		if(stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected conditional statement");
 		}
 		
-		if (stmt->statementType == oStatement)
+		if(stmt->statementType == oStatement)
 		{
 			floop->toCondition->push_back(stmt);
 		}
@@ -2064,12 +2062,12 @@ statement* parser::parseForloop()
 	{
 		statement* stmt= parseStatement("loop-expression-step-list");
 		stmt->line = getToken().lineNumber;
-		if (stmt->statementType != oStatement && stmt->statementType != eStatement)
+		if(stmt->statementType != oStatement && stmt->statementType != eStatement)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected operational statement");
 		}
 		
-		if (stmt->statementType == oStatement)
+		if(stmt->statementType == oStatement)
 		{
 			floop->stepCondition->push_back(stmt);
 		}
@@ -2102,10 +2100,10 @@ statement* parser::parseForloop()
 int parser::addStatementDistributingVariables(statement* stmt)
 {
 	
-	for (uint32_t i=0; i < currentFunction.body->appendBeforeList.size(); i++)
+	for(uint32_t i=0; i < currentFunction.body->appendBeforeList.size(); i++)
 	{
-		//if ( ((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-		if ( (termStatment*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
+		//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
+		if((termStatment*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
 		{
 			cerr << currentFunction.body->appendBeforeList.at(i) << endl << flush;
 			stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendBeforeList.at(i));
@@ -2114,10 +2112,10 @@ int parser::addStatementDistributingVariables(statement* stmt)
 			i--;
 		}
 	}
-	for (uint32_t i=0; i < currentFunction.body->appendAfterList.size(); i++)
+	for(uint32_t i=0; i < currentFunction.body->appendAfterList.size(); i++)
 	{
-		//if ( ((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-		if ( (termStatment*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
+		//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
+		if((termStatment*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
 		{
 			stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendAfterList.at(i));
 			//currentFunction.body->append_after(dvstatement);
@@ -2164,25 +2162,25 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	popToken();
 	RequireValue("(", "Expected \"(\" and not "+ getToken().value + " after function definition ", false);
 
-	if (!peekToken("->"))
+	if(!peekToken("->"))
 	{
-		while (getToken().value != "->")
+		while(getToken().value != "->")
 		{
 			//TODO: FIX 102
 			// should make a Array of declaration statements and add the statements to it, for the compiler to parse them
 			// with their initialized values ?
-			//declareStatement* stmt = (declareStatement*)parseDeclarationInternal("->");
-			//declareStatement* stmt = (declareStatement*)parseStatement("statement");
+			//declareStatement* stmt =(declareStatement*)parseDeclarationInternal("->");
+			//declareStatement* stmt =(declareStatement*)parseStatement("statement");
 			
-			declareStatement* stmt = (declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+			declareStatement* stmt =(declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
 			
 			stmt->line = getToken().lineNumber;
-			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
+			for(uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
 				idInfo Id;
-				Id.name = (stmt->identifiers->at(i)).name;
-				Id.parent = (stmt->identifiers->at(i)).parent;
-				Id.type = (stmt->identifiers->at(i)).type;
+				Id.name =(stmt->identifiers->at(i)).name;
+				Id.parent =(stmt->identifiers->at(i)).parent;
+				Id.type =(stmt->identifiers->at(i)).type;
 				Id.type = stmt->type;
 				Id.scope = stmt->scope;
 				Id.index = index;
@@ -2207,7 +2205,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	
 	RequireValue("->", "Expected \"->\" and not "+getToken().value + " after function definition ", false);
 	
-	if (peekToken(")"))
+	if(peekToken(")"))
 	{
 		popToken();
 		currentFunction.returnIDType = "NIL";
@@ -2215,20 +2213,20 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	}
 	else
 	{	
-		while (getToken().value != ")")
+		while(getToken().value != ")")
 		{
-			//declareStatement* stmt = (declareStatement*)parseDeclarationInternal();
-			declareStatement* stmt = (declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+			//declareStatement* stmt =(declareStatement*)parseDeclarationInternal();
+			declareStatement* stmt =(declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
 			popToken();
 			RequireValue(")", "Expected ) and not "+getToken().value + " after function definition ", false);
 			stmt->line = getToken().lineNumber;
-			for ( uint32_t i = 0; i < stmt->identifiers->size(); i++ )
+			for(uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 			{
 				stmt->line = getToken().lineNumber;
 				currentFunction.returnIDType = stmt->type;
 				Funcinfo.returnType = stmt->type;
 				currentFunction.returnID = stmt->identifiers->at(0).name;
-				if (stmt->identifiers->size() > 1)
+				if(stmt->identifiers->size() > 1)
 				{
 					displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Function : " + Funcinfo.name + " : more than one variable for return, only the first will be used");
 					break;
@@ -2240,22 +2238,22 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 	globalNoDist = false;
 	// continue to body !
 	popToken();
-	if (getToken().value == ";")
+	if(getToken().value == ";")
 	{
 		//check if it already exists ??
 		// different functions with same name should exist
 		// check if same parameters, then check for prototype
 		Funcinfo.protoType = true;
-		if (isFunction(Funcinfo.name, false))
+		if(isFunction(Funcinfo.name, false))
 		{
-			for (uint32_t i =0; i < functionsInfo->size(); i++)
+			for(uint32_t i =0; i < functionsInfo->size(); i++)
 			{
 				//FIX21
-				if (functionsInfo->at(i).name == Funcinfo.name)
+				if(functionsInfo->at(i).name == Funcinfo.name)
 				{
-					if ( *functionsInfo->at(i).parameters == *Funcinfo.parameters)
+					if(*functionsInfo->at(i).parameters == *Funcinfo.parameters)
 					{
-						if (functionsInfo->at(i).protoType)
+						if(functionsInfo->at(i).protoType)
 						{
 							displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defined function prototype : " +Funcinfo.name);
 						}
@@ -2269,20 +2267,20 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		}
 		functionsInfo->push_back(Funcinfo);
 	}
-	else if (getToken().value == "{")
+	else if(getToken().value == "{")
 	{
 		globalNoDist = false;
 		Funcinfo.protoType = false;
 
 		//FIX , isFucntion again ?
-		if (isFunction(Funcinfo.name, false))
+		if(isFunction(Funcinfo.name, false))
 		{
-			for (uint32_t i =0; i < functionsInfo->size(); i++)
+			for(uint32_t i =0; i < functionsInfo->size(); i++)
 			{
-				if (functionsInfo->at(i).name == Funcinfo.name &&
+				if(functionsInfo->at(i).name == Funcinfo.name &&
 					*functionsInfo->at(i).parameters == *Funcinfo.parameters)
 				{
-					if (!functionsInfo->at(i).protoType)
+					if(!functionsInfo->at(i).protoType)
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defined function : "+Funcinfo.name);
 					}
@@ -2299,8 +2297,8 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 				
 		Array<statement*>* declarations = new Array<statement*>();
 		
-		//while (popToken().value != "}")
-		while (!peekToken("}"))
+		//while(popToken().value != "}")
+		while(!peekToken("}"))
 		{
 			statement* stmt = parseStatement("statement");
 
@@ -2309,17 +2307,17 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"error parsing function : "+Funcinfo.name);
 			}
 
-			if (stmt->statementType == dStatement)
+			if(stmt->statementType == dStatement)
 			{
-				if (((declareStatement*)stmt)->Initilazed && !((declareStatement*)stmt)->global)
+				if(((declareStatement*)stmt)->Initilazed && !((declareStatement*)stmt)->global)
 				{
-					declareStatement* decStatement = ((declareStatement*)stmt);
+					declareStatement* decStatement =((declareStatement*)stmt);
 					statement* value = decStatement->value;
 					decStatement->value = NULL;
 					//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
 					declarations->push_back(decStatement);
 					//functionStatementsCount++;
-					for (uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
+					for(uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
 					{
 						//fix add type and scope ....
 						operationalStatement* os = new operationalStatement();
@@ -2327,17 +2325,17 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 						os->op = "=";
 						os->right = value;
 						os->type = stmt->type;
-						os->scope = ((declareStatement*)decStatement)->scope;
+						os->scope =((declareStatement*)decStatement)->scope;
 
 						idInfo id(decStatement->identifiers->at(i).name, os->scope, os->type, NULL);
 						id.distributedScope = distributedScope;
-						id.backProp = (bool)findIDInfo(id, BACKPROB);
-						id.recurrent = (bool)findIDInfo(id, RECURRENT);
-						id.channel = (bool)findIDInfo(id, CHANNEL);
-						id.array = (bool)findIDInfo(id, ARRAY);
-						id.noblock = (bool)findIDInfo(id, NOBLOCK);
-						id.distributed = (bool)findIDInfo(id, DISTRIBUTED);
-						id.type = (bool)findIDInfo(id, TYPE);
+						id.backProp =(bool)findIDInfo(id, BACKPROB);
+						id.recurrent =(bool)findIDInfo(id, RECURRENT);
+						id.channel =(bool)findIDInfo(id, CHANNEL);
+						id.array =(bool)findIDInfo(id, ARRAY);
+						id.noblock =(bool)findIDInfo(id, NOBLOCK);
+						id.distributed =(bool)findIDInfo(id, DISTRIBUTED);
+						id.type =(bool)findIDInfo(id, TYPE);
 						currentStatement = os;
 						pushModified(os->op, id);
 
@@ -2356,7 +2354,7 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 			}
 			else
 			{
-				if (stmt->statementType == rStatement)
+				if(stmt->statementType == rStatement)
 				{
 					currentFunction.body->clearQueue();
 				}
@@ -2366,20 +2364,20 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		}
 
 		//let's fix all backprob variables :)
-		for( uint32_t i =0; i< dvList->size(); i++ )
+		for(uint32_t i =0; i< dvList->size(); i++ )
 		{
-			if( (dvList->at(i))->type == distributingVariablesStatement::DEPS &&
+			if((dvList->at(i))->type == distributingVariablesStatement::DEPS &&
 				(dvList->at(i))->variable.backProp  )
 			{
-				for( uint32_t k =i+1; k< dvList->size(); k++ )
+				for(uint32_t k =i+1; k< dvList->size(); k++ )
 				{
-					if( (dvList->at(k))->type != distributingVariablesStatement::MODS ||
-					  ( (dvList->at(k))->variable.distributedScope == (dvList->at(i))->variable.distributedScope) ||
-					  ( (dvList->at(k))->variable.name != (dvList->at(i))->variable.name) )
+					if((dvList->at(k))->type != distributingVariablesStatement::MODS ||
+					 ((dvList->at(k))->variable.distributedScope ==(dvList->at(i))->variable.distributedScope) ||
+					 ((dvList->at(k))->variable.name !=(dvList->at(i))->variable.name) )
 					  {
 						  continue;
 					  }
-					  dvList->at(i)->dependencyNode = (dvList->at(k))->variable.distributedScope;
+					  dvList->at(i)->dependencyNode =(dvList->at(k))->variable.distributedScope;
 					  break;
 				}
 			}
@@ -2392,13 +2390,13 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 		
 		//TODO:fix what if , two initiated variables are pushed at the same place ?
 
-		termStatment* termstatement = new termStatment( "DM14FUNCTIONBEGIN", "NIL" );
+		termStatment* termstatement = new termStatment("DM14FUNCTIONBEGIN", "NIL" );
 		termstatement->scope = scope;
 		//termstatement->scopeLevel = scopeLevel;
 		//termstatement->arrayIndex = aIndex;
 		//termstatement->identifier = true;
 		declarations->push_back(termstatement);
-		for (uint32_t i=0; i < currentFunction.body->size(); i++)
+		for(uint32_t i=0; i < currentFunction.body->size(); i++)
 		{
 			declarations->push_back(currentFunction.body->at(i));
 		}
@@ -2431,9 +2429,9 @@ statement* parser::parseFunction() // add functions prototypes to userFunctions 
 
 int parser::nextIndex()
 {
-	if ((unsigned) index == (tokens->size() - 1))
+	if((unsigned) index ==(tokens->size() - 1))
 	{
-		displayError(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Unexpected EOF");
+		displayError(fName,(tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber,"Unexpected EOF");
 	}
 	index++;
 	return index;
@@ -2441,9 +2439,9 @@ int parser::nextIndex()
 
 bool parser::isIdentifier(const string& ID)
 {
-	for ( uint32_t i =0; i< identifiers->size(); i++ )
+	for(uint32_t i =0; i< identifiers->size(); i++ )
 	{
-		if ( ID == (identifiers->at(i)).name )
+		if(ID ==(identifiers->at(i)).name )
 		{
 			return true;
 		}
@@ -2457,9 +2455,9 @@ bool parser::isIdentifier(const string& ID)
 
 int parser::findIDInfo(const idInfo& ID, const int& returnType)
 {	
-	for ( uint32_t i =0; i< identifiers->size(); i++ )
+	for(uint32_t i =0; i< identifiers->size(); i++ )
 	{
-		//if ( ID.name == (identifiers->at(i)).name && ID.parent && ID.parent->name == (identifiers->at(i)).parent->name)
+		//if(ID.name ==(identifiers->at(i)).name && ID.parent && ID.parent->name ==(identifiers->at(i)).parent->name)
 		
 		string parentName;
 		string identifiersParentName;
@@ -2471,54 +2469,54 @@ int parser::findIDInfo(const idInfo& ID, const int& returnType)
 		
 		if((identifiers->at(i)).parent)
 		{
-			identifiersParentName = (identifiers->at(i)).parent->name;
+			identifiersParentName =(identifiers->at(i)).parent->name;
 		}
 		
-		if (ID.name == (identifiers->at(i)).name && parentName == identifiersParentName)
+		if(ID.name ==(identifiers->at(i)).name && parentName == identifiersParentName)
 		{
-			if (returnType == SCOPE)
+			if(returnType == SCOPE)
 			{
-				return (identifiers->at(i)).scope;
+				return(identifiers->at(i)).scope;
 			}
-			else if (returnType == INITIALIZED)
+			else if(returnType == INITIALIZED)
 			{
-				return (identifiers->at(i)).initialized;
+				return(identifiers->at(i)).initialized;
 			}
-			else if (returnType == ARRAY)
+			else if(returnType == ARRAY)
 			{
-				return (identifiers->at(i)).array;
+				return(identifiers->at(i)).array;
 			}
-			else if (returnType == ARRAYSIZE)
+			else if(returnType == ARRAYSIZE)
 			{
-				return (identifiers->at(i)).size;
+				return(identifiers->at(i)).size;
 			}
-			else if (returnType == TMPSCOPE)
+			else if(returnType == TMPSCOPE)
 			{
-				return (identifiers->at(i)).tmpScope;
+				return(identifiers->at(i)).tmpScope;
 			}
-			else if (returnType == DISTRIBUTED)
+			else if(returnType == DISTRIBUTED)
 			{
-				return (identifiers->at(i)).distributed;
+				return(identifiers->at(i)).distributed;
 			}
-			else if (returnType == BACKPROB)
+			else if(returnType == BACKPROB)
 			{
-				return (identifiers->at(i)).backProp;
+				return(identifiers->at(i)).backProp;
 			}
-			else if (returnType == RECURRENT)
+			else if(returnType == RECURRENT)
 			{
-				return (identifiers->at(i)).recurrent;
+				return(identifiers->at(i)).recurrent;
 			}
-			else if (returnType == CHANNEL)
+			else if(returnType == CHANNEL)
 			{
-				return (identifiers->at(i)).channel;
+				return(identifiers->at(i)).channel;
 			}
-			else if (returnType == NOBLOCK)
+			else if(returnType == NOBLOCK)
 			{
-				return (identifiers->at(i)).noblock;
+				return(identifiers->at(i)).noblock;
 			}
-			else if (returnType == GLOBAL)
+			else if(returnType == GLOBAL)
 			{
-				return (identifiers->at(i)).global;
+				return(identifiers->at(i)).global;
 			}
 			else
 			{
@@ -2528,15 +2526,15 @@ int parser::findIDInfo(const idInfo& ID, const int& returnType)
 	}
 	
 	
-	if (returnType == SCOPE)
+	if(returnType == SCOPE)
 	{
 		return -1;
 	}
-	else if (returnType == ARRAY)
+	else if(returnType == ARRAY)
 	{
 		return -1;
 	}
-	else if (returnType == ARRAYSIZE)
+	else if(returnType == ARRAYSIZE)
 	{
 		return -1;
 	}
@@ -2550,9 +2548,9 @@ string parser::findIDType(const idInfo& ID, const string& classID)
 	{
 		for(uint32_t i =0; i < datatypes.size(); i++)
 		{
-			if(datatypes.at(i).typeID == classID && (datatypes.at(i).classType || datatypes.at(i).enumType))
+			if(datatypes.at(i).typeID == classID &&(datatypes.at(i).classType || datatypes.at(i).enumType))
 			{
-				for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
+				for(uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 				{
 					if(datatypes.at(i).memberVariables.at(k).name == ID.name)
 					{
@@ -2564,12 +2562,12 @@ string parser::findIDType(const idInfo& ID, const string& classID)
 	}
 	else
 	{
-		for ( uint32_t i =0; i< identifiers->size(); i++ )
+		for(uint32_t i =0; i< identifiers->size(); i++ )
 		{
-			//if ( ID.name == identifiers->at(i).name && !identifiers->at(i).parent.size())
-			if ( ID.name == identifiers->at(i).name && !identifiers->at(i).parent)
+			//if(ID.name == identifiers->at(i).name && !identifiers->at(i).parent.size())
+			if(ID.name == identifiers->at(i).name && !identifiers->at(i).parent)
 			{
-				return (identifiers->at(i)).type;
+				return(identifiers->at(i)).type;
 			}
 		}
 	}
@@ -2589,11 +2587,11 @@ bool parser::isFunction(const string& func, bool recursiveCurrent,const string& 
 
 bool parser::isBuiltinFunction(const string& func)
 {
-	for ( uint32_t i = 0; i < functionsInfo->size(); i++)
+	for(uint32_t i = 0; i < functionsInfo->size(); i++)
 	{	
-		if (func == (functionsInfo->at(i)).name)
+		if(func ==(functionsInfo->at(i)).name)
 		{
-			if ((functionsInfo->at(i)).type == DM14::types::types::BUILTINFUNCTION)
+			if((functionsInfo->at(i)).type == DM14::types::types::BUILTINFUNCTION)
 			{
 				return true;
 			}
@@ -2607,19 +2605,19 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 {
 	if(!classID.size())
 	{
-		if (recursiveCurrent)
+		if(recursiveCurrent)
 		{
-			if (func == currentFunction.name)
+			if(func == currentFunction.name)
 			{
 				return true;
 			}
 		}
 	
-		for ( uint32_t i = 0; i < functionsInfo->size(); i++)
+		for(uint32_t i = 0; i < functionsInfo->size(); i++)
 		{	
-			if (func == (functionsInfo->at(i)).name)
+			if(func ==(functionsInfo->at(i)).name)
 			{
-				if ((functionsInfo->at(i)).type == DM14::types::types::USERFUNCTION)
+				if((functionsInfo->at(i)).type == DM14::types::types::USERFUNCTION)
 				{
 					return true;
 				}
@@ -2633,7 +2631,7 @@ bool parser::isUserFunction(const string& func, bool recursiveCurrent,const stri
 //bool parser::isImmediate(const string& immediate)
 bool parser::isImmediate(const token& tok)
 {
-	/*if (!  (isOperator(immediate) || isKeyword(immediate) || 
+	/*if(! (isOperator(immediate) || isKeyword(immediate) || 
 			DM14::types::isDataType(immediate) || isFunction(immediate, true) ||
 			isIdentifier(immediate)))*/
 	if(tok.type == "float"||
@@ -2664,12 +2662,12 @@ statement* parser::findTreeNode(statement* opstatement, int statementType)
 	
 	if(opstatement->statementType == oStatement)
 	{
-		if (((operationalStatement*)opstatement)->left)
+		if(((operationalStatement*)opstatement)->left)
 		{
 			result = findTreeNode(((operationalStatement*)opstatement)->left, statementType);
 		}
 			
-		if (!result && ((operationalStatement*)opstatement)->right)
+		if(!result &&((operationalStatement*)opstatement)->right)
 		{
 			result = findTreeNode(((operationalStatement*)opstatement)->right, statementType);
 		}
@@ -2691,8 +2689,8 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 	
 	if(opstatement->statementType == tStatement)
 	{
-		idInfo* id = ((termStatment*)opstatement)->id;
-		if (id)
+		idInfo* id =((termStatment*)opstatement)->id;
+		if(id)
 		{
 			if(depencyType == distributingVariablesStatement::MODS)
 			{
@@ -2709,13 +2707,13 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 		
 	if(opstatement->statementType == oStatement)
 	{
-		if (((operationalStatement*)opstatement)->left)
+		if(((operationalStatement*)opstatement)->left)
 		{
-			if ( ((operationalStatement*)opstatement)->op == "." || ((operationalStatement*)opstatement)->op == "::")
+			if(((operationalStatement*)opstatement)->op == "." ||((operationalStatement*)opstatement)->op == "::")
 			{
-				if ( ((operationalStatement*)opstatement)->left->statementType == oStatement)
+				if(((operationalStatement*)opstatement)->left->statementType == oStatement)
 				{
-					statement* leftLeft = ((operationalStatement*)((operationalStatement*)opstatement)->left)->left;
+					statement* leftLeft =((operationalStatement*)((operationalStatement*)opstatement)->left)->left;
 					searchVariables(leftLeft, depencyType, op);
 				}
 			}
@@ -2725,7 +2723,7 @@ int parser::searchVariables(statement* opstatement, int depencyType, string op)
 			}
 		}
 			
-		if (((operationalStatement*)opstatement)->right)
+		if(((operationalStatement*)opstatement)->right)
 		{
 			searchVariables(((operationalStatement*)opstatement)->right, depencyType, op);
 		}
@@ -2758,35 +2756,35 @@ std::string parser::getOpStatementType(std::string stmtType, const std::string& 
 {
 	std::string type;
 
-	if (stmtType == "NIL")
+	if(stmtType == "NIL")
 	{
 		displayError(fName, getToken().lineNumber, getToken().columnNumber,"Wrong type variable : " + getToken().value);
 	}
-	else if (stmtType == "-2")
+	else if(stmtType == "-2")
 	{
 		if(isFunction(getToken(0).value, true, classID)) /// function, set to it's return type
 		{
 			type  = getFunc(getToken(0).value, classID).returnType;
 		}
-		else if (DM14::types::isDataType(getToken(0).value)) /// if it is  datatype, use it as the statement type
+		else if(DM14::types::isDataType(getToken(0).value)) /// if it is  datatype, use it as the statement type
 		{
 			type  = getToken(0).value;
 		}		
-		else if (getToken(0).type == "identifier") // if identifier, then use it's type
+		else if(getToken(0).type == "identifier") // if identifier, then use it's type
 		{
 			type  = findIDType(idInfo(getToken(0).value, 0, "", NULL), classID);
 		}
-		else if (isImmediate(getToken(0)) ) /// use immediate type
+		else if(isImmediate(getToken(0)) ) /// use immediate type
 		{
 			type  = getToken(0).type;
 		}
-		/*else if ((DM14::types::isSingleOperator(getToken(0).value) || getToken(0).value == "@") && 0 < to)
+		/*else if((DM14::types::isSingleOperator(getToken(0).value) || getToken(0).value == "@") && 0 < to)
 		{
-			if (isImmediate(getToken(0+1)))
+			if(isImmediate(getToken(0+1)))
 			{
 				type  = getToken(0+1).type;
 			}
-			else if (getToken(0+1).type == "identifier" )
+			else if(getToken(0+1).type == "identifier" )
 			{
 				type  = findIDType(idInfo(getToken(0+1).value, 0, "", NULL), classID);
 			}
@@ -2822,12 +2820,12 @@ bool parser::restore(std::vector<token>* extract_temp_vector)
 std::vector<token>* parser::extract(int32_t from, int32_t to)
 {
 	std::vector<token>*  extract_temp_vector = new std::vector<token>();
-	for (uint32_t i = 0; i < from; i++)
+	for(uint32_t i = 0; i < from; i++)
 	{
 		extract_temp_vector->push_back(popToken());
 	}
 
-	for (uint32_t i = to+1, current_size = working_tokens->size(); i < current_size; i++)
+	for(uint32_t i = to+1, current_size = working_tokens->size(); i < current_size; i++)
 	{
 		extract_temp_vector->push_back(popToken(to+1));
 	}
@@ -2848,37 +2846,37 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	
 	bool removeBigParenthes = true;
 	
-	// [ overall check for (s and )s
-	for ( int32_t i= from; i <= to ; i++ )
+	// [ overall check for(s and )s
+	for(int32_t i= from; i <= to ; i++ )
 	{
-		if (getToken(i).value == "(" )
+		if(getToken(i).value == "(" )
 		{
 			++plevel;
 		}
-		else if (getToken(i).value == ")" )
+		else if(getToken(i).value == ")" )
 		{
 			--plevel;
 		}
 
 		if(plevel == 0)
 		{
-			if (i < to)
+			if(i < to)
 			{
 				removeBigParenthes=false;
 			}
 		}
 	}
 	
-	if ( plevel > 0 )
+	if(plevel > 0 )
 	{
 		displayError(fName, getToken().lineNumber, getToken().columnNumber," missing \")\" ");
 	}
-	else if ( plevel < 0 )
+	else if(plevel < 0 )
 	{
 		displayError(fName, getToken().lineNumber, getToken().columnNumber," missing \"(\" ");
 	}
 	
-	// big (..) statement
+	// big(..) statement
 	if(getToken(from).value == "("  && getToken(to).value == ")" && removeBigParenthes)
 	{
 		popToken();
@@ -2906,22 +2904,22 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 
 	// [ split the opstatement to left and right if there is an operator ;)
 	plevel= 0;
-	for (int32_t i = from; i <= to; i++ )
+	for(int32_t i = from; i <= to; i++ )
 	{
-		if (getToken(i).value == "(")
+		if(getToken(i).value == "(")
 		{
 			plevel++;
 			continue;
 		}
-		else if (getToken(i).value == ")" )
+		else if(getToken(i).value == ")" )
 		{
 			plevel--;
 			continue;
 		}
 		
-		if (plevel == 0)
+		if(plevel == 0)
 		{
-			if ((getToken(i).type == "operator") &&
+			if((getToken(i).type == "operator") &&
 			    !(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
 			{
 				opstatement->op = getToken(i).value;
@@ -2951,7 +2949,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				
 				if(res)
 				{
-					id  = ((termStatment*)res)->id;
+					id  =((termStatment*)res)->id;
 				}
 									
 				if(opstatement->op == "." ||  opstatement->op == "::" )
@@ -2971,13 +2969,13 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					opstatement->type = opstatement->right->type;
 					
 					//statement* res = findTreeNode(opstatement->right, tStatement);
-					//idInfo* rightID  = ((termStatment*)res)->id;
+					//idInfo* rightID  =((termStatment*)res)->id;
 					//rightID->arrayIndex = id->arrayIndex;
 					//id->arrayIndex = NULL;
 					
-					/*if ( stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
+					/*if(stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
 					{
-						displayError(fName, (tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
+						displayError(fName,(tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
 					}*/
 				}
 				else if(to > -1)
@@ -2994,7 +2992,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					displayError("could not determine statement type");
 				}
 								
-				if (DM14::types::isbinOperator(opstatement->op) && to > -1)
+				if(DM14::types::isbinOperator(opstatement->op) && to > -1)
 				{
 					if(opstatement->op == "==" || opstatement->op == "||" || opstatement->op == ">" || opstatement->op == ">"
 					 || opstatement->op == ">=" || opstatement->op == "<=" || opstatement->op == "&&")
@@ -3008,14 +3006,14 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					}
 					
 					//FIXME:
-					/*else if (caller && caller->statementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opstatement->type) && opstatement->op != "::"  )
+					/*else if(caller && caller->statementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opstatement->type) && opstatement->op != "::"  )
 					{
 						cerr  << opstatement->op << endl;
 						cerr << tokens->at(from).value << endl;
 						cerr << tokens->at(to).value << endl;
-						displayError(fName, (tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"typee \"" +opstatement->type + "\" does not support operator " + ((operationalStatement*)caller)->op);
+						displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"typee \"" +opstatement->type + "\" does not support operator " +((operationalStatement*)caller)->op);
 					}*/
-					else if (!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
+					else if(!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
 					{
 						if(opstatement->left)
 						cerr << "left type :" << opstatement->left->type << endl;
@@ -3027,13 +3025,13 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 				}
 				else if(DM14::types::isSingleOperator(opstatement->op))
 				{
-					if (!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && (opstatement->op != "@") )
+					if(!DM14::types::typeHasOperator(opstatement->op, opstatement->type) &&(opstatement->op != "@") )
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 					}
 					searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
 				}
-				else if (DM14::types::isCoreOperator(opstatement->op))
+				else if(DM14::types::isCoreOperator(opstatement->op))
 				{
 					if(opstatement->op == "@")
 					{
@@ -3045,7 +3043,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 							
 						if(res)
 						{
-							rightId  = ((termStatment*)res)->id;
+							rightId  =((termStatment*)res)->id;
 							int isDistributed = findIDInfo(*rightId, DISTRIBUTED);
 							if(!isDistributed)
 							{
@@ -3073,7 +3071,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 							
 							if(opstatement->right->statementType == oStatement)
 							{
-								operationalStatement* stmt = (operationalStatement*) opstatement->right;
+								operationalStatement* stmt =(operationalStatement*) opstatement->right;
 								searchVariables(opstatement->left, distributingVariablesStatement::MODS, stmt->op);
 								searchVariables(opstatement->left, distributingVariablesStatement::DEPS);
 								opstatement->op  = stmt->op;
@@ -3088,7 +3086,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 								opstatement->op  = "";
 							}					
 
-							if ( (parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opstatement->op == "")
+							if((parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opstatement->op == "")
 							{
 								idInfo* leftId = NULL;
 								// should we loop inside to get the term ?
@@ -3096,7 +3094,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					
 								if(res)
 								{
-									leftId  = ((termStatment*)res)->id;
+									leftId  =((termStatment*)res)->id;
 									pushDependency(*leftId);
 								}
 								else
@@ -3113,7 +3111,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 							{
 								if(currentStatement->distStatements.at(l)->type == distributingVariablesStatement::DEPS)
 								{
-									 if (currentStatement->distStatements.at(l)->variable.name == rightId->name)
+									 if(currentStatement->distStatements.at(l)->variable.name == rightId->name)
 									 {
 										 currentStatement->distStatements.remove(l);
 										 break;
@@ -3129,21 +3127,21 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					displayError("Operator is not defined as single or binary  : " + opstatement->op);
 				}
 				
-				if(   !DM14::types::typeHasOperator(opstatement->op, opstatement->type) 
+				if(  !DM14::types::typeHasOperator(opstatement->op, opstatement->type) 
 				   && !(opstatement->left && opstatement->op == ".")
 				   && opstatement->op != "@")
 				{
-					//displayError(fName, (tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+					//displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
 				}
 				
 				/*
-				if ( !hasTypeValue(opstatement->type, opstatement->right->type) && !classMember && stmtType!= "-2")
+				if(!hasTypeValue(opstatement->type, opstatement->right->type) && !classMember && stmtType!= "-2")
 				{
-					displayError(fName, (tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + opstatement->right->type + " with " +opstatement->type);
+					displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + opstatement->right->type + " with " +opstatement->type);
 				}
-				else if ( !hasTypeValue(stmtType, opstatement->type) && stmtType != "-2")
+				else if(!hasTypeValue(stmtType, opstatement->type) && stmtType != "-2")
 				{
-					displayError(fName, (tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + stmtType + " with " +opstatement->type);
+					displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + stmtType + " with " +opstatement->type);
 				}*/
 				return opstatement;
 			}
@@ -3182,9 +3180,9 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	
 	// ]
 	
-	//if (!typeHasOperator(tokens->at(currentIndex).value, findID(tokens->at(currentIndex+1).value, classID).type))
+	//if(!typeHasOperator(tokens->at(currentIndex).value, findID(tokens->at(currentIndex+1).value, classID).type))
 	//{
-	//	displayError(fName, (tokens->at(currentIndex)).lineNumber,(tokens->at(currentIndex)).columnNumber,"single operator " + (tokens->at(currentIndex)).value + " is not supported by statements of type " + findID(tokens->at(currentIndex+1).value, classID).type);
+	//	displayError(fName,(tokens->at(currentIndex)).lineNumber,(tokens->at(currentIndex)).columnNumber,"single operator " +(tokens->at(currentIndex)).value + " is not supported by statements of type " + findID(tokens->at(currentIndex+1).value, classID).type);
 	//	}
 	
 	
@@ -3192,11 +3190,11 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 	
 	statement* aIndex = NULL;
 	// if identifier , then it might be variable or user/builtin function
-	if (getToken(from).type == "identifier" ||  DM14::types::isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
+	if(getToken(from).type == "identifier" ||  DM14::types::isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
 	{
 		// function !
-		if (isBuiltinFunction(getToken(from).value) || isUserFunction(getToken(from).value, true) 
-			|| (parent && DM14::types::classHasMemberFunction(classID, getToken(from).value)))
+		if(isBuiltinFunction(getToken(from).value) || isUserFunction(getToken(from).value, true) 
+			||(parent && DM14::types::classHasMemberFunction(classID, getToken(from).value)))
 		{
 			statement* stmt = NULL;
 			if(parent)
@@ -3225,7 +3223,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			popToken();
 			string variableName = getToken().value;
 			
-			if (DM14::types::isDataType(variableName))
+			if(DM14::types::isDataType(variableName))
 			{
 				;
 			}
@@ -3240,9 +3238,9 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 					displayError(fName, getToken().lineNumber, getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
 				}
 			}
-			else if (findIDType(idInfo(variableName, 0, "", NULL)) == "NIL" && !parent)
+			else if(findIDType(idInfo(variableName, 0, "", NULL)) == "NIL" && !parent)
 			{
-				if (peekToken(0).value == "(")
+				if(peekToken(0).value == "(")
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber,"Un-defined function : " + variableName);
 				}
@@ -3254,7 +3252,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 
 			//classMember = isClass(opstatement->type);
 			classMember = DM14::types::isClass(classID);
-			termStatment* termstatement = new termStatment( variableName, opstatement->type );
+			termStatment* termstatement = new termStatment(variableName, opstatement->type );
 			
 			if(findIDType(idInfo(variableName, 0, "", NULL)) != "NIL")
 			{
@@ -3265,9 +3263,9 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			termstatement->identifier = true;
 			termstatement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
 
-			if (getToken(0).value == "[")
+			if(getToken(0).value == "[")
 			{
-				if (!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
+				if(!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
 				}
@@ -3286,13 +3284,13 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			{
 				id->parent = parent;
 			}
-			id->array = ((bool)findIDInfo(*id, ARRAY) && (aIndex != NULL));
-			id->backProp = (bool)findIDInfo(*id, BACKPROB);
-			id->recurrent = (bool)findIDInfo(*id, RECURRENT);
-			id->channel = (bool)findIDInfo(*id, CHANNEL);
-			id->noblock = (bool)findIDInfo(*id, NOBLOCK);
-			id->distributed = (bool)findIDInfo(*id, DISTRIBUTED);
-			id->global = (bool)findIDInfo(*id, GLOBAL);
+			id->array =((bool)findIDInfo(*id, ARRAY) &&(aIndex != NULL));
+			id->backProp =(bool)findIDInfo(*id, BACKPROB);
+			id->recurrent =(bool)findIDInfo(*id, RECURRENT);
+			id->channel =(bool)findIDInfo(*id, CHANNEL);
+			id->noblock =(bool)findIDInfo(*id, NOBLOCK);
+			id->distributed =(bool)findIDInfo(*id, DISTRIBUTED);
+			id->global =(bool)findIDInfo(*id, GLOBAL);
 			id->functionParent = currentFunction.name;
 			if(aIndex)
 			{
@@ -3318,7 +3316,7 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			
 			termstatement->id = id;
 			
-			if (parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@")
+			if(parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@")
 			{
 				if(peekToken(0).value != "." && peekToken(0).value != "::") // do not pus class id, since it will be done by the member anyway !
 				{
@@ -3331,9 +3329,9 @@ statement* parser::parseOpStatement(int32_t from, int32_t to,
 			return termstatement;
 		}
 	}
-	else if (isImmediate(getToken(from)))
+	else if(isImmediate(getToken(from)))
 	{
-		if (!DM14::types::hasTypeValue(opstatement->type, getToken(from).type))
+		if(!DM14::types::hasTypeValue(opstatement->type, getToken(from).type))
 		{
 			displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"wrong immediate type : " + getToken(from).value);
 		}
@@ -3374,7 +3372,7 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 		{
 			if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 			{
-				for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+				for(uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 				{
 					if(datatypes.at(i).memberFunctions.at(k).name == funcID)
 					{
@@ -3386,9 +3384,9 @@ funcInfo parser::getFunc(const string& funcID, const string& classID)
 	}
 	else
 	{
-		for (uint32_t i = 0; i < functionsInfo->size(); i++)
+		for(uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
-			if (funcID == (functionsInfo->at(i)).name)
+			if(funcID ==(functionsInfo->at(i)).name)
 			{
 				return functionsInfo->at(i);
 			}
@@ -3412,11 +3410,11 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 		{
 			if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 			{
-				for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+				for(uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 				{
-					if (datatypes.at(i).memberFunctions.at(k).returnType != returnType && returnType.size())
+					if(datatypes.at(i).memberFunctions.at(k).returnType != returnType && returnType.size())
 					{
-						if (!DM14::types::hasTypeValue(returnType, datatypes.at(i).memberFunctions.at(k).returnType))
+						if(!DM14::types::hasTypeValue(returnType, datatypes.at(i).memberFunctions.at(k).returnType))
 						{
 							continue;
 						}
@@ -3424,12 +3422,12 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 					
 					if(datatypes.at(i).memberFunctions.at(k).name == funcID)
 					{
-						if (!datatypes.at(i).memberFunctions.at(k).parameters->size() && !mparameters->size())
+						if(!datatypes.at(i).memberFunctions.at(k).parameters->size() && !mparameters->size())
 						{
 							return datatypes.at(i).memberFunctions.at(k);
 						}
 						
-						for (uint32_t l =0; l < mparameters->size(); l++)
+						for(uint32_t l =0; l < mparameters->size(); l++)
 						{
 							if(mparameters->at(l) != datatypes.at(i).memberFunctions.at(k).parameters->at(l).first)
 							{
@@ -3467,17 +3465,17 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 	}
 	else
 	{
-		for (uint32_t i = 0; i < functionsInfo->size(); i++)
+		for(uint32_t i = 0; i < functionsInfo->size(); i++)
 		{
-			if (functionsInfo->at(i).returnType != returnType && returnType.size())
+			if(functionsInfo->at(i).returnType != returnType && returnType.size())
 			{
-				if (!DM14::types::hasTypeValue(returnType, functionsInfo->at(i).returnType))
+				if(!DM14::types::hasTypeValue(returnType, functionsInfo->at(i).returnType))
 				{
 					continue;
 				}
 			}
 			
-			if ((functionsInfo->at(i)).name == funcID)
+			if((functionsInfo->at(i)).name == funcID)
 			{
 				
 				if(!functionsInfo->at(i).parameters->size() && !mparameters->size())
@@ -3486,7 +3484,7 @@ funcInfo parser::getFunc(const string& funcID, Array<string>* mparameters, const
 				}
 
 				cerr << functionsInfo->at(i).parameters->size() << ":" << mparameters->size() << endl;
-				for (uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
+				for(uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
 				{
 					cerr << mparameters->at(l)  << ":" << functionsInfo->at(i).parameters->at(k).first << endl << flush;
 					if(mparameters->at(l) != functionsInfo->at(i).parameters->at(k).first)
@@ -3608,12 +3606,12 @@ int mapcode::Print()
 	displayDebug(" Code Map  ... [" + fileName + "]");
 	displayDebug(" Functions : ");
 			
-	for (uint32_t i =0; i < functions->size(); i++)
+	for(uint32_t i =0; i < functions->size(); i++)
 	{
 		string functionHeader;
 		functionHeader += functions->at(i).returnIDType + " ";
 		functionHeader += functions->at(i).name + "(";
-		for (uint32_t k =0; k < functions->at(i).parameters->size(); k++)
+		for(uint32_t k =0; k < functions->at(i).parameters->size(); k++)
 		{
 			functionHeader += functions->at(i).parameters->at(k).type;
 			if(k+1 < functions->at(i).parameters->size())
@@ -3659,14 +3657,14 @@ statement* parser::parseThread()
 	SS << getToken().columnNumber << getToken().lineNumber;	// Number of character on the current line
 	thread->Identifier = SS.str();
 	
-	if(parentStatement && (parentStatement->statementType ==  fLoop || parentStatement->statementType == wLoop))
+	if(parentStatement &&(parentStatement->statementType ==  fLoop || parentStatement->statementType == wLoop))
 	{
 		displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Thread call inside a loop ! careful ");
 	}
 	//@TODO: fix checking the parameters to be global only
 	
 	/*
-	for (int32_t i= 0; i < working_tokens->size(); i++)
+	for(int32_t i= 0; i < working_tokens->size(); i++)
 	{
 		string parent;
 		
@@ -3676,7 +3674,7 @@ statement* parser::parseThread()
 		}
 		
 		
-		if (tokens->at(i).type == "identifier" && findID(tokens->at(i).value, parent).name.size() && !findIDInfo(idInfo((tokens->at(i)).value, 0, "", NULL), GLOBAL))
+		if(tokens->at(i).type == "identifier" && findID(tokens->at(i).value, parent).name.size() && !findIDInfo(idInfo((tokens->at(i)).value, 0, "", NULL), GLOBAL))
 		{
 			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"Only global variables are allowed to be passed to a thread call ! , " + getToken(0).value + " is not global");
 		}
@@ -3688,18 +3686,18 @@ statement* parser::parseThread()
 	if(stmt->statementType == oStatement)
 	{
 		//fix also consider parameters to be unique identidier
-		thread->parentID = (tokens->at(from)).value;
+		thread->parentID =(tokens->at(from)).value;
 		thread->classID = findIDType(findID((tokens->at(from)).value));
-		thread->ID = (tokens->at(from+2)).value;
+		thread->ID =(tokens->at(from+2)).value;
 		thread->classMember = true;
-		thread->returnType = ((operationalStatement*)stmt)->type;
-		thread->functioncall = ((operationalStatement*)stmt)->right;
+		thread->returnType =((operationalStatement*)stmt)->type;
+		thread->functioncall =((operationalStatement*)stmt)->right;
 	}
 	else if(stmt->statementType == fCall)
 	{
 		//fix also consider parameters to be unique identidier
-		thread->ID = (tokens->at(from)).value;
-		thread->returnType = ((functionCall*)stmt)->type;
+		thread->ID =(tokens->at(from)).value;
+		thread->returnType =((functionCall*)stmt)->type;
 		thread->functioncall = stmt;
 	}
 	
@@ -3739,8 +3737,8 @@ statement* parser::parseIf()
 	RequireValue("{", "Expected { and not : ", true);
 
 
-	//while (getToken().value != "}")
-	while (!peekToken("}"))
+	//while(getToken().value != "}")
+	while(!peekToken("}"))
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
@@ -3748,10 +3746,10 @@ statement* parser::parseIf()
 	}
 	popToken(); // }
 
-	while (peekToken("else"))
+	while(peekToken("else"))
 	{
 		popToken(); //else
-		if (peekToken("if"))
+		if(peekToken("if"))
 		{
 			popToken(); //if
 			
@@ -3769,7 +3767,7 @@ statement* parser::parseIf()
 			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
 			
-			while (!peekToken("}"))
+			while(!peekToken("}"))
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
@@ -3784,7 +3782,7 @@ statement* parser::parseIf()
 			popToken(); // {
 			RequireValue("{", "Expected { and not : ", true);
 			
-			while (!peekToken("}"))
+			while(!peekToken("}"))
 			{
 				statement* stmt = parseStatement("statement");
 				addStatementDistributingVariables(stmt);
@@ -3815,8 +3813,8 @@ statement* parser::parseStruct()
 
 	while(!peekToken("}"))
 	{
-		declareStatement* stmt = (declareStatement*)parseStatement("statement");
-		//declareStatement* stmt = (declareStatement*)parseDeclaration();
+		declareStatement* stmt =(declareStatement*)parseStatement("statement");
+		//declareStatement* stmt =(declareStatement*)parseDeclaration();
 		//extract members ....	
 		for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
 		{
@@ -3843,7 +3841,7 @@ statement* parser::parseStruct()
 	
 	//return new NOPStatement;
 	//return nullptr;
-	return (statement*)this;
+	return(statement*)this;
 }
 
 statement* parser::parseExtern()
@@ -3857,9 +3855,9 @@ statement* parser::parseExtern()
 	reachToken("endextern", false, true, true, true, true);
 	int to = index-1;
 	
-	for (int32_t i= from; i <= to; i++)
+	for(int32_t i= from; i <= to; i++)
 	{
-		externstatment->body += (tokens->at(i)).value;
+		externstatment->body +=(tokens->at(i)).value;
 	}
 	
 	if(scope == 0)
@@ -3908,7 +3906,7 @@ statement* parser::parseWhile()
 	popToken(); // {
 	RequireValue("{", "Expected { and not : ", true);
 
-	while (!peekToken("}"))
+	while(!peekToken("}"))
 	{
 		statement* stmt = parseStatement("statement");
 		addStatementDistributingVariables(stmt);
@@ -3925,7 +3923,7 @@ statement* parser::parseWhile()
 statement* parser::parseCase()
 {
 	CASE* Case = new CASE;
-	Case->line = (tokens->at(index)).lineNumber;
+	Case->line =(tokens->at(index)).lineNumber;
 	Case->scope = scope;	
 	
 	increaseScope(Case);
@@ -3948,7 +3946,7 @@ statement* parser::parseCase()
 		CCondition = parseStatement("expression-list");
 		tmpScope = false;
 		
-		if (tokens->at(index).value == "}")
+		if(tokens->at(index).value == "}")
 		{
 			index--;
 			break;
@@ -3957,7 +3955,7 @@ statement* parser::parseCase()
 		while(tokens->at(index).value != "}" && tokens->at(index).value != "[")
 		{
 			Case->Body[CCondition].push_back(parseStatement("statement"));
-			if (!peekToken("}") && !peekToken("["))
+			if(!peekToken("}") && !peekToken("["))
 			{
 				nextIndex();
 			}
@@ -3984,15 +3982,15 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 	int plevel = 1;
 	string firstValue = getToken().value; // for scopeLevel
 	
-	if (actual)
+	if(actual)
 	{
-		while (popToken().value.size())
+		while(popToken().value.size())
 		{
-			if (sameLine)
+			if(sameLine)
 			{
-				if (getToken().lineNumber != line )
+				if(getToken().lineNumber != line )
 				{
-					if (reportError)
+					if(reportError)
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,"Missing " + Char);
 					}
@@ -4003,23 +4001,23 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 				}
 			}
 			
-			if (scopeLevel)
+			if(scopeLevel)
 			{
-				if (getToken().value == Char)
+				if(getToken().value == Char)
 				{
 					plevel--;
 				}
-				else if (getToken().value == firstValue)
+				else if(getToken().value == firstValue)
 				{
 					plevel++;
 				}
 			}
 			
-			if ((beforeEOF && getToken().value == ";") || getToken().value == Char)
+			if((beforeEOF && getToken().value == ";") || getToken().value == Char)
 			{
-				if ( scopeLevel )
+				if(scopeLevel )
 				{
-					if (plevel == 0)
+					if(plevel == 0)
 					{
 						//return *working_tokens_index;
 						return 0;
@@ -4032,10 +4030,10 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 				}
 			}
 			
-			//if ((unsigned) *working_tokens_index == working_tokens->size())
-			if ((unsigned) 0 == working_tokens->size())
+			//if((unsigned) *working_tokens_index == working_tokens->size())
+			if((unsigned) 0 == working_tokens->size())
 			{
-				if (reportError)
+				if(reportError)
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber,"Missing " + Char);
 				}
@@ -4045,13 +4043,13 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 	else
 	{
 		int iterator = 0;
-		while ((unsigned) iterator < working_tokens->size())
+		while((unsigned) iterator < working_tokens->size())
 		{
-			if (sameLine)
+			if(sameLine)
 			{
-				if (getToken(iterator).lineNumber != line)
+				if(getToken(iterator).lineNumber != line)
 				{
-					if (reportError)
+					if(reportError)
 					{
 						displayError(fName, getToken(iterator).lineNumber, getToken(iterator).columnNumber,"Missing " + Char);
 					}
@@ -4063,26 +4061,26 @@ int parser::reachToken(	const string& Char, const bool& sameLine,  const bool& r
 			}
 
 			
-			if (scopeLevel)
+			if(scopeLevel)
 			{
-				if (getToken().value == Char)
+				if(getToken().value == Char)
 				{
 					plevel--;
 				}
-				else if (getToken().value == firstValue)
+				else if(getToken().value == firstValue)
 				{
 					plevel++;
 				}
 			}
 			
-			if ((beforeEOF && getToken().value == ";") || getToken(iterator).value == Char)
+			if((beforeEOF && getToken().value == ";") || getToken(iterator).value == Char)
 			{
 				return iterator;
 			}
 			
-			if ((unsigned) iterator == working_tokens->size()-1)
+			if((unsigned) iterator == working_tokens->size()-1)
 			{
-				if (reportError)
+				if(reportError)
 				{
 					displayError(fName, getToken(iterator).lineNumber, getToken(iterator).columnNumber,"Missing " + Char);
 				}
@@ -4098,7 +4096,7 @@ token parser::peekToken(const int& pos)
 {
 	if(working_tokens->size())
 	{
-		if ((unsigned) pos < working_tokens->size())
+		if((unsigned) pos < working_tokens->size())
 		{
 			return working_tokens->at(pos);
 		}
@@ -4114,7 +4112,7 @@ bool parser::peekToken(const string& str)
 {
 	if(working_tokens->size())
 	{
-		if (working_tokens->at(0).value == str)
+		if(working_tokens->at(0).value == str)
 		{
 			return true;
 		}
@@ -4124,15 +4122,15 @@ bool parser::peekToken(const string& str)
 
 string parser::getType(const int& Index)
 {
-	if (isIdentifier(getToken().value))
+	if(isIdentifier(getToken().value))
 	{
 		return findIDType(idInfo(getToken().value, 0, "", NULL));
 	}
-	else if (isImmediate(getToken()))
+	else if(isImmediate(getToken()))
 	{
 		return getToken().type;
 	}
-	else if (isFunction(getToken().value, true))
+	else if(isFunction(getToken().value, true))
 	{
 		return getFunc(getToken().value).returnType;
 	}
@@ -4147,23 +4145,23 @@ bool parser::checkToken(int type, string error, bool addtoken)
 {
 	bool rError = false;
 	
-	if (type == DM14::types::types::Function)
+	if(type == DM14::types::types::Function)
 	{
-		if ( isBuiltinFunction(getToken().value )  || isUserFunction(getToken().value, true) )
+		if(isBuiltinFunction(getToken().value )  || isUserFunction(getToken().value, true) )
 		{
 			rError = true;
 		}
 	}
-	else if (type == DM14::types::types::USERFUNCTION)
+	else if(type == DM14::types::types::USERFUNCTION)
 	{
-		if (isUserFunction(getToken().value, true) )
+		if(isUserFunction(getToken().value, true) )
 		{
 			rError = true;
 		}
 	}
-	else if (type == DM14::types::types::BUILTINFUNCTION)
+	else if(type == DM14::types::types::BUILTINFUNCTION)
 	{
-		if ( isBuiltinFunction(getToken().value ) )
+		if(isBuiltinFunction(getToken().value ) )
 		{
 			rError = true;
 		}
@@ -4179,7 +4177,7 @@ bool parser::checkToken(int type, string error, bool addtoken)
 bool parser::checkToken(string value, string error, bool addtoken)
 {
 	bool rError = false;
-	if (getToken().value == value)
+	if(getToken().value == value)
 	{
 		rError = true;
 	}
@@ -4196,14 +4194,14 @@ bool parser::RequireType(string type, string error, bool addtoken) // add and in
 {
 	bool rError = false;
 	
-	if (getToken().type != type)
+	if(getToken().type != type)
 	{
 		rError = true;
 	}
 	
 	if(rError)
 	{
-		if (addtoken)
+		if(addtoken)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber,error + getToken().value);
 		}
@@ -4219,14 +4217,14 @@ bool parser::RequireValue(string value, string error, bool addtoken) // add and 
 {
 	bool rError = false;
 	
-	if (getToken().value != value)
+	if(getToken().value != value)
 	{
 		rError = true;
 	}
 	
 	if(rError)
 	{
-		if (addtoken)
+		if(addtoken)
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber,error + getToken().value);
 		}
@@ -4249,7 +4247,7 @@ int parser::mapFunctions(const string& package, const string& library)
 	{
 		ifstream ifs;			
 		
-		if ( library == package )
+		if(library == package )
 		{
 			fullLibraryName = includePaths.at(i) + "/" + package + "/" + package + ".hpp";
 		}
@@ -4270,7 +4268,7 @@ int parser::mapFunctions(const string& package, const string& library)
 	//displayInfo(" Scanning  ... [" + fullLibraryName + "]");
 	scanner* scner = new scanner(fullLibraryName);
 	
-	if (!scner->isReady())
+	if(!scner->isReady())
 	{
 		displayError(scner->getFileName(), -1,-1,"Could not open Library : " + fullLibraryName);
 	}
@@ -4286,15 +4284,15 @@ int parser::mapFunctions(const string& package, const string& library)
 
 	Array<string> templateNames;
 	
-	for (uint32_t i = 0; i < mapTokens->size(); i++)
+	for(uint32_t i = 0; i < mapTokens->size(); i++)
 	{
 		
-		if (mapTokens->at(i).value == "#")
+		if(mapTokens->at(i).value == "#")
 		{
 			int line = mapTokens->at(i).lineNumber;
-			for (uint32_t k = i; k <  mapTokens->size(); k++)
+			for(uint32_t k = i; k <  mapTokens->size(); k++)
 			{
-				if (mapTokens->at(k).lineNumber != line)
+				if(mapTokens->at(k).lineNumber != line)
 				{
 					i = k-1;
 					break;
@@ -4305,7 +4303,7 @@ int parser::mapFunctions(const string& package, const string& library)
 				}
 			}
 		}
-		else if (mapTokens->at(i).value == "using") // using
+		else if(mapTokens->at(i).value == "using") // using
 		{
 			if(scner->reachToken(i, ";", false, false, true) == -1)
 			{
@@ -4313,10 +4311,10 @@ int parser::mapFunctions(const string& package, const string& library)
 			}
 			i = scner->reachToken(i, ";", false, false, true);
 		}
-		else if (mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename")
+		else if(mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename")
 		{
 			int brace = 0;
-			for (uint32_t k = i+1; k < mapTokens->size(); k++)
+			for(uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
 				if(mapTokens->at(k).value == "class" || mapTokens->at(k).value == "typename")
 				{
@@ -4337,7 +4335,7 @@ int parser::mapFunctions(const string& package, const string& library)
 				}
 			}
 		}
-		else if (mapTokens->at(i).value == "class" ||
+		else if(mapTokens->at(i).value == "class" ||
 				 mapTokens->at(i).value == "struct" ||
 				 mapTokens->at(i).value == "typedef") //class , struct, typedef
 		{
@@ -4348,7 +4346,7 @@ int parser::mapFunctions(const string& package, const string& library)
 				displayError(scner->getFileName(), -1,-1,"Internal Compiler error, parsing class in package : " + fullLibraryName);
 			}
 		}
-		else if (DM14::types::isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
+		else if(DM14::types::isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
 		{
 			funcInfo finfo = parseCFunction(scner, i, DatatypeBase());
 			cerr << "||" << finfo.name << ":" << finfo.returnType << endl;
@@ -4381,7 +4379,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 	bool forwardDecelation = false;
 	Array<token>* mapTokens = scner->getTokens();
 	
-	if (mapTokens->at(start).value == "typedef")
+	if(mapTokens->at(start).value == "typedef")
 	{
 		TYPEDEF = true;
 	}
@@ -4398,7 +4396,7 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 			start = scner->reachToken(start, ";", false, false, true);
 			forwardDecelation = true;
 		}
-		else if( semiColon > rightBrace && rightBrace != -1)
+		else if(semiColon > rightBrace && rightBrace != -1)
 		{
 			protoType = false;
 			CClass.setID(mapTokens->at(start+1).value);
@@ -4422,50 +4420,50 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 	}
 	
 		
-	if (!forwardDecelation)
+	if(!forwardDecelation)
 	{
-		for (uint32_t i = start; i < mapTokens->size(); i++)
+		for(uint32_t i = start; i < mapTokens->size(); i++)
 		{
-			if (mapTokens->at(i).value == "public" || mapTokens->at(i).value == "public:")
+			if(mapTokens->at(i).value == "public" || mapTokens->at(i).value == "public:")
 			{
-				if (mapTokens->at(i).value == "public")
+				if(mapTokens->at(i).value == "public")
 				{
 					if(scner->reachToken(i, ":", false, false, true) != i+1)
 					{
-						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
+						displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
 				classifier = DM14::types::CLASSIFIER::PUBLIC;
 				i++;
 			}
-			else if (mapTokens->at(i).value == "private" || mapTokens->at(i).value == "private:")
+			else if(mapTokens->at(i).value == "private" || mapTokens->at(i).value == "private:")
 			{
-				if (mapTokens->at(i).value == "private")
+				if(mapTokens->at(i).value == "private")
 				{
 					if(scner->reachToken(i, ":", false, false, true) != i+1)
 					{
-						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
+						displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
 				classifier = DM14::types::CLASSIFIER::PRIVATE;
 				i++;
 			}
-			else if (mapTokens->at(i).value == "protected" || mapTokens->at(i).value == "protected:")
+			else if(mapTokens->at(i).value == "protected" || mapTokens->at(i).value == "protected:")
 			{
-				if (mapTokens->at(i).value == "protected")
+				if(mapTokens->at(i).value == "protected")
 				{
 					if(scner->reachToken(i, ":", false, false, true) != i+1)
 					{
-						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
+						displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Expected : inside class declaration : " + CClass.typeID + package);
 					}
 				}
 				classifier = DM14::types::CLASSIFIER::PROTECTED;
 				i++;
 			}
-			else if (mapTokens->at(i).value == "}")
+			else if(mapTokens->at(i).value == "}")
 			{
 				start = i;
-				if (scner->reachToken(start, ";", false, false, true) == i+1)
+				if(scner->reachToken(start, ";", false, false, true) == i+1)
 				{
 					start++;
 				}
@@ -4499,12 +4497,12 @@ long parser::parseCClass(scanner* scner, uint32_t start, const Array<string>& te
 	CClass.addTypeValue(CClass.typeID);
 	CClass.classType = true;
 	
-	for (uint32_t i =0; i < CClass.parents.size(); i++)
+	for(uint32_t i =0; i < CClass.parents.size(); i++)
 	{
 		CClass.addTypeValue(CClass.parents.at(i));
 	}
 	
-	/*for (unsigned i = index+1; i < tokens->size(); i++)
+	/*for(unsigned i = index+1; i < tokens->size(); i++)
 	{
 		if((tokens->at(i)).value == CClass.typeID)
 		{
@@ -4540,10 +4538,10 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 	//cout << " tempalte : " << parentClass.templateName << endl;
 	bool destructor = false;
 	bool Enum = false;
-	for (uint32_t i = start; i < mapTokens->size(); i++) // function return, data member type
+	for(uint32_t i = start; i < mapTokens->size(); i++) // function return, data member type
 	{
 		
-		if (mapTokens->at(i).value  == "const" || 
+		if(mapTokens->at(i).value  == "const" || 
 		    mapTokens->at(i).value == "unsigned" || 
 		    mapTokens->at(i).value == "&" || 
 		    mapTokens->at(i).value == "struct" || 
@@ -4551,21 +4549,21 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		{
 			continue;
 		}
-		else if (mapTokens->at(i).value == "static")
+		else if(mapTokens->at(i).value == "static")
 		{
 			funcinfo.noAutism = true;
 			continue;
 		}
-		else if (mapTokens->at(i).value == "enum")
+		else if(mapTokens->at(i).value == "enum")
 		{
 			Enum = true;
 			start = i;
 			funcinfo.returnType = "int";
 			break;
 		}
-		else if (mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename" )
+		else if(mapTokens->at(i).value == "template" || mapTokens->at(i).value == "typename" )
 		{
-			for (uint32_t k = i+1; k < mapTokens->size(); k++) // skip tempalte stuff
+			for(uint32_t k = i+1; k < mapTokens->size(); k++) // skip tempalte stuff
 			{
 				if(mapTokens->at(k).value == ">")
 				{
@@ -4575,55 +4573,55 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 			}
 			continue;
 		}
-		else if (mapTokens->at(i).value == "*")
+		else if(mapTokens->at(i).value == "*")
 		{
-			displayWarning(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Functions should not return a pointer  : " + funcinfo.name + package);
+			displayWarning(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Functions should not return a pointer  : " + funcinfo.name + package);
 			continue;
 		}
 		else
 		{
-			if (scner->tokenAt(i+1).value == "::")
+			if(scner->tokenAt(i+1).value == "::")
 			{
 				i++;
 				continue;
 			}
 			
-			if (mapTokens->at(i).value== "~")
+			if(mapTokens->at(i).value== "~")
 			{
 				destructor = true;
 				continue;
 			}
-			else if (mapTokens->at(i).type != "identifier" && !DM14::types::isDataType(mapTokens->at(i).value))//mapTokens->at(i).type != "datatype")
+			else if(mapTokens->at(i).type != "identifier" && !DM14::types::isDataType(mapTokens->at(i).value))//mapTokens->at(i).type != "datatype")
 			{
-				displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"could not parse a c++ function retun type, expected identifier and not :  " + mapTokens->at(i).value);
+				displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"could not parse a c++ function retun type, expected identifier and not :  " + mapTokens->at(i).value);
 			}
 			
 			if(parentClass.typeID.size() && mapTokens->at(i).value == parentClass.typeID)
 			{
-				if (!destructor)
+				if(!destructor)
 				{
 					funcinfo.returnType = parentClass.typeID;
 				}
 			}
 			else
 			{
-				if (mapTokens->at(i).value == "void")
+				if(mapTokens->at(i).value == "void")
 				{
-					displayWarning(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Functions should not have return type of \"void\" adding as int ");
+					displayWarning(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Functions should not have return type of \"void\" adding as int ");
 					funcinfo.returnType = "int";
 				}
 				else
 				{
 					funcinfo.returnType = DM14::types::getDataType(mapTokens->at(i).value);
 				
-					if( funcinfo.returnType == "NIL")
+					if(funcinfo.returnType == "NIL")
 					{
-						displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Uknown type : " + mapTokens->at(i).value);
+						displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Uknown type : " + mapTokens->at(i).value);
 					}
 				}
 			}
 			
-			if (scner->tokenAt(i+1).value == "*" ||
+			if(scner->tokenAt(i+1).value == "*" ||
 				scner->tokenAt(i+1).value == "&" ||
 				scner->tokenAt(i+1).value == "const")
 			{
@@ -4635,14 +4633,14 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 	}
 	
 	
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) //ignore template parameters
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) //ignore template parameters
 	{
 		
-		if (mapTokens->at(i).value == "<")
+		if(mapTokens->at(i).value == "<")
 		{
-			for (uint32_t k = i+1; k < mapTokens->size(); k++)
+			for(uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
-				if (mapTokens->at(k).value == ">")
+				if(mapTokens->at(k).value == ">")
 				{
 					start = k;
 					break;
@@ -4652,18 +4650,18 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		break;
 	}
 	
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
 	{
 		
-		if (mapTokens->at(i).value == "(")
+		if(mapTokens->at(i).value == "(")
 		{
 			funcinfo.name = parentClass.typeID;
 			start = i;
 			break;
 		}
-		else if (mapTokens->at(i).type != "identifier" && mapTokens->at(i).type != "keyword")
+		else if(mapTokens->at(i).type != "identifier" && mapTokens->at(i).type != "keyword")
 		{
-			displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"could not parse a c++ function/member name, expected identifier and not: " + mapTokens->at(i).value);
+			displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"could not parse a c++ function/member name, expected identifier and not: " + mapTokens->at(i).value);
 		}
 		funcinfo.name = mapTokens->at(i).value;
 		start = i;
@@ -4687,9 +4685,9 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		CUSTOMENUM.addTypeValue("float");
 		CUSTOMENUM.parents.push_back(parentClass.typeID);
 				
-		for (uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
+		for(uint32_t i = start+1; i < mapTokens->size(); i++) // the function/member name
 		{
-			if (mapTokens->at(i).type == "identifier")
+			if(mapTokens->at(i).type == "identifier")
 			{
 				funcInfo enumMember;
 				enumMember.name = mapTokens->at(i).value;
@@ -4700,17 +4698,17 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				CUSTOMENUM.memberVariables.push_back(enumMember);
 			}
 			
-			if (mapTokens->at(i).value == "}")
+			if(mapTokens->at(i).value == "}")
 			{
-				//if (mapTokens->at(i+1).value == ";")
-				if (scner->tokenAt(i+1).value == ";")
+				//if(mapTokens->at(i+1).value == ";")
+				if(scner->tokenAt(i+1).value == ";")
 				{
 					
 					i++;
 				}
-				/*for (uint32_t l = 0; l < datatypes.size(); l++)
+				/*for(uint32_t l = 0; l < datatypes.size(); l++)
 				{
-					if (datatypes.at(i).typeID == "int")
+					if(datatypes.at(i).typeID == "int")
 					{
 						datatypes.at(i).CEquivalent.push_back(funcinfo.name);
 						break;
@@ -4726,11 +4724,11 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		}
 	}
 	
-	if (mapTokens->at(start+1).value == "[") // array index ?
+	if(mapTokens->at(start+1).value == "[") // array index ?
 	{
-		for (uint32_t i = start+1; i < mapTokens->size(); i++) 
+		for(uint32_t i = start+1; i < mapTokens->size(); i++) 
 		{
-			if (mapTokens->at(i).value == "]")
+			if(mapTokens->at(i).value == "]")
 			{
 				start = i;
 				break;
@@ -4738,11 +4736,11 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		}
 	}
 	
-	if (mapTokens->at(start+1).value == "[") // two diemnsional array index ?
+	if(mapTokens->at(start+1).value == "[") // two diemnsional array index ?
 	{
-		for (uint32_t i = start+1; i < mapTokens->size(); i++) 
+		for(uint32_t i = start+1; i < mapTokens->size(); i++) 
 		{
-			if (mapTokens->at(i).value == "]")
+			if(mapTokens->at(i).value == "]")
 			{
 				start = i;
 				break;
@@ -4750,19 +4748,19 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		}
 	}
 	
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) // the member variable
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) // the member variable
 	{
-		if (mapTokens->at(i).value == ";")
+		if(mapTokens->at(i).value == ";")
 		{
 			if(!funcinfo.name.size())
 			{
-				displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"parsing error : " + mapTokens->at(i).value);
+				displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"parsing error : " + mapTokens->at(i).value);
 			}
 			funcinfo.classifier = i;
 			funcinfo.type = DM14::types::types::DATAMEMBER;
 			return funcinfo;
 		}
-		else if (mapTokens->at(i).value == "(")
+		else if(mapTokens->at(i).value == "(")
 		{
 			start = i;
 		}
@@ -4770,25 +4768,25 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		break;
 	}
 	
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) // function parameterss
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) // function parameterss
 	{
-		if (mapTokens->at(i).value == "::") // function member dfinition,, ignore all
+		if(mapTokens->at(i).value == "::") // function member dfinition,, ignore all
 		{
 			int depthLevel = 0;
-			for (uint32_t k = i+1; k < mapTokens->size(); k++)
+			for(uint32_t k = i+1; k < mapTokens->size(); k++)
 			{
-				if (mapTokens->at(k).value == "{")
+				if(mapTokens->at(k).value == "{")
 				{
 					depthLevel++;
 				}
-				else if (mapTokens->at(k).value == "}")
+				else if(mapTokens->at(k).value == "}")
 				{
 					depthLevel--;
 					
 					if(depthLevel == 0)
 					{
-						//if (mapTokens->at(k+1).value == ";")
-						if (scner->tokenAt(k+1).value == ";")
+						//if(mapTokens->at(k+1).value == ";")
+						if(scner->tokenAt(k+1).value == ";")
 						{
 							k++;
 						}
@@ -4802,17 +4800,17 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		}
 		
 		bool found = false;
-		if (mapTokens->at(i).value == ")")
+		if(mapTokens->at(i).value == ")")
 		{
 			if(i+1 < mapTokens->size())
 			{
 				i++;
 			}
 		
-			if (mapTokens->at(i).value != ";")
+			if(mapTokens->at(i).value != ";")
 			{
-				//displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"parsing error, expected ; :" + mapTokens->at(i).value);
-				displayWarning(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Function definition in header, be careful !");
+				//displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(tokens->at(i)).columnNumber,"parsing error, expected ; :" + mapTokens->at(i).value);
+				displayWarning(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"Function definition in header, be careful !");
 				
 			}
 			
@@ -4823,26 +4821,26 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		
 		bool init = false;
 		int depthLevel = 0;
-		for (uint32_t k = i; k < mapTokens->size(); k++) // parameter type
+		for(uint32_t k = i; k < mapTokens->size(); k++) // parameter type
 		{
-			if (mapTokens->at(k).value  == "const" || 
+			if(mapTokens->at(k).value  == "const" || 
 			    mapTokens->at(k).value == "unsigned" || 
 			    mapTokens->at(k).value == "&" || 
 			    mapTokens->at(k).value == "volatile")
 			{
 				continue;
 			}
-			else if (mapTokens->at(k).value == "*")
+			else if(mapTokens->at(k).value == "*")
 			{
-				displayWarning(scner->getFileName(), (mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Functions should not take a pointer  : " + funcinfo.name + package);
+				displayWarning(scner->getFileName(),(mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Functions should not take a pointer  : " + funcinfo.name + package);
 				continue;
 			}
-			else if (mapTokens->at(k).value == ",")
+			else if(mapTokens->at(k).value == ",")
 			{
 				i = k;
 				break;
 			}
-			else if (mapTokens->at(k).value == ")")
+			else if(mapTokens->at(k).value == ")")
 			{
 				depthLevel--;
 				if(depthLevel == -1)
@@ -4851,12 +4849,12 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 					break;
 				}
 			}
-			else if (mapTokens->at(k).value == "(")
+			else if(mapTokens->at(k).value == "(")
 			{
 				depthLevel++;
 				continue;
 			}
-			else if (mapTokens->at(k).value == "=")
+			else if(mapTokens->at(k).value == "=")
 			{
 				//funcinfo.parameters->remove(funcinfo.parameters->size()-1);
 
@@ -4865,7 +4863,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 			}
 			else
 			{
-				if (mapTokens->at(k).value == "::")
+				if(mapTokens->at(k).value == "::")
 				{
 					funcinfo.parameters->remove(funcinfo.parameters->size()-1);
 				}
@@ -4875,14 +4873,14 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 					continue;
 				}
 					
-				if (mapTokens->at(k).value == "void")
+				if(mapTokens->at(k).value == "void")
 				{
-					displayWarning(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(k)).columnNumber,"Functions should not have return type of \"void\"  : " + funcinfo.name + package);
+					displayWarning(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(k)).columnNumber,"Functions should not have return type of \"void\"  : " + funcinfo.name + package);
 				}
-				else if (mapTokens->at(k).type != "identifier")
+				else if(mapTokens->at(k).type != "identifier")
 				{
 					//cout << k << ":" << i << ":" << start<<endl;
-					//displayError(scner->getFileName(), (mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"could not parse a c++ function retun type, expected identifier: " + mapTokens->at(i).value);
+					//displayError(scner->getFileName(),(mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"could not parse a c++ function retun type, expected identifier: " + mapTokens->at(i).value);
 				}
 				
 				if(parentClass.typeID.size() && mapTokens->at(k).value == parentClass.typeID)
@@ -4903,7 +4901,7 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 					}
 					else if(!found)
 					{
-						displayError(scner->getFileName(), (mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Uknown type : " + mapTokens->at(k).value);
+						displayError(scner->getFileName(),(mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Uknown type : " + mapTokens->at(k).value);
 					}
 				}
 			}
@@ -4911,27 +4909,27 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 		start = i;
 	}
 	
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) // finish variables inizilization :X(x),Y(y),Z(z)
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) // finish variables inizilization :X(x),Y(y),Z(z)
 	{
-		if (mapTokens->at(i).value == ":")
+		if(mapTokens->at(i).value == ":")
 		{
-			for (uint32_t k = i+1; k < mapTokens->size(); k++) 
+			for(uint32_t k = i+1; k < mapTokens->size(); k++) 
 			{
-				if (mapTokens->at(k).value == ")")
+				if(mapTokens->at(k).value == ")")
 				{
 					//if((mapTokens->at(k+1).value == ","))
-					if (scner->tokenAt(k+1).value == ",")
+					if(scner->tokenAt(k+1).value == ",")
 					{
 						k++;
 					}
 					//else if((mapTokens->at(k+1).value == "{"))
-					else if (scner->tokenAt(k+1).value == "{")
+					else if(scner->tokenAt(k+1).value == "{")
 					{
 						start = k;
 						break;
 					}
 					//else if((mapTokens->at(k+1).value == ";"))
-					else if (scner->tokenAt(k+1).value == ";")
+					else if(scner->tokenAt(k+1).value == ";")
 					{
 						//k++;
 						start = k;
@@ -4945,28 +4943,28 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 	
 	
 		
-	for (uint32_t i = start+1; i < mapTokens->size(); i++) // function inizliation;
+	for(uint32_t i = start+1; i < mapTokens->size(); i++) // function inizliation;
 	{
 		int depthLevel = 1;
-		if (mapTokens->at(i).value == "{")
+		if(mapTokens->at(i).value == "{")
 		{
-			for (uint32_t k = i+1; k < mapTokens->size(); k++) 
+			for(uint32_t k = i+1; k < mapTokens->size(); k++) 
 			{
-				if (mapTokens->at(k).value == "{")
+				if(mapTokens->at(k).value == "{")
 				{
 					depthLevel++;
 				}
-				else if (mapTokens->at(k).value == "}")
+				else if(mapTokens->at(k).value == "}")
 				{
 					depthLevel--;
 				}
 				
 				if(depthLevel == 0)
 				{
-					//if (mapTokens->at(k+1).value != ";")
-					if (scner->tokenAt(k+1).value != ";")
+					//if(mapTokens->at(k+1).value != ";")
+					if(scner->tokenAt(k+1).value != ";")
 					{
-						displayError(scner->getFileName(), (mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Unterminated function definition, missing ;");
+						displayError(scner->getFileName(),(mapTokens->at(k)).lineNumber,(mapTokens->at(k)).columnNumber,"Unterminated function definition, missing ;");
 					}
 					
 					i = k+1;
@@ -4976,13 +4974,13 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 				
 			}
 		}
-		else if (mapTokens->at(i).value == ";")
+		else if(mapTokens->at(i).value == ";")
 		{
 			start = i;
 		}
 		else
 		{
-			displayError(scner->getFileName(), (mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"not expecting : " + (mapTokens->at(i)).value);
+			displayError(scner->getFileName(),(mapTokens->at(i)).lineNumber,(mapTokens->at(i)).columnNumber,"not expecting : " +(mapTokens->at(i)).value);
 		}
 		break;
 	}
@@ -4997,19 +4995,19 @@ funcInfo parser::parseCFunction(scanner* scner, uint32_t start, const DatatypeBa
 
 idInfo parser::findID(const string& ID, const string& parentID)
 {
-	for ( uint32_t i =0; i< identifiers->size(); i++ )
+	for(uint32_t i =0; i< identifiers->size(); i++ )
 	{
-		//if ( ID == (identifiers->at(i)).name && parentID == (identifiers->at(i)).parent)
-		if ((identifiers->at(i)).parent && parentID.size())
+		//if(ID ==(identifiers->at(i)).name && parentID ==(identifiers->at(i)).parent)
+		if((identifiers->at(i)).parent && parentID.size())
 		{
-			if ( ID == (identifiers->at(i)).name && parentID == (identifiers->at(i)).parent->name)
+			if(ID ==(identifiers->at(i)).name && parentID ==(identifiers->at(i)).parent->name)
 			{
 				return identifiers->at(i);
 			}
 		}
-		else if (!(identifiers->at(i)).parent && !parentID.size())
+		else if(!(identifiers->at(i)).parent && !parentID.size())
 		{
-			if (ID == (identifiers->at(i)).name)
+			if(ID ==(identifiers->at(i)).name)
 			{
 				return identifiers->at(i);
 			}
@@ -5047,14 +5045,14 @@ statement* parser::parseDeclarationInternal()
 
 	Array<idInfo>* tempIdentifiers = new Array<idInfo>;
 
-	while (true)
+	while(true)
 	{
 		checkToken(DM14::types::types::Function, "this is a function name ! :  ", true);
 		RequireType("identifier", "Expected \"Identifier\" and not ", true);
 		
-		if (findIDInfo(idInfo(getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
+		if(findIDInfo(idInfo(getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
 		{
-			if (findIDInfo(idInfo(getToken().value, 0, "", NULL),TMPSCOPE))
+			if(findIDInfo(idInfo(getToken().value, 0, "", NULL),TMPSCOPE))
 			{
 				displayWarning(fName, getToken().lineNumber,getToken().columnNumber,"Pre-defined variable in different scope :  " + getToken().value);
 			}
@@ -5063,7 +5061,7 @@ statement* parser::parseDeclarationInternal()
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defineddd variable :  " + getToken().value);
 			}
 		}
-		else if (findIDInfo(idInfo(getToken().value, 0, "", NULL),GLOBAL))
+		else if(findIDInfo(idInfo(getToken().value, 0, "", NULL),GLOBAL))
 		{
 			displayError(fName, getToken().lineNumber, getToken().columnNumber,"Pre-defined Global variable :  " + getToken().value);
 		}
@@ -5090,39 +5088,39 @@ statement* parser::parseDeclarationInternal()
 	
 	while(true)
 	{
-		if (getToken().value == "noblock" )
+		if(getToken().value == "noblock" )
 		{
 			decStatement->noblock = true;
 		}
-		else if (getToken().value == "recurrent" )
+		else if(getToken().value == "recurrent" )
 		{
 			decStatement->recurrent=true;
 		}
-		else if (getToken().value == "backprop" )
+		else if(getToken().value == "backprop" )
 		{
 			decStatement->backProp=true;
 		}
-		else if (getToken().value == "nodist" )
+		else if(getToken().value == "nodist" )
 		{
 			if(decStatement->recurrent)
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber, "nodist variable can not be recurrent !");
 			}
 			
-			////displayWarning(fName, (tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber, "Warning, nodist variable");
+			////displayWarning(fName,(tokens->at(index)).lineNumber,(tokens->at(index)).columnNumber, "Warning, nodist variable");
 			distributed = false;
 			decStatement->distributed = false;
 		}
-		else if (getToken().value == "channel" )
+		else if(getToken().value == "channel" )
 		{
-			if (decStatement->recurrent || !distributed || decStatement->backProp)
+			if(decStatement->recurrent || !distributed || decStatement->backProp)
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber, "channel variable is not pure !?");
 			}
 
 			decStatement->channel = true;
 		}
-		else if (getToken().value == "global" )
+		else if(getToken().value == "global" )
 		{
 			decStatement->global = true;
 		}
@@ -5147,13 +5145,13 @@ statement* parser::parseDeclarationInternal()
 	
 	
 	/** array index */
-	if (peekToken("["))
+	if(peekToken("["))
 	{
 		popToken(); // [
 		decStatement->array = true;
 		popToken();
 		//@TODO: only int can be array ?
-		if (getToken().type == "int")
+		if(getToken().type == "int")
 		{
 			stringstream SS;
 			SS << getToken().value;
@@ -5170,12 +5168,12 @@ statement* parser::parseDeclarationInternal()
 		
 
 		/** second array index == a matrix */
-		if (peekToken("["))
+		if(peekToken("["))
 		{
 			popToken();
 			decStatement->array = true;
 			popToken();
-			if (getToken().type == "int")
+			if(getToken().type == "int")
 			{
 				stringstream SS;
 				SS << getToken().value;
@@ -5195,7 +5193,7 @@ statement* parser::parseDeclarationInternal()
 
 
 	
-	if (peekToken("("))
+	if(peekToken("("))
 	{
 		popToken();
 		int to = reachToken(")", true, true, false, false, true);
@@ -5206,7 +5204,7 @@ statement* parser::parseDeclarationInternal()
 		//RequireValue(terminal, "Expected " + terminal + " and not ", true);
 		decStatement->Initilazed = true;
 	}
-	else if (peekToken("="))
+	else if(peekToken("="))
 	{
 		popToken();
 		/* TODO: FIX: fix the array list initialization or atleast review */
@@ -5214,7 +5212,7 @@ statement* parser::parseDeclarationInternal()
 		{
 			popToken();
 			
-			if (!decStatement->array)
+			if(!decStatement->array)
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"This variable is not an array");
 			}
@@ -5222,13 +5220,13 @@ statement* parser::parseDeclarationInternal()
 			int plevel = 1;
 			//int from = *working_tokens_index+1;
 			int from = 1;
-			while (popToken().value.size())
+			while(popToken().value.size())
 			{
-				if (getToken().value == "(")
+				if(getToken().value == "(")
 				{
 					plevel++;
 				}
-				else if (getToken().value == ")" || getToken().value == "}")
+				else if(getToken().value == ")" || getToken().value == "}")
 				{
 					plevel--;
 					if(plevel ==0)
@@ -5242,9 +5240,9 @@ statement* parser::parseDeclarationInternal()
 						break;
 					}
 				}
-				else if (getToken().value == ",")
+				else if(getToken().value == ",")
 				{
-					if (plevel==1)
+					if(plevel==1)
 					{		
 						//if(*working_tokens_index != from)
 						if(0 != from)
@@ -5258,26 +5256,26 @@ statement* parser::parseDeclarationInternal()
 				}
 			}
 			
-			if (decStatement->values.size() > (uint32_t) decStatement->size && decStatement->size !=  0)
+			if(decStatement->values.size() >(uint32_t) decStatement->size && decStatement->size !=  0)
 			{
 				displayError(fName, getToken().lineNumber, getToken().columnNumber,"too many initilizations");
 			}
 			
-			if (decStatement->size == 0)
+			if(decStatement->size == 0)
 			{
 				decStatement->size = decStatement->values.size();
 			}
 			
 			stringstream SS;
-			for (uint32_t k =0; k < decStatement->identifiers->size(); k++)
+			for(uint32_t k =0; k < decStatement->identifiers->size(); k++)
 			{
-				for (uint32_t i =0; i < decStatement->values.size(); i++)
+				for(uint32_t i =0; i < decStatement->values.size(); i++)
 				{
-					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
+					termStatment* termstatement = new termStatment(decStatement->identifiers->at(k).name, decStatement->type);
 					termstatement->scope = scope;
 					
 					SS << i;
-					termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
+					termStatment* arrayIndex = new termStatment(SS.str(), decStatement->type);
 					arrayIndex->scope = scope;
 					
 					termstatement->arrayIndex = arrayIndex;
@@ -5315,7 +5313,7 @@ statement* parser::parseDeclarationInternal()
 					SS.clear();
 				}
 			}
-			if (decStatement->size == 0) /*FIX: && decStatement->distributed) */
+			if(decStatement->size == 0) /*FIX: && decStatement->distributed) */
 			{
 				distributedVariablesCount += decStatement->values.size();
 			}
@@ -5327,11 +5325,18 @@ statement* parser::parseDeclarationInternal()
 			//decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
 			//reachToken(terminal, true, true, true, false, false);
             //decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
+            
 			decStatement->value = parseStatement("expression-list", &parser::parseExpressionStatement);
+			for(auto* statement : decStatement->value->distStatements)
+			{
+				decStatement->distStatements.push_back(statement);
+			}
+
+			decStatement->value->distStatements.clear();
 
 			if(decStatement->value->type != decStatement->type)
 			{
-				if (!DM14::types::hasTypeValue(decStatement->type, decStatement->value->type))
+				if(!DM14::types::hasTypeValue(decStatement->type, decStatement->value->type))
 				{
 					// error on type
 					displayError(fName, -1,0,"wrong value type for declaration value", false);
@@ -5340,9 +5345,9 @@ statement* parser::parseDeclarationInternal()
 			
 			if(decStatement->global)
 			{
-				for (uint32_t k =0; k < decStatement->identifiers->size(); k++)
+				for(uint32_t k =0; k < decStatement->identifiers->size(); k++)
 				{
-					termStatment* termstatement = new termStatment( decStatement->identifiers->at(k).name, decStatement->type);
+					termStatment* termstatement = new termStatment(decStatement->identifiers->at(k).name, decStatement->type);
 					termstatement->scope = scope;
 					
 					operationalStatement* os = new operationalStatement();
@@ -5380,7 +5385,7 @@ statement* parser::parseDeclarationInternal()
 	for(uint32_t i = 0; i < tempIdentifiers->size(); i++)
 	{
 		SS << i;
-		termStatment* arrayIndex = new termStatment( SS.str(), decStatement->type);
+		termStatment* arrayIndex = new termStatment(SS.str(), decStatement->type);
 		arrayIndex->scope = scope;
 		
 		idInfo idinfo(tempIdentifiers->at(i).name, decStatement->scope, decStatement->type, arrayIndex);
@@ -5406,7 +5411,7 @@ statement* parser::parseDeclarationInternal()
 		{
 			if(datatypes.at(i).typeID == idinfo.type && datatypes.at(i).classType)
 			{
-				for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
+				for(uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 				{
 					idInfo id = idInfo(datatypes.at(i).memberVariables.at(k).name, decStatement->scope, datatypes.at(i).memberVariables.at(k).returnType, NULL);
 					/*FIX: bad ?! */

@@ -1406,7 +1406,7 @@ int compiler::compileInsider(statement*& stmt, iostream* outstream, bool overrid
 	{
 		if((stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
 		{
-			//compileDistributingVariables((statement*&)stmt->distStatements.at(i));
+			compileDistributingVariables((statement*&)stmt->distStatements.at(i));
 			stmt->distStatements.erase(stmt->distStatements.begin()+i);
 			i--;
 			
