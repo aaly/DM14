@@ -232,7 +232,7 @@ return 0;
 
  int printOperators()
 {
-	for ( int unsigned i =0; i< Operators.size(); i++ )
+	for ( uint32_t i =0; i< Operators.size(); i++ )
 	{
 		cout << "operator[" << i << "] = "<< Operators.at(i).first << endl;
 	}
@@ -243,7 +243,7 @@ return 0;
 
  int printKeywords()
 {
-	for ( int unsigned i =0; i< keywords.size(); i++ )
+	for ( uint32_t i =0; i< keywords.size(); i++ )
 	{
 		cout << "keyword[" << i << "] = "<< keywords.at(i) << endl;
 	}
@@ -252,7 +252,7 @@ return 0;
 
  int printDatatypes()
 {
-	for ( int unsigned i =0; i< datatypes.size(); i++ )
+	for ( uint32_t i =0; i< datatypes.size(); i++ )
 	{
 		cout << "datatypes[" << i << "] = "<< datatypes.at(i).typeID << endl;
 	}
@@ -261,7 +261,7 @@ return 0;
 
  /*int printFunctions()
 {
-	for ( int unsigned i =0; i< functions.size(); i++ )
+	for ( uint32_t i =0; i< functions.size(); i++ )
 	{
 		cout << "functions[" << i << "] = "<< functions.at(i) << endl;
 	}
@@ -305,7 +305,7 @@ bool isString(const string& str)
 
 bool isKeyword(const string& str)
 {
-	for (unsigned int i =0; i<keywords.size(); i++)
+	for (uint32_t i =0; i<keywords.size(); i++)
 	{
 		if (str == keywords.at(i) )
 		{
@@ -318,14 +318,14 @@ bool isKeyword(const string& str)
 
 bool isDataType(const string& type)
 {
-	for (unsigned int i = 0; i<datatypes.size(); i++)
+	for (uint32_t i = 0; i<datatypes.size(); i++)
 	{
 		if (datatypes.at(i).typeID == type)
 		{
 			return true;
 		}
 		
-		for (unsigned k =0; k < datatypes.at(i).CEquivalent.size(); k++)
+		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			if( datatypes.at(i).CEquivalent.at(k) == type)
 			{
@@ -339,7 +339,7 @@ bool isDataType(const string& type)
 /*bool isFunction(const string& str)
 {
 	
-	for ( unsigned int i = 0; i<functions.size(); i++ )
+	for ( uint32_t i = 0; i<functions.size(); i++ )
 	{
 		if ( str == functions.at(i) )
 		{
@@ -351,7 +351,7 @@ bool isDataType(const string& type)
 
 bool isbinOperator(const string& str)
 {
-	for (unsigned int i =0; i < Operators.size(); i++)
+	for (uint32_t i =0; i < Operators.size(); i++)
 	{
 		if (str == Operators.at(i).first)
 		{
@@ -366,7 +366,7 @@ bool isbinOperator(const string& str)
 
 bool isSingleOperator(const string& str)
 {
-	for (unsigned int i =0; i < Operators.size(); i++)
+	for (uint32_t i =0; i < Operators.size(); i++)
 	{
 		if (str == Operators.at(i).first)
 		{
@@ -382,7 +382,7 @@ bool isSingleOperator(const string& str)
 
 bool isCoreOperator(const string& str)
 {
-	for (unsigned int i =0; i < Operators.size(); i++)
+	for (uint32_t i =0; i < Operators.size(); i++)
 	{
 		if ( str == Operators.at(i).first )
 		{
@@ -459,11 +459,11 @@ string	matchDataType(const int& type)
 
 /*bool hasOperator(const string& type, const string& op)
 {
-	for (unsigned int i =0;i < datatypes.size(); i++)
+	for (uint32_t i =0;i < datatypes.size(); i++)
 	{
 		if ( datatypes.at(i).typeID == type )
 		{
-			for (unsigned int k =0;k < datatypes.at(i).dataOperators.size(); k++)
+			for (uint32_t k =0;k < datatypes.at(i).dataOperators.size(); k++)
 			{
 				if ( datatypes.at(i).dataOperators.at(k) == op )
 				{
@@ -477,7 +477,7 @@ string	matchDataType(const int& type)
 
 bool isOperator(const string& str)
 {
-	for ( unsigned int i =0; i < Operators.size(); i++ )
+	for ( uint32_t i =0; i < Operators.size(); i++ )
 	{
 		if ( str == Operators.at(i).first )
 		{
@@ -491,11 +491,11 @@ bool isOperator(const string& str)
 
 bool hasTypeValue(const string& type, const string& oppositeType)
 {
-	for (unsigned int i =0;i < datatypes.size(); i++)
+	for (uint32_t i =0;i < datatypes.size(); i++)
 	{
 		if ( datatypes.at(i).typeID == type )
 		{		
-			for (unsigned int k =0;k < datatypes.at(i).dataTypes.size(); k++)
+			for (uint32_t k =0;k < datatypes.at(i).dataTypes.size(); k++)
 			{
 				if ( datatypes.at(i).dataTypes.at(k) == oppositeType )
 				{
@@ -510,7 +510,7 @@ bool hasTypeValue(const string& type, const string& oppositeType)
 
 string getDataType(const string& type)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		
 		if(datatypes.at(i).typeID == type)
@@ -518,7 +518,7 @@ string getDataType(const string& type)
 			return datatypes.at(i).typeID;
 		}
 		
-		for (unsigned k =0; k < datatypes.at(i).CEquivalent.size(); k++)
+		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			if(type ==  datatypes.at(i).CEquivalent.at(k))
 			{
@@ -533,14 +533,14 @@ string getDataType(const string& type)
 
 DatatypeBase findDataType(const string& type)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == type)
 		{
 			return datatypes.at(i);
 		}
 		
-		for (unsigned k =0; k < datatypes.at(i).CEquivalent.size(); k++)
+		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			if(type ==  datatypes.at(i).CEquivalent.at(k))
 			{
@@ -553,7 +553,7 @@ DatatypeBase findDataType(const string& type)
 
 bool isClass(const string& type)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == type && datatypes.at(i).classType)
 		{
@@ -565,7 +565,7 @@ bool isClass(const string& type)
 
 bool isEnum(const string& type)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == type && datatypes.at(i).enumType)
 		{
@@ -577,11 +577,11 @@ bool isEnum(const string& type)
 
 bool classHasMemberFunction(const string& classID, const string& member)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 			{
 				if(datatypes.at(i).memberFunctions.at(k).name == member)
 				{
@@ -596,11 +596,11 @@ bool classHasMemberFunction(const string& classID, const string& member)
 
 string classMemberFunctionType(const string& classID, const string& member)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 			{
 				if(datatypes.at(i).memberFunctions.at(k).name == member)
 				{
@@ -616,11 +616,11 @@ string classMemberFunctionType(const string& classID, const string& member)
 
 bool classHasMemberFunction(const string& classID, const functionCall& member)
 {
-	/*for(unsigned int i =0; i < datatypes.size(); i++)
+	/*for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 			{
 				if(datatypes.at(i).memberFunctions.at(k).name == member.name)
 				{
@@ -639,11 +639,11 @@ bool classHasMemberFunction(const string& classID, const functionCall& member)
 
 funcInfo getClassMemberFunction(const string& classID, const functionCall& member)
 {
-	/*for(unsigned int i =0; i < datatypes.size(); i++)
+	/*for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberFunctions.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberFunctions.size(); k++)
 			{
 				if(datatypes.at(i).memberFunctions.at(k).name == member.name)
 				{
@@ -662,11 +662,11 @@ funcInfo getClassMemberFunction(const string& classID, const functionCall& membe
 
 bool classHasMemberVariable(const string& classID, const string& member)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && (datatypes.at(i).classType || datatypes.at(i).enumType))
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 			{
 				if(datatypes.at(i).memberVariables.at(k).name == member)
 				{
@@ -680,11 +680,11 @@ bool classHasMemberVariable(const string& classID, const string& member)
 
 funcInfo getClassMemberVariable(const string& classID, const string& member)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
-			for (unsigned int k =0; k < datatypes.at(i).memberVariables.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).memberVariables.size(); k++)
 			{
 				if(datatypes.at(i).memberVariables.at(k).name == member)
 				{
@@ -699,7 +699,7 @@ funcInfo getClassMemberVariable(const string& classID, const string& member)
 
 std::vector<funcInfo> getClassMemberVariables(const string& classID)
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
@@ -711,18 +711,18 @@ std::vector<funcInfo> getClassMemberVariables(const string& classID)
 
 int printTypes()
 {
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		cout << datatypes.at(i).typeID <<endl;
 		
 		if(datatypes.at(i).typeID == "string")
 		{
-			for (unsigned k =0; k < datatypes.at(i).dataOperators.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).dataOperators.size(); k++)
 			{
 				cout << ":::" << datatypes.at(i).dataOperators.at(k) << endl;
 			}
 		}
-		for (unsigned k =0; k < datatypes.at(i).CEquivalent.size(); k++)
+		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			cout << "::" << datatypes.at(i).CEquivalent.at(k) << endl;
 		}
@@ -734,14 +734,14 @@ int printTypes()
 bool typeHasOperator(const string& op, const string& type)
 {
 	int typeFound = false;
-	for(unsigned int i =0; i < datatypes.size(); i++)
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == type)
 		{
 			typeFound = true;
 		}
 		
-		for (unsigned k =0; k < datatypes.at(i).CEquivalent.size(); k++)
+		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			if(datatypes.at(i).CEquivalent.at(k) == type)
 			{
@@ -751,7 +751,7 @@ bool typeHasOperator(const string& op, const string& type)
 		
 		if(typeFound)
 		{
-			for (unsigned k =0; k < datatypes.at(i).dataOperators.size(); k++)
+			for (uint32_t k =0; k < datatypes.at(i).dataOperators.size(); k++)
 			{
 				if(datatypes.at(i).dataOperators.at(k) == op)
 				{
