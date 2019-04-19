@@ -98,50 +98,14 @@ int parser::removeToken()
 	return 0;
 }
 
-class parser_depth
-{
-	public:
-		int32_t ebnf_level = 0;
-		std::string start_map_index = "";
-		uint32_t current_rule = 0;
-		uint32_t current_token = 0;
-		int64_t input_tokens_index = 0;
-		bool operator <(const parser_depth& depth)
-		{
-			if(//ebnf_level <= depth.ebnf_level &&
-			   //current_rule <= depth.current_rule &&
-			//current_token < depth.current_token && 
-			   input_tokens_index < depth.input_tokens_index)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		};
 
-		int32_t print()
-		{
-			std::cerr << "Map index  : " << start_map_index << std::endl;
-			std::cerr << "ebnf level : " << ebnf_level << std::endl;
-			std::cerr << "current_rule : " << current_rule << std::endl;
-			std::cerr << "current_token : " << current_token << std::endl;
 
-			return 0;
-		}
-};
-
-parser_depth old_depth;
-parser_depth old_successful_depth;
-
-statement* parser::empty_file()
+statement* parser::bad_program()
 {
 	//cerr << "unable to proceed file [" <<  fName << "] , wrong grammar at token [" << index <<"] : " << tokens->at(index).value<< endl;
 	
-	displayError(fName, -1,0,"unable to proceed file", false);
-	displayError(fName, -1,0,"dumping stack : ", false);
-	old_successful_depth.print();
+	displayError(fName, -1,0,"unable to proceed file, error follows :", false);
+	//old_successful_depth.print();
 	old_depth.print();
 	std::cerr  << "i can no recognize token[" << old_depth.input_tokens_index << "] : " << input_tokens->at(old_depth.input_tokens_index).value <<  std::endl;
 	std::cerr  << "on this line : " <<  std::endl;
@@ -156,12 +120,11 @@ statement* parser::empty_file()
 		}
 	}
 	std::cerr << std::endl;
-	//for(uint32_t i =0; i < working_tokens->size(); i++)
+	/*for(uint32_t i =0; i < working_tokens->size(); i++)
 	{
-		//cerr << working_tokens->at(i).value << endl;
-	}
+		cerr << working_tokens->at(i).value << endl;
+	}*/
 	
-	displayError(fName, -1,0,"Quiting");
 	return NULL;
 }
 
@@ -350,6 +313,7 @@ uint32_t parser::getLevelOfEBNFRule(const std::string rule, const std::string st
  */
 ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens, const bool verify_only)
 {
+	//cerr << "inside parseEBF : " << start_map_index << " :" <<  *input_tokens_index << endl;
 	if(!EBNF[start_map_index].size())
 	{
 		cerr << "unknown grammar map index : " << start_map_index << endl << flush;
@@ -376,6 +340,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 	depth.start_map_index = start_map_index;
 
 
+	
 	// loop over std::vector<grammar_token_array_t>
 	for(uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 	{
@@ -400,7 +365,11 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			ebnfResult previous_result = result;
 			result.first = 1; /** initial value assumes error , prove otherwise */
 
-			
+//			if(start_map_index == "unknown-list")
+//                         {
+//                                 cerr << "IN UNKNOWN LIST" << ebnf_token.tokenType << endl;
+//                         }
+
 			depth.current_token = k;
 
 			if(*input_tokens_index > depth.input_tokens_index)
@@ -424,16 +393,43 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 			}
 			else if(ebnf_token.tokenType == REGEX_TOKEN)
 			{
+
+
+
+          /*if(start_map_index == "unknown-list" && input_tokens->at(*input_tokens_index).value == "*")
+                          {       
+                                  cerr << "IN UNKNOWN LIST" << ebnf_token.tokenType << endl;
+
+                                         std::cerr << "HEREEEEEEEEEEEEE" << input_tokens->at(*input_tokens_index).value << endl;
+                                                  std::cerr << "Expansion : "<< ebnf_token.expansion << endl;
+                                           std::cerr << DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) << endl;
+                                           //cerr << std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex) << endl;
+                                          //cerr << std::regex_match(input_tokens->at(*input_tokens_index).value, self_regex) << endl;
+
+                                           exit(1);
+                          }*/
 				//cerr << input_tokens->at(*input_tokens_index).value << ":" <<  ebnf_token.expansion << endl << flush;
 				// do regex stuff
-				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value))
+				if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) || ebnf_token.expansion == ".*")
 				{
-					std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
-					if(std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex))
-					{
-						//cerr << input_tokens->at(*input_tokens_index).value << "==" <<  ebnf_token.expansion << endl << flush;
-						result.first = 0;
-					}
+
+        		            std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
+	                            if(std::regex_match(input_tokens->at(*input_tokens_index).value, self_regex))
+                                   {
+                                    	result.first = 0;
+                                    }
+
+				/*if(start_map_index == "unknown-list" && ebnf_token.expansion == ".*")
+                                 {
+                                         std::cerr << "HEREEEEEEEEEEEEE" << endl << input_tokens->at(*input_tokens_index).value << endl;
+						std::cerr << "Expansion : "<< ebnf_token.expansion << endl;
+                                         std::cerr << DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) << endl;
+					 cerr << std::regex_search(input_tokens->at(*input_tokens_index).value, self_regex) << endl;
+					cerr << std::regex_match(input_tokens->at(*input_tokens_index).value, self_regex) << endl;
+
+                                         exit(1);
+				}*/
+
 				}
 			}
 			else if(ebnf_token.tokenType == EXPANSION_TOKEN)
@@ -505,7 +501,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(old_successful_depth < depth)
 				{
 					old_successful_depth = depth;
-					//std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+					std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
 				}
 
 				#if PARSER_EBNF_SHOW_TRACE == 1
@@ -557,7 +553,7 @@ ebnfResult parser::parseEBNF(Array<token>* input_tokens, std::string start_map_i
 				if(old_depth < depth)
 				{
 					old_depth = depth;
-					//std::cerr << "Update fail map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+					std::cerr << "Update fail map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
 				}	
 				#if PARSER_EBNF_SHOW_TRACE == 1
 				cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
@@ -701,7 +697,7 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 	EBNF["program"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"function-list",EXPANSION_TOKEN, &parser::parseFunction},
 												//TODO {"global-statement",EXPANSION_TOKEN}, add all allowed statments in the global scope !?
 												{"statement",EXPANSION_TOKEN},
-											    {"unknown-list",EXPANSION_TOKEN, &parser::empty_file}}}};
+											    {"unknown-list",EXPANSION_TOKEN, &parser::bad_program}}}};
 	
 	EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",REGEX_TOKEN}}}};
 	EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
@@ -729,50 +725,38 @@ parser::parser(Array<token>* gtokens, const string& filename, const bool insider
 																  }}};
 
 	/** the with statement */
-	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN},
-														   {"include-statement-body",EXPANSION_TOKEN}}}};
+	EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN}, {"include-statement-body",EXPANSION_TOKEN}}}};
 
-	EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"include-statement-package",EXPANSION_TOKEN},
-																{"include-statement-file",EXPANSION_TOKEN}}}};
+	EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"include-statement-package",EXPANSION_TOKEN}, {"include-statement-file",EXPANSION_TOKEN}}}};
 
-	EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z0-9]+",REGEX_TOKEN},
-																   {"include-statement-subpackage",EXPANSION_TOKEN}}}};
-	EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",KEYWORD_TOKEN},
-																	    	{"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
+	EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z0-9]+",REGEX_TOKEN}, {"include-statement-subpackage",EXPANSION_TOKEN}}}};
+	EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
 
 	EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
 	
 	/** the extern statement */
 	EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"extern",KEYWORD_TOKEN},
-														   {"string",DATATTYPE_TOKEN},
-														   {"endextern",KEYWORD_TOKEN}}}};
+								{"string",DATATTYPE_TOKEN},
+								{"endextern",KEYWORD_TOKEN}}}};
 
 	/** the link statement */
-	EBNF["link-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"link-statement",EXPANSION_TOKEN},
-														   {"slink-statement",EXPANSION_TOKEN}}}};
+	EBNF["link-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"link-statement",EXPANSION_TOKEN}, {"slink-statement",EXPANSION_TOKEN}}}};
 
-	EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"link",KEYWORD_TOKEN},
-														   {"string",DATATTYPE_TOKEN}}}};
-	EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"slink",KEYWORD_TOKEN},
-														   {"string",DATATTYPE_TOKEN}}}};
+	EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"link",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
+	EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"slink",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
 
 	/** the distribute statement */
-	EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",KEYWORD_TOKEN},
-												{";",TERMINAL_TOKEN}}}};
+	EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
 	/** the break statement */
-	EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"break",KEYWORD_TOKEN},
-												{";",TERMINAL_TOKEN}}}};
+	EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"break",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
 	/** the continue statement */
-	EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"continue",KEYWORD_TOKEN},
-												{";",TERMINAL_TOKEN}}}};
+	EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"continue",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 												
 	/** the reset statement */
-	EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",EXPANSION_TOKEN},
-														 {";",TERMINAL_TOKEN}}}};
-	EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN},
-											   {"full-expression-list",EXPANSION_TOKEN}}},
+	EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
+	EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}, {"full-expression-list",EXPANSION_TOKEN}}},
 					{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}}}};
 	
 	/** the setnode statement */
@@ -1018,7 +1002,7 @@ statement* parser::parseBreak()
 	return new breakStatement();
 }
 
-int	parser::parse()
+int parser::parse()
 {
 	if(!insider)
 	{
@@ -1035,7 +1019,9 @@ int	parser::parse()
 			{
 				ebnf_verification_list.erase(ebnf_verification_list.end());
 			}
+			bad_program();
 		}
+
 	}
 	cerr << "<<<<<<<<<< END " << endl << flush;
 	
