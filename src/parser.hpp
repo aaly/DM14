@@ -322,7 +322,6 @@ namespace DM14::parser
 
 			int addIncludePath(string path);
 			private:
-			
 				parser_depth old_depth;
 				parser_depth old_successful_depth;
 
