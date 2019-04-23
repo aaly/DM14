@@ -1,6 +1,6 @@
-with io use *
-with math use *
-with sys use *
+with io use io
+with math use math
+~~with sys use sys
 with sys use time
 with core use Sleep
 with io use File
@@ -8,12 +8,12 @@ with io use string
 
 link "pthread"
 
-blockTimerInt (variable int; mseconds int;->)
+blockTimerInt (variable int, mseconds int->)
 {
 	USleep(mseconds);
 }
 
-main ( -> xx int;)
+main ( -> xx int)
 {
 
 nspill(strToFloat("5.5"));

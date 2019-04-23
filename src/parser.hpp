@@ -164,11 +164,11 @@ namespace DM14::parser
 
 	typedef enum
 	{
-		GRAMMAR_TOKEN_OR_ARRAY=0,
-		GRAMMAR_TOKEN_AND_ARRAY,
-		GRAMMAR_TOKEN_ZERO_MORE_ARRAY,
-		GRAMMAR_TOKEN_ONE_MORE_ARRAY,
-		GRAMMAR_TOKEN_ONLY_ONE_ARRAY,
+		GRAMMAR_TOKEN_OR=0,
+		GRAMMAR_TOKEN_AND,
+		GRAMMAR_TOKEN_ZERO_MORE,
+		GRAMMAR_TOKEN_ONE_MORE,
+		GRAMMAR_TOKEN_ONLY_ONE,
 	}
 	grammar_rule_type_t;
 
@@ -182,7 +182,13 @@ namespace DM14::parser
 
 	typedef std::map <std::string, std::vector<grammar_rule_t>> EBNF_map_t;
 
-	typedef std::pair<int, statement*> ebnfResult;
+	enum class ebnfResultType
+	{
+		SUCCESS =0,
+		FAILURE
+	};
+
+	typedef std::pair<ebnfResultType, statement*> ebnfResult;
 
 
 	class parser

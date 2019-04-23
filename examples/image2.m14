@@ -6,7 +6,7 @@ with io      use string
 with math	 use math
 with core    use Sleep
 with core    use common
-with sys	 use sys
+~~with sys	 use sys
 with sys	 use time
 with imgproc use objectDistance
 
@@ -31,13 +31,13 @@ struct nodeInfo
 	location Point_st;
 }
 
-processNodeInformation (distanceUpdateValue int; nodeID string;->);
+~~processNodeInformation (distanceUpdateValue int, nodeID string->);
 monitorBoat (->);
-findNodeIndex(nodeID string; -> nodeIndex int;);
+findNodeIndex(nodeID string -> nodeIndex int);
 updateAverageDistance(->);
-calculateCoordinates(nodeIndex int; -> loc Point_st;);
+calculateCoordinates(nodeIndex int -> loc Point_st);
 
-main (args string; -> result int;)
+main (args string -> result int)
 {
 	file File;
 	file.open("config.txt");
@@ -158,13 +158,13 @@ main (args string; -> result int;)
 	{
 		~~ do not pass directly so we block for it !
 		localDistanceUpdate nodist global int = lastUpdate; 
-		thread processNodeInformation(localDistanceUpdate, @lastUpdate);
+		~~thread processNodeInformation(localDistanceUpdate, @lastUpdate);
 		~~ do not call a thread directly like the following !
 		~~ thread processNodeInformation(lastUpdate, @lastUpdate);
 	}
 }
 
-processNodeInformation (distanceUpdateValue int; nodeID string;->)
+processNodeInformation (distanceUpdateValue int, nodeID string->)
 {
 	nodeindex nodist int = findNodeIndex(nodeID);
 	if [ nodeindex != -1 ]
@@ -221,7 +221,7 @@ monitorBoat(->)
 	displayInfo("end");
 }
 
-findNodeIndex(nodeID string; -> nodeIndex int;)
+findNodeIndex(nodeID string -> nodeIndex int)
 {
 	for [i int = 0; i < nodesInfoSize; i++;]
 	{
@@ -235,7 +235,7 @@ findNodeIndex(nodeID string; -> nodeIndex int;)
 }
 
 
-updateAverageDistance(->result int;)
+updateAverageDistance(->result int)
 {
 	size nodist global int = nodesInfoCurrentSize;
 	totalDistance nodist global int = 0;
@@ -266,7 +266,7 @@ updateAverageDistance(->result int;)
 }
 
 
-calculateCoordinates(nodeIndex int; -> loc Point_st;)
+calculateCoordinates(nodeIndex int -> loc Point_st)
 {
 	~~ calculate the distance between our node and the other node
 	Distance nodist float = FAbsoulte(nodesInfo[0].location.x - nodesInfo[nodeIndex].location.x) + FAbsoulte(nodesInfo[nodeIndex].location.y - nodesInfo[nodeIndex].location.y);

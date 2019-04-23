@@ -114,7 +114,13 @@ namespace DM14::parser
 				std::cerr << tokens->at(i).value;
 			}
 		}
+
 		std::cerr << std::endl;
+		/*for(uint32_t i =0; i < working_tokens->size(); i++)
+		{
+			cerr << working_tokens->at(i).value << endl;
+		}*/
+		exit(1);
 		return nullptr;
 	}
 
@@ -232,27 +238,27 @@ namespace DM14::parser
 					}
 					
 					/** process the current grammar rule type*/
-					if(current_rule.type == GRAMMAR_TOKEN_OR_ARRAY)
+					if(current_rule.type == GRAMMAR_TOKEN_OR)
 					{
 						if(k < current_rule.tokens.size() -1)
 						{
 							cerr << "| ";
 						}
 					}
-					else if(current_rule.type == GRAMMAR_TOKEN_AND_ARRAY)
+					else if(current_rule.type == GRAMMAR_TOKEN_AND)
 					{
 						//cerr << " ";
 						;
 					}
-					else if(current_rule.type == GRAMMAR_TOKEN_ZERO_MORE_ARRAY)
+					else if(current_rule.type == GRAMMAR_TOKEN_ZERO_MORE)
 					{
 						cerr << "*";
 					}
-					else if(current_rule.type == GRAMMAR_TOKEN_ONE_MORE_ARRAY)
+					else if(current_rule.type == GRAMMAR_TOKEN_ONE_MORE)
 					{
 						cerr << "+";
 					}
-					else if(current_rule.type == GRAMMAR_TOKEN_ONLY_ONE_ARRAY)
+					else if(current_rule.type == GRAMMAR_TOKEN_ONLY_ONE)
 					{
 						cerr << "?";
 					}
@@ -325,7 +331,7 @@ namespace DM14::parser
 		this->input_tokens = input_tokens;
 		
 		EBNF_level++;
-		ebnfResult result(0, NULL);
+		ebnfResult result(ebnfResultType::SUCCESS, NULL);
 		bool continue_searching_rules = true;
 
 		#if PARSER_EBNF_SHOW_TRACE == 1
@@ -340,7 +346,7 @@ namespace DM14::parser
 		/** loop over std::vector<grammar_token_array_t> */
 		for(uint32_t i = 0; i < EBNF[start_map_index].size() && continue_searching_rules == true; i++)
 		{
-			result.first = 0;
+			result.first = ebnfResultType::SUCCESS;
 			
 			#if PARSER_EBNF_SHOW_TRACE == 1
 			cerr << string(EBNF_level*2, ' ')  << "..LOOPING RULE : " << i << 	 " : " <<  *input_tokens_index << endl << flush;
@@ -359,7 +365,7 @@ namespace DM14::parser
 				
 				/** process the invidual token first */
 				ebnfResult previous_result = result;
-				result.first = 1; /** initial value assumes error , prove otherwise */
+				result.first = ebnfResultType::FAILURE; /** initial value assumes error , prove otherwise */
 
 				depth.current_token = k;
 
@@ -372,14 +378,14 @@ namespace DM14::parser
 				{
 					if(input_tokens->at(*input_tokens_index).type == ebnf_token.expansion)
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == TERMINAL_TOKEN)
 				{
 					if(input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == REGEX_TOKEN)
@@ -389,7 +395,7 @@ namespace DM14::parser
 						std::regex self_regex(ebnf_token.expansion, std::regex_constants::ECMAScript);
 						if(std::regex_match(input_tokens->at(*input_tokens_index).value, self_regex))
 						{
-							result.first = 0;
+							result.first = ebnfResultType::SUCCESS;
 						}
 					}
 				}
@@ -408,14 +414,14 @@ namespace DM14::parser
 				{
 					if(DM14::types::isSingleOperator(input_tokens->at(*input_tokens_index).value))
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == CORE_OP_TOKEN)
 				{
 					if(DM14::types::isCoreOperator(input_tokens->at(*input_tokens_index).value))
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == IMMEDIATE_TOKEN)
@@ -423,7 +429,7 @@ namespace DM14::parser
 					if(!DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) &&
 						isImmediate(input_tokens->at(*input_tokens_index)))
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == KEYWORD_TOKEN)
@@ -431,14 +437,14 @@ namespace DM14::parser
 					if(DM14::types::isKeyword(input_tokens->at(*input_tokens_index).value) &&
 						input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == BINARY_OP_TOKEN)
 				{
 					if(DM14::types::isbinOperator(input_tokens->at(*input_tokens_index).value))
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else if(ebnf_token.tokenType == OP_TOKEN)
@@ -446,7 +452,7 @@ namespace DM14::parser
 					if(DM14::types::isOperator(input_tokens->at(*input_tokens_index).value) &&
 						input_tokens->at(*input_tokens_index).value == ebnf_token.expansion)
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 				}
 				else
@@ -454,12 +460,12 @@ namespace DM14::parser
 					displayError(" ERROR : unknown grammar token type");
 				}
 					
-				if(result.first == 0)
+				if(result.first == ebnfResultType::SUCCESS)
 				{
 					/*if(old_successful_depth < depth)
 					{
 						old_successful_depth = depth;
-						//std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
+						std::cerr << "Update success map : " << old_depth.start_map_index << "->" << depth.start_map_index  << std::endl;
 					}*/
 
 					#if PARSER_EBNF_SHOW_TRACE == 1
@@ -484,13 +490,13 @@ namespace DM14::parser
 							tempTokenStack.push_back(popToken());
 						}
 						
-						/*for(uint32_t i =0; i < working_tokens->size(); i++)
+						for(uint32_t i =0; i < working_tokens->size(); i++)
 						{
 							cerr << "///" << working_tokens->at(i).value << endl;
-						}*/
+						}
 
 						
-						//displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
+						displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 						//cerr << EBNF_level << endl << flush;
 						
 						result.second =(this->*ebnf_token.callback)();
@@ -527,16 +533,16 @@ namespace DM14::parser
 				}
 				
 				/** process the current grammar rule type*/
-				if(current_rule.type == GRAMMAR_TOKEN_OR_ARRAY)
+				if(current_rule.type == GRAMMAR_TOKEN_OR)
 				{
-					if(result.first == 0)
+					if(result.first == ebnfResultType::SUCCESS)
 					{
 						continue_searching_rules = false;
 					}
 				}
-				else if(current_rule.type == GRAMMAR_TOKEN_AND_ARRAY)
+				else if(current_rule.type == GRAMMAR_TOKEN_AND)
 				{
-					if(result.first != 0)
+					if(result.first != ebnfResultType::SUCCESS)
 					{
 						#if PARSER_EBNF_SHOW_TRACE == 1
 						cerr << string(EBNF_level*4, ' ') << "ERROR : tokens do not(follow order/exist) in map : " << start_map_index << " rule : " << i << endl;
@@ -552,9 +558,9 @@ namespace DM14::parser
 						}
 					}
 				}
-				else if(current_rule.type == GRAMMAR_TOKEN_ZERO_MORE_ARRAY)
+				else if(current_rule.type == GRAMMAR_TOKEN_ZERO_MORE)
 				{
-					if(result.first == 0)
+					if(result.first == ebnfResultType::SUCCESS)
 					{
 						previous_result = result;
 						--k;
@@ -565,9 +571,9 @@ namespace DM14::parser
 						continue_searching_rules = false;
 					}
 				}
-				else if(current_rule.type == GRAMMAR_TOKEN_ONE_MORE_ARRAY)
+				else if(current_rule.type == GRAMMAR_TOKEN_ONE_MORE)
 				{
-					if(result.first == 0)
+					if(result.first == ebnfResultType::SUCCESS)
 					{
 						previous_result = result;
 						--k;
@@ -578,17 +584,16 @@ namespace DM14::parser
 						continue_searching_rules = false;
 					}
 				}
-				else if(current_rule.type == GRAMMAR_TOKEN_ONLY_ONE_ARRAY)
+				else if(current_rule.type == GRAMMAR_TOKEN_ONLY_ONE)
 				{
-					if(result.first == 1)
+					if(result.first == ebnfResultType::FAILURE)
 					{
-						result.first = 0;
+						result.first = ebnfResultType::SUCCESS;
 					}
 					else
 					{
 						continue_searching_rules = false;
 					}
-					//continue_searching_rules = false;
 					break;
 				}
 				else
@@ -599,7 +604,7 @@ namespace DM14::parser
 				}
 			}
 
-			if(result.first == 1)
+			if(result.first == ebnfResultType::FAILURE)
 			{
 				int diff = *input_tokens_index - rule_old_index;
 				deadvance_EBNFindex(diff);
@@ -652,16 +657,16 @@ namespace DM14::parser
 		distributedScope = 0;
 		functionStatementsCount = 0;
 		
-		EBNF["program"] = {{GRAMMAR_TOKEN_OR_ARRAY,{
+		EBNF["program"] = {{GRAMMAR_TOKEN_OR,{
 							{"function-list",EXPANSION_TOKEN, &parser::parseFunction},
 							//TODO {"global-statement",EXPANSION_TOKEN}, add all allowed statments in the global scope !?
 							{"statement",EXPANSION_TOKEN},
 							{"unknown-list",EXPANSION_TOKEN, &parser::bad_program}}}};
 		
-		EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{".*",REGEX_TOKEN}}}};
-		EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"statement",EXPANSION_TOKEN}}}};
+		EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND ,{{".*",REGEX_TOKEN}}}};
+		EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"statement",EXPANSION_TOKEN}}}};
 
-		EBNF["statement"] = {{GRAMMAR_TOKEN_OR_ARRAY,{
+		EBNF["statement"] = {{GRAMMAR_TOKEN_OR,{
 			{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
 								{"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
 								{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for(from -> to : step) { statements; } */
@@ -685,61 +690,61 @@ namespace DM14::parser
 																	  }}};
 
 		/** the with statement */
-		EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"with",KEYWORD_TOKEN}, {"include-statement-body",EXPANSION_TOKEN}}}};
+		EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND,{{"with",KEYWORD_TOKEN}, {"include-statement-body",EXPANSION_TOKEN}}}};
 
-		EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"include-statement-package",EXPANSION_TOKEN}, {"include-statement-file",EXPANSION_TOKEN}}}};
+		EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR ,{{"include-statement-package",EXPANSION_TOKEN}, {"include-statement-file",EXPANSION_TOKEN}}}};
 
-		EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z0-9]+",REGEX_TOKEN}, {"include-statement-subpackage",EXPANSION_TOKEN}}}};
-		EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"use",KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
+		EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",REGEX_TOKEN}, {"include-statement-subpackage",EXPANSION_TOKEN}}}};
+		EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND ,{{"use",KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
 
-		EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
+		EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
 		
 		/** the extern statement */
-		EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"extern",KEYWORD_TOKEN},
+		EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND ,{{"extern",KEYWORD_TOKEN},
 									{"string",DATATTYPE_TOKEN},
 									{"endextern",KEYWORD_TOKEN}}}};
 
 		/** the link statement */
-		EBNF["link-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"link-statement",EXPANSION_TOKEN}, {"slink-statement",EXPANSION_TOKEN}}}};
+		EBNF["link-list"] = {{GRAMMAR_TOKEN_OR ,{{"link-statement",EXPANSION_TOKEN}, {"slink-statement",EXPANSION_TOKEN}}}};
 
-		EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"link",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
-		EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"slink",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
+		EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND ,{{"link",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
+		EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND ,{{"slink",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
 
 		/** the distribute statement */
-		EBNF["distribute"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"distribute",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		EBNF["distribute"] = {{GRAMMAR_TOKEN_AND,{{"distribute",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
 		/** the break statement */
-		EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"break",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND,{{"break",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
 		/** the continue statement */
-		EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"continue",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND,{{"continue",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 													
 		/** the reset statement */
-		EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
-		EBNF["reset"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}, {"full-expression-list",EXPANSION_TOKEN}}},
-						{GRAMMAR_TOKEN_AND_ARRAY,{{"reset",KEYWORD_TOKEN}}}};
+		EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND,{{"reset",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		EBNF["reset"] = {{GRAMMAR_TOKEN_AND,{{"reset",KEYWORD_TOKEN}, {"full-expression-list",EXPANSION_TOKEN}}},
+						{GRAMMAR_TOKEN_AND,{{"reset",KEYWORD_TOKEN}}}};
 		
 		/** the setnode statement */
-		EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode-expr",EXPANSION_TOKEN},
+		EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND,{{"setnode-expr",EXPANSION_TOKEN},
 															 {";",TERMINAL_TOKEN}}}};
-		EBNF["setnode-expr"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN},
+		EBNF["setnode-expr"] = {{GRAMMAR_TOKEN_AND,{{"setnode",KEYWORD_TOKEN},
 												   {"full-expression-list",EXPANSION_TOKEN}}},
-						{GRAMMAR_TOKEN_AND_ARRAY,{{"setnode",KEYWORD_TOKEN}}}};
+						{GRAMMAR_TOKEN_AND,{{"setnode",KEYWORD_TOKEN}}}};
 		/** the struct statement */
-		EBNF["struct-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"struct",KEYWORD_TOKEN},
+		EBNF["struct-list"] = {{GRAMMAR_TOKEN_AND,{{"struct",KEYWORD_TOKEN},
 													{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 													{"struct-body",EXPANSION_TOKEN}}}};
 
-		EBNF["struct-body"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{";",TERMINAL_TOKEN},
+		EBNF["struct-body"] = {{GRAMMAR_TOKEN_OR ,{{";",TERMINAL_TOKEN},
 															   {"struct-definition",EXPANSION_TOKEN}}}};											
-		EBNF["struct-definition"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"{",TERMINAL_TOKEN},
+		EBNF["struct-definition"] = {{GRAMMAR_TOKEN_AND ,{{"{",TERMINAL_TOKEN},
 																{"struct-declaration-list",EXPANSION_TOKEN},
 																{"}",TERMINAL_TOKEN}}}};
-		EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN}}}};
+		EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE ,{{"declaration-full-statement",EXPANSION_TOKEN}}}};
 		
 		/** the for loop statement */
 		
-		EBNF["for-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"for",KEYWORD_TOKEN},
+		EBNF["for-list"] = {{GRAMMAR_TOKEN_AND,{{"for",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
 													  {"loop-expression-declarator",EXPANSION_TOKEN},
 													  {"loop-expression-condition",EXPANSION_TOKEN},
@@ -747,27 +752,27 @@ namespace DM14::parser
 													  {"]",TERMINAL_TOKEN},
 													  {"compound-statement",EXPANSION_TOKEN}}}};
 																		
-		EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
+		EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR ,{{"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
 																		{";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 																		
-		EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+		EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
 																	   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 		
-		EBNF["logical-expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression",EXPANSION_TOKEN},
+		EBNF["logical-expression-list"] = {{GRAMMAR_TOKEN_AND ,{{"logical-expression",EXPANSION_TOKEN},
 																	  {";",TERMINAL_TOKEN}}}};
-		EBNF["logical-expression"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN},
+		EBNF["logical-expression"] = {{GRAMMAR_TOKEN_AND ,{{"logical-expression-term",EXPANSION_TOKEN},
 																 {".*",BINARY_OP_TOKEN},
 																 {"logical-expression-term",EXPANSION_TOKEN}}},
-									  {GRAMMAR_TOKEN_AND_ARRAY ,{{"logical-expression-term",EXPANSION_TOKEN}}}};
+									  {GRAMMAR_TOKEN_AND ,{{"logical-expression-term",EXPANSION_TOKEN}}}};
 
-		EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+		EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																	 {".*",IMMEDIATE_TOKEN}}}};
 
-		EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+		EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_OR ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
 																	   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 
 		/** the if statement */
-		EBNF["if-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"if",KEYWORD_TOKEN},
+		EBNF["if-list"] = {{GRAMMAR_TOKEN_AND,{{"if",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
 													  {"full-expression-list",EXPANSION_TOKEN},
 													  {"]",TERMINAL_TOKEN},
@@ -775,17 +780,17 @@ namespace DM14::parser
 													  {"elseif-list",EXPANSION_TOKEN},
 													  {"else-list",EXPANSION_TOKEN}}}};
 
-		EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"elseif-statement",EXPANSION_TOKEN}}}};
+		EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"elseif-statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"else",KEYWORD_TOKEN},
+		EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
 															{"if-list",EXPANSION_TOKEN}}}};
 
-		EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"else-statement",EXPANSION_TOKEN}}}};
+		EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"else-statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["else-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"else",KEYWORD_TOKEN},
+		EBNF["else-statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
 															{"compound-statement",EXPANSION_TOKEN}}}};
 		/** the while loop statement */
-		EBNF["while-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"while",KEYWORD_TOKEN},
+		EBNF["while-list"] = {{GRAMMAR_TOKEN_AND,{{"while",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
 													  //{"logical-expression",EXPANSION_TOKEN},
 													  {"full-expression-list",EXPANSION_TOKEN},
@@ -793,151 +798,162 @@ namespace DM14::parser
 													  {"compound-statement",EXPANSION_TOKEN}}}};
 		
 		/** variable */
-		EBNF["variable"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+		EBNF["variable"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 													   {"declaration-index-list",EXPANSION_TOKEN}}}};
 
 		/** the variables declaration list */
-		EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"declaration-full-statement",EXPANSION_TOKEN},
+		EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR ,{{"declaration-full-statement",EXPANSION_TOKEN},
 															{"declaration-statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["declaration-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
-															   {"declaration-dataflow-specifier",EXPANSION_TOKEN},
-															   {"declaration-dist-specifiers-list",EXPANSION_TOKEN},
-															   {"declaration-global-specifier",EXPANSION_TOKEN},
-															   {"declaration-datatype-list",EXPANSION_TOKEN},
-															   {"declaration-index-list",EXPANSION_TOKEN},
-															   {"declaration-value-list",EXPANSION_TOKEN}}}};
+		EBNF["declaration-statement"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+															   //{"declaration-dataflow-specifier",EXPANSION_TOKEN},
+															   //{"declaration-dist-specifiers-list",EXPANSION_TOKEN},
+															   //{"declaration-global-specifier",EXPANSION_TOKEN},
+															   {"declaration-specifiers-list", EXPANSION_TOKEN},
+															   {"declaration-datatype-list", EXPANSION_TOKEN},
+															   {"declaration-index-list", EXPANSION_TOKEN},
+															   {"declaration-value-list", EXPANSION_TOKEN}}}};
 
-		EBNF["declaration-full-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"declaration-statement",EXPANSION_TOKEN},
-																		{";",TERMINAL_TOKEN}}}};
+		EBNF["declaration-specifiers-list"] = {{GRAMMAR_TOKEN_ZERO_MORE, {{"declaration-specifiers", EXPANSION_TOKEN}}}};
 
-		EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
+		EBNF["declaration-specifiers"] = {{GRAMMAR_TOKEN_OR, {{"global",KEYWORD_TOKEN},
+						{"nodist", KEYWORD_TOKEN},
+						{"channel", KEYWORD_TOKEN},
+						{"backprop", KEYWORD_TOKEN},
+						{"recurrent", KEYWORD_TOKEN},
+						{"noblock", KEYWORD_TOKEN}}}};
 
-		EBNF["declaration-dist-specifiers-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"channel",KEYWORD_TOKEN}}},
-													{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"recurrent",KEYWORD_TOKEN}}},
-													{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"nodist",KEYWORD_TOKEN}}}};
+		EBNF["declaration-full-statement"] = {{GRAMMAR_TOKEN_AND ,{{"declaration-statement",EXPANSION_TOKEN},
+									{";",TERMINAL_TOKEN}}}};
 
-		EBNF["declaration-global-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"global",KEYWORD_TOKEN}}}};
+		/*EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
+
+		EBNF["declaration-dist-specifiers-list"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"channel",KEYWORD_TOKEN}}},
+													{GRAMMAR_TOKEN_ONLY_ONE ,{{"recurrent",KEYWORD_TOKEN}}},
+													{GRAMMAR_TOKEN_ONLY_ONE ,{{"nodist",KEYWORD_TOKEN}}}};
+
+		EBNF["declaration-global-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"global",KEYWORD_TOKEN}}}};*/
 		
-		EBNF["declaration-datatype-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"declaration-datatype",EXPANSION_TOKEN}}}};
+		EBNF["declaration-datatype-list"] = {{GRAMMAR_TOKEN_AND ,{{"declaration-datatype",EXPANSION_TOKEN}}}};
 		
-		EBNF["declaration-datatype"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+[a-zA-Z_0-9]*",REGEX_TOKEN}}}};
+		EBNF["declaration-datatype"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+[a-zA-Z_0-9]*",REGEX_TOKEN}}}};
 		
 
-		EBNF["declaration-index-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-index",EXPANSION_TOKEN}}}};
+		EBNF["declaration-index-list"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"declaration-index",EXPANSION_TOKEN}}}};
 		
-		EBNF["declaration-index"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{"matrix-index",EXPANSION_TOKEN, &parser::parseMatrixIndex},
-															   {"array-index",EXPANSION_TOKEN, &parser::parseArrayIndex}}}};
+		EBNF["declaration-index"] = {{GRAMMAR_TOKEN_OR ,{{"matrix-index",EXPANSION_TOKEN, &parser::parseMatrixIndex},
+								 {"array-index",EXPANSION_TOKEN, &parser::parseArrayIndex}}}};
 
 		
-		EBNF["matrix-index"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"array-index",EXPANSION_TOKEN},
-														   {"array-index",EXPANSION_TOKEN}}}};
+		EBNF["matrix-index"] = {{GRAMMAR_TOKEN_AND ,{{"array-index",EXPANSION_TOKEN},
+							   {"array-index",EXPANSION_TOKEN}}}};
 
-		EBNF["array-index"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[",TERMINAL_TOKEN},
-														  {"[0-9]+",REGEX_TOKEN},
-														  {"]",TERMINAL_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY ,{{"[",TERMINAL_TOKEN},
-														  {"variable",EXPANSION_TOKEN},
-														  {"]",TERMINAL_TOKEN}}}};
+		EBNF["array-index"] = {{GRAMMAR_TOKEN_AND ,{{"[",TERMINAL_TOKEN},
+							  {"[0-9]+",REGEX_TOKEN},
+							  {"]",TERMINAL_TOKEN}}},
+				{GRAMMAR_TOKEN_AND ,{{"[",TERMINAL_TOKEN},
+						  {"variable",EXPANSION_TOKEN},
+						  {"]",TERMINAL_TOKEN}}}};
 
 		
-		EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE_ARRAY ,{{"declaration-value",EXPANSION_TOKEN}}}};
-		EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND_ARRAY , {{"=",TERMINAL_TOKEN}, {"expression-list",EXPANSION_TOKEN}}}};
+		EBNF["declaration-value-list"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"declaration-value",EXPANSION_TOKEN}}}};
+		EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND , {{"=",TERMINAL_TOKEN}, 
+								   {"expression-list",EXPANSION_TOKEN}}}};
 
 		/** the function call statement */
 		
-		EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"function-call",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND,{{"function-call",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
 														  
-		EBNF["function-call"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+		EBNF["function-call"] = {{GRAMMAR_TOKEN_AND,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																   {"(",TERMINAL_TOKEN},
 																   {"function-call-arguments-list",EXPANSION_TOKEN},
 																   {")",TERMINAL_TOKEN}}}};
 		
-		EBNF["function-call-arguments-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY,{{"function-call-arguments",EXPANSION_TOKEN}}}};
+		EBNF["function-call-arguments-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"function-call-arguments",EXPANSION_TOKEN}}}};
 		
-		EBNF["function-call-arguments"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"full-expression-list",EXPANSION_TOKEN},
+		EBNF["function-call-arguments"] = {{GRAMMAR_TOKEN_AND,{{"full-expression-list",EXPANSION_TOKEN},
 																	 {",",TERMINAL_TOKEN}}},
-										   {GRAMMAR_TOKEN_AND_ARRAY,{{"full-expression-list",EXPANSION_TOKEN}}}};
+										   {GRAMMAR_TOKEN_AND,{{"full-expression-list",EXPANSION_TOKEN}}}};
 		
-		EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-list",EXPANSION_TOKEN},
+		EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND,{{"expression-list",EXPANSION_TOKEN},
 														{";",TERMINAL_TOKEN, &parser::parseExpressionStatement}}}};
 
-		EBNF["expression-list"] = {{GRAMMAR_TOKEN_ONE_MORE_ARRAY ,{{"full-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
+		EBNF["expression-list"] = {{GRAMMAR_TOKEN_ONE_MORE ,{{"full-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
 
-		EBNF["full-expression-list"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"big-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement},
+		EBNF["full-expression-list"] = {{GRAMMAR_TOKEN_OR,{{"big-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement},
 														{"expression",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
 														
-		EBNF["big-expression-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-types",EXPANSION_TOKEN},
+		EBNF["big-expression-list"] = {{GRAMMAR_TOKEN_AND,{{"expression-types",EXPANSION_TOKEN},
 														{"BIN_OP",BINARY_OP_TOKEN},
 														{"expression-types",EXPANSION_TOKEN}}}};
-		EBNF["expression-types"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"big-expression",EXPANSION_TOKEN},
+		EBNF["expression-types"] = {{GRAMMAR_TOKEN_OR,{{"big-expression",EXPANSION_TOKEN},
 														{"expression",EXPANSION_TOKEN}}}};
-		EBNF["big-expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"(",OP_TOKEN},
+		EBNF["big-expression"] = {{GRAMMAR_TOKEN_AND,{{"(",OP_TOKEN},
 														{"big-expression-list",EXPANSION_TOKEN},
 														{")",OP_TOKEN}}}};
-		EBNF["expression"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"(",OP_TOKEN},
+		EBNF["expression"] = {{GRAMMAR_TOKEN_AND,{{"(",OP_TOKEN},
 														{"expression",EXPANSION_TOKEN},
 														{")",OP_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN},
+								{GRAMMAR_TOKEN_AND,{{"expression-extend",EXPANSION_TOKEN},
 														{"BIN_OP",BINARY_OP_TOKEN},
 														{"expression-types",EXPANSION_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY,{{"SING_OP",SINGLE_OP_TOKEN},
+								{GRAMMAR_TOKEN_AND,{{"SING_OP",SINGLE_OP_TOKEN},
 														{"expression-extend",EXPANSION_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY,{{"CORE_OP",CORE_OP_TOKEN},
+								{GRAMMAR_TOKEN_AND,{{"CORE_OP",CORE_OP_TOKEN},
 														{"expression-extend",EXPANSION_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN},
+								{GRAMMAR_TOKEN_AND,{{"expression-extend",EXPANSION_TOKEN},
 														{"SING_OP",SINGLE_OP_TOKEN}}},
-								{GRAMMAR_TOKEN_AND_ARRAY,{{"expression-extend",EXPANSION_TOKEN}}}};
+								{GRAMMAR_TOKEN_AND,{{"expression-extend",EXPANSION_TOKEN}}}};
 
-		EBNF["expression-extend"] = {{GRAMMAR_TOKEN_OR_ARRAY,{{"function-call",EXPANSION_TOKEN},
+		EBNF["expression-extend"] = {{GRAMMAR_TOKEN_OR,{{"function-call",EXPANSION_TOKEN},
 															 {"variable",EXPANSION_TOKEN},
 															  {"IMMEDIATE",IMMEDIATE_TOKEN}}}};
 		/** the thread statement */
 
-		EBNF["thread-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread-list",EXPANSION_TOKEN},
+		EBNF["thread-statement"] = {{GRAMMAR_TOKEN_AND ,{{"thread-list",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
 
-		EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"thread",KEYWORD_TOKEN},
+		EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND ,{{"thread",KEYWORD_TOKEN},
 														 {"function-call",EXPANSION_TOKEN}}}};
 		
 		/** the function statement */
-		EBNF["function-list"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"function-prototype",EXPANSION_TOKEN},
+		EBNF["function-list"] = {{GRAMMAR_TOKEN_AND ,{{"function-prototype",EXPANSION_TOKEN},
 														   {"function-definition-list",EXPANSION_TOKEN}}}};
 		
 		
-		EBNF["function-definition-list"] = {{GRAMMAR_TOKEN_OR_ARRAY ,{{";",TERMINAL_TOKEN},
+		EBNF["function-definition-list"] = {{GRAMMAR_TOKEN_OR ,{{";",TERMINAL_TOKEN},
 																		{"compound-statement",EXPANSION_TOKEN}}}};
 																 
-		EBNF["function-prototype"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([_]*[0-9]*)*",REGEX_TOKEN},
+		EBNF["function-prototype"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([_]*[0-9]*)*",REGEX_TOKEN},
 																{"(",TERMINAL_TOKEN},
 																{"function-parameter-list",EXPANSION_TOKEN},
 																{"->",TERMINAL_TOKEN},
 																{"function-return",EXPANSION_TOKEN},
 																{")",TERMINAL_TOKEN}}}};
 
-		EBNF["function-parameter-list"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-parameters",EXPANSION_TOKEN}}}};
-		EBNF["function-parameters"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"function-parameter",EXPANSION_TOKEN}}},
-										{GRAMMAR_TOKEN_AND_ARRAY ,{{"function-extra-parameter",EXPANSION_TOKEN}}}};
+		EBNF["function-parameter-list"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"function-parameters",EXPANSION_TOKEN}}}};
+		EBNF["function-parameters"] = {{GRAMMAR_TOKEN_AND ,{{"function-parameter",EXPANSION_TOKEN}}},
+										{GRAMMAR_TOKEN_AND ,{{"function-extra-parameter",EXPANSION_TOKEN}}}};
 
-		EBNF["function-extra-parameter"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{",",TERMINAL_TOKEN},
+		EBNF["function-extra-parameter"] = {{GRAMMAR_TOKEN_AND ,{{",",TERMINAL_TOKEN},
 																	  {"function-parameter",EXPANSION_TOKEN}}}};															  
 		
-		EBNF["function-parameter"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+		EBNF["function-parameter"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																{"declaration-datatype-list",EXPANSION_TOKEN}}}};
 		
-		EBNF["function-return"] = {{GRAMMAR_TOKEN_ZERO_MORE_ARRAY ,{{"function-parameter",EXPANSION_TOKEN}}}};
+		EBNF["function-return"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"function-parameter",EXPANSION_TOKEN}}}};
 																	
-		EBNF["compound-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY ,{{"{",TERMINAL_TOKEN},
+		EBNF["compound-statement"] = {{GRAMMAR_TOKEN_AND ,{{"{",TERMINAL_TOKEN},
 																{"statement-list",EXPANSION_TOKEN},
 																{"}",TERMINAL_TOKEN}}}};
 		/** return statement */
 		
-		EBNF["return-list"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{"return",KEYWORD_TOKEN},
+		EBNF["return-list"] = {{GRAMMAR_TOKEN_AND,{{"return",KEYWORD_TOKEN},
 														{"expression-statement",EXPANSION_TOKEN}}},
-							   {GRAMMAR_TOKEN_AND_ARRAY,{{"return",KEYWORD_TOKEN},
+							   {GRAMMAR_TOKEN_AND,{{"return",KEYWORD_TOKEN},
 														{";",TERMINAL_TOKEN}}}};
 		/* nop statement */
-		EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND_ARRAY,{{";",TERMINAL_TOKEN}}}};
+		EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND,{{";",TERMINAL_TOKEN}}}};
 	};
 
 
@@ -973,7 +989,7 @@ namespace DM14::parser
 		while(index < tokens->size()-1)
 		{	
 			//EBNF_level = -1;
-			if(parseEBNF(tokens, "program", &tokens_stack).first != 0)
+			if(parseEBNF(tokens, "program", &tokens_stack).first != ebnfResultType::SUCCESS)
 			{
 				for(uint32_t i =0; i < ebnf_verification_list.size(); i++)
 				{

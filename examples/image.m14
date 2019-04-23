@@ -1,5 +1,6 @@
 ~~ all variables outside main must be nodist by default ! or we get error at compiling
 
+with io use *
 with io		 use io
 with io      use File
 with io      use string
@@ -16,6 +17,7 @@ link "opencv_imgcodecs"
 link "opencv_imgproc"
 link "opencv_videoio"
 
+
 struct Point_st
 {
 	x float;
@@ -24,19 +26,18 @@ struct Point_st
 
 struct nodeInfo
 {
-	nodeID string;           ~~ node id
-	distance float;	         ~~ last read value from this node
-	location Point_st;       ~~ the location of the node ;)
-	firstPinpoint Point_st;  ~~ first pinpoint estimation
-	secondPinpoint Point_st; ~~ second pinpoint estimation
+	nodeID string;
+	distance float;	
+	readValue float;
+	location Point_st;
 }
 
-
+~~processNodeInformation (distanceUpdateValue int, nodeID string->);
 monitorBoat (->);
 findNodeIndex(nodeID string -> nodeIndex int);
 updateAverageDistance(->);
-calculateCoordinates(nodeIndex int ->);
-processNodeInformation (distanceUpdateValue int, nodeID string->);
+calculateCoordinates(nodeIndex int -> loc Point_st);
+
 main (args string -> result int)
 {
 	file File;
@@ -45,16 +46,21 @@ main (args string -> result int)
 
 	nodesInfoSize nodist global int = 10000;
 	nodesInfoCurrentSize nodist global int = 0;
-	nodesInfo nodist global nodeInfo[10000];
+	nodesInfo global nodeInfo[10000];
 	
-	localLastUpdate nodist global float;
-	lastUpdate channel global float;
-	
-	localLocation global Point_st;
-	Location channel global Point_st;
+	localLastUpdate nodist global int;
+	lastUpdate channel global int;
 	
 	objectMonitor nodist global objectDistance;
 	
 	Init nodist global bool = false;
 	
+	while [true]
+	{
+		~~ do not pass directly so we block for it !
+		localDistanceUpdate nodist global int = lastUpdate;
+		~~thread processNodeInformation(localDistanceUpdate, @lastUpdate);
+		~~ do not call a thread directly like the following !
+		~~ thread processNodeInformation(lastUpdate, @lastUpdate);
+	}
 }
