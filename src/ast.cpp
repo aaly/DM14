@@ -1,9 +1,12 @@
-// Copyright (c) 2010, <Abdallah Aly> <l3thal8@gmail.com>
-//
-// Part of Mission14 programming language
-//
-// See file "license" for bsd license
-
+/**
+@file             ast.hpp
+@brief            ast
+@details          Abstract Syntax Tree classes, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2018
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
 #include "ast.hpp"
 
 funcInfo::funcInfo()
@@ -162,6 +165,20 @@ statement::statement()
 	type = "";
 };
 
+void statement::absorbDistStatements(statement* arg)
+{
+	if(arg == NULL)
+	{
+		return;
+	}
+
+	for(uint32_t i = 0; i < arg->distStatements.size(); i++)
+	{
+		distStatements.push_back(arg->distStatements.at(i));
+	}
+
+	arg->distStatements.clear();
+}
 
 emptyStatement::emptyStatement()
 {

@@ -531,24 +531,29 @@ string getDataType(const string& type)
 
 
 
-DatatypeBase findDataType(const string& type)
+std::pair<bool, DatatypeBase> findDataType(const string& type)
 {
-	for(uint32_t i =0; i < datatypes.size(); i++)
+	std::pair<bool, DatatypeBase> result(false, DatatypeBase());
+	for(uint32_t i =0; i < datatypes.size() && result.first == false; i++)
 	{
 		if(datatypes.at(i).typeID == type)
 		{
-			return datatypes.at(i);
+			result.first = true;
+			result.second = datatypes.at(i);
+			break;
 		}
 		
 		for (uint32_t k =0; k < datatypes.at(i).CEquivalent.size(); k++)
 		{
 			if(type ==  datatypes.at(i).CEquivalent.at(k))
 			{
-				return datatypes.at(i);
+				result.first = true;
+				result.second = datatypes.at(i);
+				break;
 			}
 		}
 	}
-	return DatatypeBase();
+	return result;
 }
 
 bool isClass(const string& type)
@@ -637,9 +642,10 @@ bool classHasMemberFunction(const string& classID, const functionCall& member)
 }
 
 
-funcInfo getClassMemberFunction(const string& classID, const functionCall& member)
+std::pair<bool, funcInfo> getClassMemberFunction(const string& classID, const functionCall& member)
 {
-	/*for(uint32_t i =0; i < datatypes.size(); i++)
+	std::pair<bool, funcInfo> result(false, funcInfo());
+	for(uint32_t i =0; i < datatypes.size(); i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
@@ -647,16 +653,18 @@ funcInfo getClassMemberFunction(const string& classID, const functionCall& membe
 			{
 				if(datatypes.at(i).memberFunctions.at(k).name == member.name)
 				{
-					if(*(datatypes.at(i).memberFunctions.at(k).size()) == *member.size())
+					result.first = true;
+					result.second = datatypes.at(i).memberFunctions.at(k);
+					break;
+					/*if(*(datatypes.at(i).memberFunctions.at(k).size()) == *member.size())
 					{
 						return true;
-					}
+					}*/
 				}
 			}
 		}
 	}
-	return false;*/
-	return funcInfo();
+	return result;
 }
 
 
@@ -678,9 +686,10 @@ bool classHasMemberVariable(const string& classID, const string& member)
 	return false;
 }
 
-funcInfo getClassMemberVariable(const string& classID, const string& member)
+std::pair<bool, funcInfo> getClassMemberVariable(const string& classID, const string& member)
 {
-	for(uint32_t i =0; i < datatypes.size(); i++)
+	std::pair<bool, funcInfo> result(false, funcInfo());
+	for(uint32_t i =0; i < datatypes.size() && result.first == false; i++)
 	{
 		if(datatypes.at(i).typeID == classID && datatypes.at(i).classType)
 		{
@@ -688,12 +697,14 @@ funcInfo getClassMemberVariable(const string& classID, const string& member)
 			{
 				if(datatypes.at(i).memberVariables.at(k).name == member)
 				{
-					return datatypes.at(i).memberVariables.at(k);
+					result.first = true;
+					result.second =  datatypes.at(i).memberVariables.at(k);
+					break;
 				}
 			}
 		}
 	}
-	return funcInfo();
+	return result;
 }
 
 

@@ -51,7 +51,7 @@ using namespace std;
 	//bool		hasOperator(const string&, const int&);
 	bool		hasTypeValue(const string&, const string&);
 	string		getDataType(const string& type);
-	DatatypeBase findDataType(const string& type);
+	std::pair<bool, DatatypeBase> findDataType(const string& type);
 	bool		isClass(const string& type);
 	bool		isEnum(const string& type);
 	
@@ -63,8 +63,8 @@ using namespace std;
 	bool		classHasMemberFunction(const string& classID, const functionCall& member);
 	bool		classHasMemberVariable(const string& classID, const string& member);
 	
-	funcInfo getClassMemberVariable(const string& classID, const string& member);
-	funcInfo getClassMemberFunction(const string& classID, const functionCall& member);
+	std::pair<bool, funcInfo> getClassMemberVariable(const string& classID, const string& member);
+	std::pair<bool, funcInfo> getClassMemberFunction(const string& classID, const functionCall& member);
 	
 	static 		string	Op;
 	//static		char	funcbuff;

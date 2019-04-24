@@ -1549,13 +1549,13 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 	m14FileDefs << "#define " << name << " " << dVariablesNames.size() << std::endl;
 	dVariablesNames.push_back(name);
 	
-	DatatypeBase dType =  DM14::types::findDataType(id.type);
-	if(dType.classType)
+	auto dType =  DM14::types::findDataType(id.type);
+	if(dType.first == true && dType.second.classType)
 	{
-		for(uint32_t i =0; i < dType.memberVariables.size(); i++)
+		for(uint32_t i =0; i < dType.second.memberVariables.size(); i++)
 		{
 			idInfo id2;
-			id2.name = dType.memberVariables.at(i).name;
+			id2.name = dType.second.memberVariables.at(i).name;
 			
 			id2.parent = new idInfo();
 			*id2.parent = id;
@@ -1578,10 +1578,10 @@ int compiler::compileTerm(statement*& stmt)
 
 	if(DM14::types::isEnum(termstatement->term))
 	{
-		DatatypeBase dt = DM14::types::findDataType(termstatement->term);
-		if(dt.parents.size())
+		auto dt = DM14::types::findDataType(termstatement->term);
+		if(dt.first == true && dt.second.parents.size())
 		{
-			write(dt.parents.at(0)+"::");
+			write(dt.second.parents.at(0)+"::");
 		}
 		//write(termstatement->id->parent->name);
 	}

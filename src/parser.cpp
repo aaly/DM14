@@ -1622,12 +1622,12 @@ namespace DM14::parser
 		
 		if(DM14::types::isClass(id.type))
 		{
-			DatatypeBase datatype = DM14::types::findDataType(id.type);
-			for(uint32_t i =0; i < datatype.memberVariables.size(); i++)
+			auto datatype = DM14::types::findDataType(id.type);
+			for(uint32_t i =0; i < datatype.second.memberVariables.size(); i++)
 			{
 				idInfo id2(id);
-				id2.name = datatype.memberVariables.at(i).name;
-				id2.type = datatype.memberVariables.at(i).returnType;
+				id2.name = datatype.second.memberVariables.at(i).name;
+				id2.type = datatype.second.memberVariables.at(i).returnType;
 				id2.arrayIndex = NULL;
 				id2.array = false;
 				id2.parent = &id;
@@ -1845,9 +1845,7 @@ namespace DM14::parser
 
 	statement* parser::parseFunctionCall()
 	{
-		cerr << "parsing function call" << endl;
 		statement* result = parseFunctionCallInternal(true, "", "");
-		cerr << "end : " << getToken().value << endl;
 		return result;
 	}
 
@@ -1880,21 +1878,11 @@ namespace DM14::parser
 		}
 		else /** we have parameters ! */
 		{
-
+			currentStatement = funcCall;
 			while(!peekToken(")"))
 			{
-				//TODO: FIX 
-				/*if(terminated)
-				{
-					//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, funcCall));
-					parameter = parseOpStatement(0, counter-1, "-2", 0, funcCall);
-				}
-				else
-				{
-					//funcCall->parameters->push_back(parseOpStatement(*working_tokens_index, counter-1, "-2", 0, currentStatement));
-					parameter = parseOpStatement(0, counter-1, "-2", 0, currentStatement);
-				}*/
 				statement* parameter = parseStatement("full-expression-list");
+				funcCall->absorbDistStatements(parameter);
 				funcCall->parameters->push_back(parameter);
 				parameters->push_back(parameter->type);
 				if(peekToken(","))
@@ -1903,7 +1891,7 @@ namespace DM14::parser
 				}
 			}
 
-			popToken(); // )
+			popToken();
 		}
 		
 		bool error = true;
@@ -2697,7 +2685,7 @@ namespace DM14::parser
 
 	statement* parser::parseExpressionStatement()
 	{
-		cerr << "parse expression statement" << endl;
+		//cerr << "parse expression statement" << endl;
 		statement* result = nullptr;
 		
 		if(working_tokens->at(working_tokens->size()-1).value == ";")
@@ -2708,7 +2696,7 @@ namespace DM14::parser
 		{
 			result = parseOpStatement(0, working_tokens->size()-1, "-2", scope, parentStatement);
 		}
-		cerr << "DONE parse expression statement" << endl;
+		//cerr << "DONE parse expression statement" << endl;
 
 		return result;
 	}
@@ -2779,6 +2767,7 @@ namespace DM14::parser
 		delete extract_temp_vector;
 		return result;
 	}
+
 	std::vector<token>* parser::extract(int32_t from, int32_t to)
 	{
 		std::vector<token>*  extract_temp_vector = new std::vector<token>();
@@ -2793,6 +2782,7 @@ namespace DM14::parser
 		}
 		return extract_temp_vector;
 	}
+
 	statement* parser::parseOpStatement(int32_t from, int32_t to, 
 										const string& stmtType, const int& scopeLevel, statement* caller, 
 										idInfo* parent, const string& parentOp)
@@ -2889,6 +2879,7 @@ namespace DM14::parser
 					{
 						auto* temp = extract(from, i-1);
 						opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
+						opstatement->absorbDistStatements(opstatement->left);
 						restore(temp);
 						if(opstatement->left->type.size())
 						{
@@ -2907,42 +2898,100 @@ namespace DM14::parser
 			
 					idInfo* id = NULL;
 					// should we loop inside to get the term ?
+					
 					statement* res = findTreeNode(opstatement->left, tStatement);
 					
 					if(res)
 					{
 						id  =((termStatment*)res)->id;
 					}
-										
+
 					if(opstatement->op == "." ||  opstatement->op == "::" )
 					{
 						if(!id)
 						{
 							displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"false class member !");
+							
 						}
-						
-						if(i == to &&
-							 to > 0)
+						else
 						{
-							displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"incomplete data member access at " +  getToken(i).value);
+							if(i == to && to > 0)
+							{
+								displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"incomplete data member access at " +  getToken(i).value);
+							}
+
+							opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement, id);
+							opstatement->left->type = opstatement->right->type;
+							opstatement->type = opstatement->right->type;
+
+							opstatement->absorbDistStatements(opstatement->right);
+							
+							
+							string classID = id->name;
+							
+							if(DM14::types::isDataType(classID))
+							{
+								statement* staticFunction = findTreeNode(opstatement->right, fCall);
+								if(staticFunction != nullptr)
+								{	
+									
+									auto fInfoResult = DM14::types::getClassMemberFunction(classID, (*(functionCall*)staticFunction));
+									//TODO
+									if(fInfoResult.first == true)
+									{
+										
+										if(fInfoResult.second.noAutism == true)
+										{
+											opstatement->op = "::";
+										}
+									}
+									else
+									{
+										displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class has no member static function ...");
+									}
+								}
+								else
+								{
+									statement* staticVariable = findTreeNode(opstatement->right, tStatement);
+									if(staticVariable != nullptr)
+									{
+										auto vInfoResult = DM14::types::getClassMemberFunction(classID, (*(functionCall*)staticVariable));
+										if(vInfoResult.first == true)
+										{
+											
+											if(vInfoResult.second.noAutism == true)
+											{
+												opstatement->op == "::";
+											}
+										}
+										else
+										{
+											displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class has no member static variable ...");
+										}
+									}
+									else
+									{
+										displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"parsing error, should not be here !");
+									}
+								}
+							}
+							
+							
+							//statement* res = findTreeNode(opstatement->right, tStatement);
+							//idInfo* rightID  =((termStatment*)res)->id;
+							//rightID->arrayIndex = id->arrayIndex;
+							//id->arrayIndex = NULL;
+							
+							/*if(stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
+							{
+								displayError(fName,(tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
+							}*/
 						}
-						opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement, id);
-						opstatement->left->type = opstatement->right->type;
-						opstatement->type = opstatement->right->type;
-						
-						//statement* res = findTreeNode(opstatement->right, tStatement);
-						//idInfo* rightID  =((termStatment*)res)->id;
-						//rightID->arrayIndex = id->arrayIndex;
-						//id->arrayIndex = NULL;
-						
-						/*if(stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
-						{
-							displayError(fName,(tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
-						}*/
 					}
 					else if(to > -1)
 					{
 						opstatement->right = parseOpStatement(from, to, opstatement->type == "" ? stmtType : opstatement->type, opstatement->scopeLevel, currentStatement);
+						opstatement->absorbDistStatements(opstatement->right);
 						if(!opstatement->left)
 						{
 							opstatement->type = opstatement->right->type;
@@ -3195,7 +3244,7 @@ namespace DM14::parser
 				}
 				else if(parent && DM14::types::classHasMemberVariable(classID, variableName))
 				{
-					if(DM14::types::getClassMemberVariable(classID, variableName).classifier != DM14::types::CLASSIFIER::PUBLIC)
+					if(DM14::types::getClassMemberVariable(classID, variableName).second.classifier != DM14::types::CLASSIFIER::PUBLIC)
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
 					}
@@ -3286,7 +3335,16 @@ namespace DM14::parser
 					}
 				}
 				
-				termstatement->distStatements = opstatement->distStatements;
+				//if(currentStatement != nullptr)
+				{
+					
+					//cerr << currentStatement << endl << flush;
+					//currentStatement->absorbDistStatements(opstatement);
+				}
+				//else
+				{
+					termstatement->distStatements = opstatement->distStatements;
+				}
 				delete opstatement;
 				return termstatement;
 			}

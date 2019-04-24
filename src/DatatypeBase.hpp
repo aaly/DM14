@@ -1,6 +1,16 @@
 #ifndef	DATATYPEBASE_HPP
 #define	DATATYPEBASE_HPP
 
+/**
+@file             DataType.hpp
+@brief            DataType
+@details          DataType class, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2018
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
+
 #include <vector>
 #include <string>
 #include "Array.hpp"
@@ -50,7 +60,6 @@ class DatatypeBase
 };
 
 #include "types.hpp"
-
 #include "ast.hpp"
 
 #endif	//DATATYPEBASE_HPP
