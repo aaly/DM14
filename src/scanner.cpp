@@ -341,7 +341,6 @@ int	scanner::scan()
 		}
 		else if ( ch == '"' ) // a double qutation , which means a string
 		{
-			cerr << "ADD STRING " << endl;
 			addString();
 		}
 		else if ( ch == '\'' )

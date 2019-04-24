@@ -33,19 +33,19 @@ class with
 class distributingVariablesStatement;
 class funcInfo;
 
-class statement
+class Statement
 {
 	public:
-		void absorbDistStatements(statement*);
-		statement();
+		void absorbDistStatements(Statement*);
+		Statement();
 		int line;
 		int scope;
-		int statementType;
+		int StatementType;
 		string	type;
 		int	scopeLevel; // count how many ( we entered !
 		//Array < map<string, map <int, map < int, void*> > >* > vars; // map ( identifier , map ( type, map ( operator, value) )
 		Array<distributingVariablesStatement*> distStatements;
-		Array<statement*> splitStatements;
+		Array<Statement*> splitStatements;
 };
 
 class funcInfo
@@ -69,8 +69,8 @@ class funcInfo
 class idInfo
 {
 	public:
-		idInfo(const string&, const int&, const string&, statement*);
-		idInfo(const string&, const int&, const string&, const string&, statement*);
+		idInfo(const string&, const int&, const string&, Statement*);
+		idInfo(const string&, const int&, const string&, const string&, Statement*);
 		idInfo();
 		string		name;
 		int			scope;
@@ -80,7 +80,7 @@ class idInfo
 		bool		initialized;
 		int			distributedScope;
 		bool		distributed;
-		statement*	arrayIndex;
+		Statement*	arrayIndex;
 		bool		array;
 		bool		pointer;
 		int			size;
@@ -103,15 +103,15 @@ class idInfo
 		
 };
 
-class returnStatement : public statement
+class returnStatement : public Statement
 {
 	public:
 		returnStatement();
-		statement* retValue;
+		Statement* retValue;
 };
 
 
-class threadStatement : public statement
+class threadStatement : public Statement
 {
 	public:
 		threadStatement();
@@ -123,32 +123,32 @@ class threadStatement : public statement
 		string			Identifier;
 		
 		bool			classMember;
-		statement*		functioncall;
-		//Array<statement*>*	parameters;
+		Statement*		functioncall;
+		//Array<Statement*>*	parameters;
 		//funcInfo			funcinfo;
 		
 };
 
-class emptyStatement : public statement
+class emptyStatement : public Statement
 {
 	public:
 		emptyStatement();
 };
 
-class breakStatement : public statement
+class breakStatement : public Statement
 {
 	public:
 		breakStatement();
 };
 
-class continueStatement : public statement
+class continueStatement : public Statement
 {
 	public:
 		continueStatement();
 };
 
 
-class distributingVariablesStatement : public statement
+class distributingVariablesStatement : public Statement
 {
 	public:
 		enum dvStatementType
@@ -164,7 +164,7 @@ class distributingVariablesStatement : public statement
 };
 
 /*
-class Class : public statement
+class Class : public Statement
 {
 	public:
 		Class();
@@ -183,7 +183,7 @@ class Class : public statement
 };
 */
 
-class Link : public statement
+class Link : public Statement
 {
 	public:
 		Link();
@@ -194,7 +194,7 @@ class Link : public statement
 		
 };
 
-class declareStatement : public statement
+class declareStatement : public Statement
 {
 	public:
 		declareStatement();
@@ -205,8 +205,8 @@ class declareStatement : public statement
 		
 		bool				array;
 		int					size;
-		statement*			value;				// value to be stored in the variable
-		Array<statement*>	values;
+		Statement*			value;				// value to be stored in the variable
+		Array<Statement*>	values;
 		bool			Initilazed;
 		bool			distributed;
 		bool			tmpScope;
@@ -219,43 +219,43 @@ class declareStatement : public statement
 		bool			shared;
 };
 
-class resetStatement : public statement
+class resetStatement : public Statement
 {
 	public:
 		resetStatement();
 		~resetStatement();	
 		
-		statement* count;
+		Statement* count;
 };
 
-class parentAddStatement : public statement
+class parentAddStatement : public Statement
 {
 	public:
 		parentAddStatement();
 		~parentAddStatement();	
 		
-		statement* socket;
-		statement* ip;
+		Statement* socket;
+		Statement* ip;
 };
 
-class NOPStatement : public statement
+class NOPStatement : public Statement
 {
 	public:
 		NOPStatement();
 		~NOPStatement();	
 };
 
-class setNodeStatement : public statement
+class setNodeStatement : public Statement
 {
 	public:
 		setNodeStatement();
 		~setNodeStatement();	
 		
-		statement* node;
+		Statement* node;
 };
 
 
-class distStatement : public statement
+class distStatement : public Statement
 {
 	public:
 		distStatement();
@@ -268,7 +268,7 @@ class distStatement : public statement
 	
 };
 
-class operationalStatement : public statement
+class operationalStatement : public Statement
 {
 	public:
 		operationalStatement();
@@ -276,92 +276,92 @@ class operationalStatement : public statement
 		//int					type;
 		string						op;		// operator like += or -= so on ...
 		//Array<string>*		left;	// right expression maybe a,b ?
-		//Array<statement*>*		right;	// termStatements ?
-		statement*			right;	// left expression
-		statement*			left;	// left expression
+		//Array<Statement*>*		right;	// termStatements ?
+		Statement*			right;	// left expression
+		Statement*			left;	// left expression
 };
 
 
-class termStatment : public statement
+class termStatement : public Statement
 {
 	public:
-		termStatment();
-		termStatment(const string&);
-		termStatment(const string&, const string&);		
+		termStatement();
+		termStatement(const string&);
+		termStatement(const string&, const string&);		
 		string			term; // if its type is Identifier or immediate
 		idInfo*			id;
 		bool			identifier;
-		statement*		arrayIndex;
+		Statement*		arrayIndex;
 		unsigned int	size;
 };
 
 
-class functionCall : public statement
+class functionCall : public Statement
 {
 	public:
 		functionCall();
 		~functionCall();
 		string			name;				// function to call
-		Array<statement*>*	parameters;		// Array of parameters with void , that can be anything
+		Array<Statement*>*	parameters;		// Array of parameters with void , that can be anything
 		int				functionType;
 };
 
-class forloop : public statement
+class forloop : public Statement
 {
 	public:
 		forloop();
 		~forloop();
 		//string from;						// the starter value
-		Array<statement*>* fromCondition;
+		Array<Statement*>* fromCondition;
 		//string to;							// the end value
-		Array<statement*>* toCondition;
+		Array<Statement*>* toCondition;
 		//string step;						// the step value
-		Array<statement*>* stepCondition;
-		Array<statement*>* body; 			// will point to the statments in the statments Array
+		Array<Statement*>* stepCondition;
+		Array<Statement*>* body; 			// will point to the Statements in the Statements Array
 };
 
-class whileloop : public statement
+class whileloop : public Statement
 {
 	public:
 		whileloop();
 		~whileloop();
-		statement* condition;						// the starter value
-		Array<statement*>* body; 			// will point to the statments in the statments Array
+		Statement* condition;						// the starter value
+		Array<Statement*>* body; 			// will point to the Statements in the Statements Array
 };
 
-/*class adressingStatement : public statement
+/*class adressingStatement : public Statement
 {
 	public:
 		adressingStatement();
 		~adressingStatement();
-		statement* condition;						// the starter value
-		Array<statement*>* body; 			// will point to the statments in the statments Array
+		Statement* condition;						// the starter value
+		Array<Statement*>* body; 			// will point to the Statements in the Statements Array
 };*/
 
 
-class IF : public statement
+class IF : public Statement
 {
 	public:
 		IF();
 		~IF();
-		statement*			condition;
-		Array<statement*>*	body; 		// will point to the statments in the statments Array
-		Array<statement*>*	ELSE;
-		Array<statement*>*	elseIF;
+		Statement*			condition;
+		Array<Statement*>*	body; 		// will point to the Statements in the Statements Array
+		Array<Statement*>*	ELSE;
+		Array<Statement*>*	elseIF;
 };
 
-class CASE : public statement
+class CASE : public Statement
 {
 	public:
 		CASE();
 		~CASE();
-		statement* condition;
-		//Array<statement*>*	cases;		// Array of parameters with void , that can be anything
-		//Array<statement*>*	body;		// Array of parameters with void , that can be anything
-		map<statement*, Array<statement*> > Body;
+		Statement* condition;
+		//Array<Statement*>*	cases;		// Array of parameters with void , that can be anything
+		//Array<Statement*>*	body;		// Array of parameters with void , that can be anything
+		map<Statement*, Array<Statement*> > Body;
 };
 
-class EXTERN : public statement
+class EXTERN : public Statement
 {
 	public:
 		EXTERN();
@@ -373,11 +373,11 @@ class EXTERN : public statement
 		
 };
 
-/*class expression : public statement
+/*class expression : public Statement
 {
 	public:
 	expression();
-	statement* expr;
+	Statement* expr;
 	private:
 	
 };*/
@@ -394,20 +394,20 @@ enum grammarNonTerminals
 	fCall,					/**< Function  Call */
 	fLoop,					/**< For Loop */
 	wLoop,					/**< while loop */
-	IFStatement,			/**< IF statement */
-	CASEStatement,			/**< Case statement */
-	DISTStatement,			/**< distribute statement */
+	IFStatement,			/**< IF Statement */
+	CASEStatement,			/**< Case Statement */
+	DISTStatement,			/**< distribute Statement */
 	adressingStatement,		/**< Node addressing Statement */
-	Expr,					/**< Expression statement */
+	Expr,					/**< Expression Statement */
 	dvStatement,			/**< distributingVariablesStatement */
-	RESETStatement,			/**< Reset statement */
-	PAStatement,			/**< Parent Add statement */
-	SNStatement,			/**< Set Node statement */
+	RESETStatement,			/**< Reset Statement */
+	PAStatement,			/**< Parent Add Statement */
+	SNStatement,			/**< Set Node Statement */
 	EXTERNStatement, 		/**< Extern Statement */
 	THREADStatement, 		/**< Thread Statement */
-	NOPSTATEMENT,			/**< nop statement */
-	BREAKSTATEMENT,			/**< break statement */
-	CONTINUESTATEMENT,		/**< continue statement */
+	NOPSTATEMENT,			/**< nop Statement */
+	BREAKSTATEMENT,			/**< break Statement */
+	CONTINUESTATEMENT,		/**< continue Statement */
 
 };
 
@@ -418,7 +418,7 @@ class ast_function
 		~ast_function();
 		int						scope;				//
 		string					name;				// global ? or in a class
-		Array<statement*>*		body;				// will point to the statments in the statments Array
+		Array<Statement*>*		body;				// will point to the Statements in the Statements Array
 		Array<idInfo>*			parameters;			// 
 		//Array<int>*			parametersTypes;	// 
 		// when user define a function , get its info into the info map and then we can search for its info later

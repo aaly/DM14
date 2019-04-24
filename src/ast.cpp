@@ -45,17 +45,17 @@ with::~with()
 
 breakStatement::breakStatement()
 {
-	statementType = BREAKSTATEMENT;
+	StatementType = BREAKSTATEMENT;
 }
 
 continueStatement::continueStatement()
 {
-	statementType = CONTINUESTATEMENT;
+	StatementType = CONTINUESTATEMENT;
 }
 
 NOPStatement::NOPStatement()
 {
-	statementType = NOPSTATEMENT;
+	StatementType = NOPSTATEMENT;
 }
 
 NOPStatement::~NOPStatement()
@@ -77,7 +77,7 @@ threadStatement::threadStatement()
 	functioncall = NULL;
 	ID = "";
 	classMember = false;
-	statementType = THREADStatement;
+	StatementType = THREADStatement;
 };
 threadStatement::~threadStatement()
 {
@@ -121,7 +121,7 @@ idInfo::idInfo()
 };
 
 
-idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, statement* aIndex)
+idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, Statement* aIndex)
 {
 	idInfo();
 	name = ID;
@@ -132,7 +132,7 @@ idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, state
 	
 };
 
-idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, const string& Value,statement* aIndex)
+idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, const string& Value,Statement* aIndex)
 {
 	name = ID;
 	scope = IDscope;
@@ -154,18 +154,18 @@ int	idInfo::setParent(const string& parentID)
 	return 0;
 };
 
-statement::statement()
+Statement::Statement()
 {
 	scopeLevel = 0;
 	//distStatements = new Array<distributingVariablesStatement*>();
 	
 	line = 0;
 	scope = 0;
-	statementType = 0;
+	StatementType = 0;
 	type = "";
 };
 
-void statement::absorbDistStatements(statement* arg)
+void Statement::absorbDistStatements(Statement* arg)
 {
 	if(arg == NULL)
 	{
@@ -182,18 +182,18 @@ void statement::absorbDistStatements(statement* arg)
 
 emptyStatement::emptyStatement()
 {
-	statementType = eStatement;
+	StatementType = eStatement;
 };
 
 returnStatement::returnStatement()
 {
-	statementType = rStatement;
+	StatementType = rStatement;
 	retValue = NULL;
 };
 
 declareStatement::declareStatement()
 {
-	statementType = dStatement;
+	StatementType = dStatement;
 	value = NULL;
 	identifiers = new Array<idInfo>;
 	array = false;
@@ -216,8 +216,8 @@ declareStatement::~declareStatement()
 
 operationalStatement::operationalStatement()
 {
-	statementType = oStatement;
-	//right = new Array<statement*>;
+	StatementType = oStatement;
+	//right = new Array<Statement*>;
 	right = NULL;
 	left  = NULL;
 	op = "";
@@ -230,9 +230,9 @@ operationalStatement::~operationalStatement()
 };
 
 
-termStatment::termStatment()
+termStatement::termStatement()
 {
-	statementType = tStatement;
+	StatementType = tStatement;
 	arrayIndex = NULL;
 	identifier = false;
 	size = 0;
@@ -240,7 +240,7 @@ termStatment::termStatment()
 
 distStatement::distStatement()
 {
-	statementType = DISTStatement;
+	StatementType = DISTStatement;
 	//bigOrder++;
 	//order=distStatement::bigOrder;
 	dependenciesVariables	= new Array<idInfo>;
@@ -258,7 +258,7 @@ distStatement::~distStatement()
 resetStatement::resetStatement()
 {
 	count = NULL;
-	statementType = RESETStatement;
+	StatementType = RESETStatement;
 };
 
 resetStatement::~resetStatement()
@@ -271,7 +271,7 @@ parentAddStatement::parentAddStatement()
 {
 	socket = NULL;
 	ip = NULL;
-	statementType = PAStatement;
+	StatementType = PAStatement;
 };
 
 parentAddStatement::~parentAddStatement()
@@ -282,7 +282,7 @@ parentAddStatement::~parentAddStatement()
 setNodeStatement::setNodeStatement()
 {
 	node = NULL;
-	statementType = SNStatement;
+	StatementType = SNStatement;
 };
 
 setNodeStatement::~setNodeStatement()
@@ -292,18 +292,18 @@ setNodeStatement::~setNodeStatement()
 
 
 
-termStatment::termStatment(const string& value)
+termStatement::termStatement(const string& value)
 {
-	statementType = tStatement;
+	StatementType = tStatement;
 	term = value; // immediate or identifier :D
 	arrayIndex = NULL;
 	id = NULL;
 	size = 0;
 };
 
-termStatment::termStatment(const string& value, const string& Stype)
+termStatement::termStatement(const string& value, const string& Stype)
 {
-	statementType = tStatement;
+	StatementType = tStatement;
 	term = value; // immediate or identifier :D
 	type = Stype;
 	arrayIndex = NULL;
@@ -313,8 +313,8 @@ termStatment::termStatment(const string& value, const string& Stype)
 
 functionCall::functionCall()
 {
-	statementType = fCall;
-	parameters = new Array<statement*>;
+	StatementType = fCall;
+	parameters = new Array<Statement*>;
 };
 
 
@@ -326,11 +326,11 @@ functionCall::~functionCall()
 
 forloop::forloop()
 {
-	statementType = fLoop;
-	fromCondition = new Array<statement*>;
-	toCondition = new Array<statement*>;
-	stepCondition = new Array<statement*>;
-	body = new Array<statement*>;
+	StatementType = fLoop;
+	fromCondition = new Array<Statement*>;
+	toCondition = new Array<Statement*>;
+	stepCondition = new Array<Statement*>;
+	body = new Array<Statement*>;
 };
 
 forloop::~forloop()
@@ -344,9 +344,9 @@ forloop::~forloop()
 
 whileloop::whileloop()
 {
-	statementType = wLoop;
-	condition = new statement();
-	body = new Array<statement*>;
+	StatementType = wLoop;
+	condition = new Statement();
+	body = new Array<Statement*>;
 };
 
 
@@ -359,11 +359,11 @@ whileloop::~whileloop()
 
 IF::IF()
 {
-	statementType = IFStatement;
-	condition = new statement;
-	body = new Array<statement*>;
-	ELSE = new Array<statement*>;
-	elseIF = new Array<statement*>;
+	StatementType = IFStatement;
+	condition = new Statement;
+	body = new Array<Statement*>;
+	ELSE = new Array<Statement*>;
+	elseIF = new Array<Statement*>;
 }
 
 IF::~IF()
@@ -376,8 +376,8 @@ IF::~IF()
 
 CASE::CASE()
 {
-//	body = new map<expression,statement>;
-	statementType = CASEStatement;
+//	body = new map<expression,Statement>;
+	StatementType = CASEStatement;
 	condition = NULL;
 }
 
@@ -388,14 +388,14 @@ CASE::~CASE()
 
 ast_function::ast_function()
 {
-	body = new Array<statement*>;
+	body = new Array<Statement*>;
 	parameters = new Array<idInfo>;
 	distributed = false;
 }
 
 distributingVariablesStatement::distributingVariablesStatement()
 {
-	statementType = dvStatement;
+	StatementType = dvStatement;
 	dependencyNode = -1;
 };
 
@@ -403,7 +403,7 @@ distributingVariablesStatement::distributingVariablesStatement()
 
 EXTERN::EXTERN()
 {
-	statementType = EXTERNStatement;
+	StatementType = EXTERNStatement;
 	dependenciesVariables	= new Array<idInfo>;
 	modifiedVariables		= new Array<idInfo>;
 	

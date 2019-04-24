@@ -45,35 +45,35 @@ class compiler
 		int 	compileOuterExtern();
 		int 	compileFunction();
 		int	compileGlobalStructs();
-		int 	compileNOPStatement(statement*&);
+		int 	compileNOPStatement(Statement*&);
 		int	compileGlobalDeclarations();
-		int	compileRetStatement(statement*&);
-		int 	compileForLoop(statement*&);
-		int 	compileWhileLoop(statement*&);
-		int 	compileDistribute(statement*&);
-		int 	compileDistributingVariables(statement*&);
-		int 	compileDecStatement(statement*&);
-		int 	compileOpStatement(statement*&);
-		int 	compileFunctionCall(statement*&);
-		int	compileTerm(statement*&);
-		int	compileInsider(statement*&, iostream* = NULL, const bool = false);
-		int	compileIF(statement*&);
-		int	compileCASE(statement*&);
-		int	compileResetStatement(statement*&);
-		int	compileParentAddStatement(statement*&);
-		int	compileSetNodeStatement(statement*&);
+		int	compileRetStatement(Statement*&);
+		int 	compileForLoop(Statement*&);
+		int 	compileWhileLoop(Statement*&);
+		int 	compileDistribute(Statement*&);
+		int 	compileDistributingVariables(Statement*&);
+		int 	compileDecStatement(Statement*&);
+		int 	compileOpStatement(Statement*&);
+		int 	compileFunctionCall(Statement*&);
+		int	compileTerm(Statement*&);
+		int	compileInsider(Statement*&, iostream* = NULL, const bool = false);
+		int	compileIF(Statement*&);
+		int	compileCASE(Statement*&);
+		int	compileResetStatement(Statement*&);
+		int	compileParentAddStatement(Statement*&);
+		int	compileSetNodeStatement(Statement*&);
 		int	compileDistributedVariable(const idInfo&, const bool = false);
 		int	compileNodeSelector(ast_function&);
-		int	compileExtern(statement*&);
-		int	compileThread(statement*&);
-		int	compileAddVector(statement*&, const idInfo&, const bool = false);
+		int	compileExtern(Statement*&);
+		int	compileThread(Statement*&);
+		int	compileAddVector(Statement*&, const idInfo&, const bool = false);
 		bool	setcompileStatic(const bool&);
 		bool	isCompilingMain();
 		
 		string	generateDistributedVariableName(idInfo* id);
 		
 		int		writeDepedency(idInfo&, int);
-		void	printStatement(statement* stmt, int indent);
+		void	printStatement(Statement* stmt, int indent);
 
 		static bool compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2);
 		

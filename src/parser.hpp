@@ -113,10 +113,10 @@ namespace DM14::parser
 			int						nodesCount;
 			int						dVariablesCount;
 			Array<string>*			ExternCodes;
-			Array<statement*>*		linkLibs;
+			Array<Statement*>*		linkLibs;
 			int						Print();
-			Array<statement*>		globalDeclarations;
-			Array<statement*>		globalDefinitions;
+			Array<Statement*>		globalDeclarations;
+			Array<Statement*>		globalDefinitions;
 			Array<DatatypeBase>		dataTypes;
 			uint32_t				addInclude(includePath);
 		
@@ -146,7 +146,7 @@ namespace DM14::parser
 
 	class parser;
 
-	typedef statement* (parser::*parser_callback)();
+	typedef Statement* (parser::*parser_callback)();
 
 	//typedef struct
 
@@ -188,7 +188,7 @@ namespace DM14::parser
 		FAILURE
 	};
 
-	typedef std::pair<ebnfResultType, statement*> ebnfResult;
+	typedef std::pair<ebnfResultType, Statement*> ebnfResult;
 
 
 	class parser
@@ -202,7 +202,7 @@ namespace DM14::parser
 			Array<token>* input_tokens = NULL;
 			int *input_tokens_index = NULL;
 			bool pushStatements = true;
-			Array<statement*> statements_stack;
+			Array<Statement*> Statements_stack;
 			 parser(Array<token>*, const string&, const bool);
 			~parser();
 
@@ -215,35 +215,35 @@ namespace DM14::parser
 			Array<mapcode>*				getMapCodes();
 			// parse functions
 			int							parse();
-			statement*					parseIncludes();
-			statement*					parseFunction();
-			statement*					parseStruct();
-			statement*					parseDeclaration();
-			statement*					parseDeclarationInternal();
-			statement*					parseFunctionCall();
-			statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
-			//statement*					parseConditionalExpression(statement* stmt);
-			statement*					parseForloop();
-			statement*					parseIf();
-			statement*					parseWhile();
-			statement*					parseCase();
-			statement*					parseMatrixIndex();
-			statement*					parseArrayIndex();
+			Statement*					parseIncludes();
+			Statement*					parseFunction();
+			Statement*					parseStruct();
+			Statement*					parseDeclaration();
+			Statement*					parseDeclarationInternal();
+			Statement*					parseFunctionCall();
+			Statement*					parseFunctionCallInternal(bool, const string& returnType = "", const string& classID = "");
+			//Statement*					parseConditionalExpression(Statement* stmt);
+			Statement*					parseForloop();
+			Statement*					parseIf();
+			Statement*					parseWhile();
+			Statement*					parseCase();
+			Statement*					parseMatrixIndex();
+			Statement*					parseArrayIndex();
 			//DatatypeBase				parseClass();
-			statement*					parseExtern();
-			statement*					parseLink();
-			statement*					parseStatement(const std::string starting_rule, parser_callback custom_callback = nullptr);
-			statement*					parseDistribute();
-			statement*					parseReset();
-			statement*					parseSetNode();
-			statement*					parseContinue();
-			statement*					parseBreak();
-			statement*					parseAddParent();
-			statement*					parseThread();
-			statement*					parseExpressionStatement();
-			statement*					parseNOPStatement();
-			statement*					parseOpStatement(int32_t, int32_t, const string&, const int&, statement*, idInfo* parent = NULL, const string& parentOp = "");
-			int							increaseScope(statement*);
+			Statement*					parseExtern();
+			Statement*					parseLink();
+			Statement*					parseStatement(const std::string starting_rule, parser_callback custom_callback = nullptr);
+			Statement*					parseDistribute();
+			Statement*					parseReset();
+			Statement*					parseSetNode();
+			Statement*					parseContinue();
+			Statement*					parseBreak();
+			Statement*					parseAddParent();
+			Statement*					parseThread();
+			Statement*					parseExpressionStatement();
+			Statement*					parseNOPStatement();
+			Statement*					parseOpStatement(int32_t, int32_t, const string&, const int&, Statement*, idInfo* parent = NULL, const string& parentOp = "");
+			int							increaseScope(Statement*);
 			int							decreaseScope();
 			int							parseIncludesInsider(const string&, const string&, const includePath::sourceFileType);
 			//string 						getDataType(const string&);
@@ -254,16 +254,16 @@ namespace DM14::parser
 			token						peekToken(const int&);
 			std::string 				getOpStatementType(std::string stmtType, const std::string& classID);
 			
-			int extractSplitStatements(Array<statement*>* array, Array<statement*>* splitStatements);
+			int extractSplitStatements(Array<Statement*>* array, Array<Statement*>* splitStatements);
 			
 			// including stuff
 			int							mapFunctions(const string&, const string&);
 			
-			statement*					findTreeNode(statement* opstatement, int statementType);
-			int							searchVariables(statement* opstatement, int depencyType, string op="");
+			Statement*					findTreeNode(Statement* opStatement, int StatementType);
+			int							searchVariables(Statement* opStatement, int depencyType, string op="");
 			
 			// identifiers
-			distStatement*				diststatementTemp;
+			distStatement*				distStatementTemp;
 			Array<idInfo>*				distModifiedGlobal;
 			
 			bool						isIdentifier(const string&);
@@ -344,20 +344,20 @@ namespace DM14::parser
 				token getToken(const uint32_t index);
 
 				
-				statement* parseReturn();
+				Statement* parseReturn();
 				EBNF_map_t EBNF;
 				uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start);
 				
 				int deadvance_EBNFindex(uint16_t steps = 1);
 				int advance_EBNFindex(uint16_t steps = 1);
-				statement* bad_program();
+				Statement* bad_program();
 
 				idInfo*					getTopParent(idInfo*);
 				Array<idInfo>*				identifiers;
 			
 				bool						globalNoDist;
-				Array<statement*>			globalDeclarations;
-				Array<statement*>			globalDefinitions;
+				Array<Statement*>			globalDeclarations;
+				Array<Statement*>			globalDefinitions;
 				string						fName;
 				Array<token>*				tokens;
 				int							index;
@@ -393,12 +393,12 @@ namespace DM14::parser
 				bool							tmpScope;
 				bool							insider;
 				
-				statement*						currentStatement;
-				statement*						parentStatement;
+				Statement*						currentStatement;
+				Statement*						parentStatement;
 				
-				int 							addStatementDistributingVariables(statement* stmt);
+				int 							addStatementDistributingVariables(Statement* stmt);
 				Array<distributingVariablesStatement*>* dvList;
-				Array<statement*>*				linkLibs;
+				Array<Statement*>*				linkLibs;
 				
 				long parseCClass(scanner* scner, uint32_t start, const Array<string>& templateName);
 				funcInfo parseCFunction(scanner* scner, uint32_t start, const DatatypeBase& parentClass);

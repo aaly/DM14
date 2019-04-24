@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 	parametersHandler pHandler(argc, argv);
 
 	// when  variavle declared , if no value initialized , then just make a pointer to it
-	// wait when the operational statement that assigns it , then initialize it with NEW , and use it as *P :)
+	// wait when the operational Statement that assigns it , then initialize it with NEW , and use it as *P :)
 	// make a vector with initialzed variables to check if its initialized yet or not :)
 
 	DM14::types::intSymbols();
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
-	scner->printTokens();
+	//scner->printTokens();
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 		displayInfo(" adding   ... [" + includePaths.at(i) + "]");
 		prser->addIncludePath(includePaths.at(i));
 	}
-	prser->printEBNF();
+	//prser->printEBNF();
 	prser->parse();
 	
 	

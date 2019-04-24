@@ -43,7 +43,7 @@ namespace DM14::parser
 		}
 		else
 		{
-			displayError("Empty pop !!!");
+			//displayError("Empty pop !!!");
 			current_token = token();
 		}
 		
@@ -59,7 +59,7 @@ namespace DM14::parser
 		}
 		else
 		{
-			displayError("Empty pop !!!");
+			//displayError("Empty pop !!!");
 			current_token = token();
 		}
 		
@@ -97,7 +97,7 @@ namespace DM14::parser
 
 
 
-	statement* parser::bad_program()
+	Statement* parser::bad_program()
 	{		
 		displayError(fName, -1,0,"unable to proceed file, error follows :", false);
 		//old_successful_depth.print();
@@ -490,20 +490,20 @@ namespace DM14::parser
 							tempTokenStack.push_back(popToken());
 						}
 						
-						for(uint32_t i =0; i < working_tokens->size(); i++)
+						/*for(uint32_t i =0; i < working_tokens->size(); i++)
 						{
 							cerr << "///" << working_tokens->at(i).value << endl;
-						}
+						}*/
 
 						
-						displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
+						////////displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 						//cerr << EBNF_level << endl << flush;
 						
 						result.second =(this->*ebnf_token.callback)();
 						
 						if(pushStatements && result.second)
 						{
-							statements_stack.push_back(result.second);
+							Statements_stack.push_back(result.second);
 						}
 						
 						for(uint32_t i =0; i < tempTokenStack.size(); i++)
@@ -635,7 +635,7 @@ namespace DM14::parser
 		index				=	0;
 		scope				=	0;
 		Header				=	false;
-		diststatementTemp	=	new distStatement();
+		distStatementTemp	=	new distStatement();
 		distributedVariablesCount = 0;
 		distributedNodesCount = 0;
 		tmpScope = false;
@@ -646,12 +646,12 @@ namespace DM14::parser
 		input_tokens = tokens;
 		
 		dvList				=	new Array<distributingVariablesStatement*>;
-		linkLibs			=	new Array<statement*>();
+		linkLibs			=	new Array<Statement*>();
 
 		this->insider = insider;
 		
 		distModifiedGlobal	= new Array<idInfo>;
-		diststatementTemp	= new distStatement();
+		distStatementTemp	= new distStatement();
 		modifiedVariablesList = Array < pair<idInfo,int> >();
 		increaseScope(NULL);
 		distributedScope = 0;
@@ -659,78 +659,78 @@ namespace DM14::parser
 		
 		EBNF["program"] = {{GRAMMAR_TOKEN_OR,{
 							{"function-list",EXPANSION_TOKEN, &parser::parseFunction},
-							//TODO {"global-statement",EXPANSION_TOKEN}, add all allowed statments in the global scope !?
-							{"statement",EXPANSION_TOKEN},
+							//TODO {"global-Statement",EXPANSION_TOKEN}, add all allowed Statements in the global scope !?
+							{"Statement",EXPANSION_TOKEN},
 							{"unknown-list",EXPANSION_TOKEN, &parser::bad_program}}}};
 		
 		EBNF["unknown-list"] = {{GRAMMAR_TOKEN_AND ,{{".*",REGEX_TOKEN}}}};
-		EBNF["statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"statement",EXPANSION_TOKEN}}}};
+		EBNF["Statement-list"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"Statement",EXPANSION_TOKEN}}}};
 
-		EBNF["statement"] = {{GRAMMAR_TOKEN_OR,{
-			{"include-statement",EXPANSION_TOKEN,&parser::parseIncludes},
-								{"declaration-full-statement",EXPANSION_TOKEN, &parser::parseDeclaration},
-								{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for(from -> to : step) { statements; } */
-								{"extern-statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
+		EBNF["Statement"] = {{GRAMMAR_TOKEN_OR,{
+			{"include-Statement",EXPANSION_TOKEN,&parser::parseIncludes},
+								{"declaration-full-Statement",EXPANSION_TOKEN, &parser::parseDeclaration},
+								{"for-list",EXPANSION_TOKEN, &parser::parseForloop}, /** for(from -> to : step) { Statements; } */
+								{"extern-Statement", EXPANSION_TOKEN, &parser::parseExtern}, /** extern  { c/c++ code } endextern */
 								{"link-list",EXPANSION_TOKEN, &parser::parseLink},
 								{"struct-list",EXPANSION_TOKEN, &parser::parseStruct},
 								{"if-list",EXPANSION_TOKEN, &parser::parseIf}, /** if [expr] {} else if[] {} else {} */
 								{"distribute",EXPANSION_TOKEN, &parser::parseDistribute},
-								{"reset-statement",EXPANSION_TOKEN, &parser::parseReset},
-								{"setnode-statement",EXPANSION_TOKEN},
-								{"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { statements } */
-								//{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,statments> */
-								//{"addparent-statement",EXPANSION_TOKEN},
-								{"thread-statement",EXPANSION_TOKEN, &parser::parseThread},
+								{"reset-Statement",EXPANSION_TOKEN, &parser::parseReset},
+								{"setnode-Statement",EXPANSION_TOKEN},
+								{"while-list",EXPANSION_TOKEN, &parser::parseWhile}, /** while [ cond ] { Statements } */
+								//{"case-list",EXPANSION_TOKEN}, /** case [ID/expr] in { 1) ; 2) ; *) ;}   body is like map<condition,Statements> */
+								//{"addparent-Statement",EXPANSION_TOKEN},
+								{"thread-Statement",EXPANSION_TOKEN, &parser::parseThread},
 								{"function-call-list",EXPANSION_TOKEN, &parser::parseFunctionCall},
 								{"return-list",EXPANSION_TOKEN, &parser::parseReturn},
-								{"break-statement",EXPANSION_TOKEN, &parser::parseBreak},
-								{"continue-statement",EXPANSION_TOKEN, &parser::parseContinue},
-								{"nop-statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
-								{"expression-statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
+								{"break-Statement",EXPANSION_TOKEN, &parser::parseBreak},
+								{"continue-Statement",EXPANSION_TOKEN, &parser::parseContinue},
+								{"nop-Statement",EXPANSION_TOKEN, &parser::parseNOPStatement},
+								{"expression-Statement", EXPANSION_TOKEN, &parser::parseExpressionStatement},
 																	  }}};
 
-		/** the with statement */
-		EBNF["include-statement"] = {{GRAMMAR_TOKEN_AND,{{"with",KEYWORD_TOKEN}, {"include-statement-body",EXPANSION_TOKEN}}}};
+		/** the with Statement */
+		EBNF["include-Statement"] = {{GRAMMAR_TOKEN_AND,{{"with",KEYWORD_TOKEN}, {"include-Statement-body",EXPANSION_TOKEN}}}};
 
-		EBNF["include-statement-body"] = {{GRAMMAR_TOKEN_OR ,{{"include-statement-package",EXPANSION_TOKEN}, {"include-statement-file",EXPANSION_TOKEN}}}};
+		EBNF["include-Statement-body"] = {{GRAMMAR_TOKEN_OR ,{{"include-Statement-package",EXPANSION_TOKEN}, {"include-Statement-file",EXPANSION_TOKEN}}}};
 
-		EBNF["include-statement-package"] = {{GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",REGEX_TOKEN}, {"include-statement-subpackage",EXPANSION_TOKEN}}}};
-		EBNF["include-statement-subpackage"] = {{GRAMMAR_TOKEN_AND ,{{"use",KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
+		EBNF["include-Statement-package"] = {{GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",REGEX_TOKEN}, {"include-Statement-subpackage",EXPANSION_TOKEN}}}};
+		EBNF["include-Statement-subpackage"] = {{GRAMMAR_TOKEN_AND ,{{"use",KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",REGEX_TOKEN}}}};
 
-		EBNF["include-statement-file"] = {{GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
+		EBNF["include-Statement-file"] = {{GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",REGEX_TOKEN}}}};
 		
-		/** the extern statement */
-		EBNF["extern-statement"] = {{GRAMMAR_TOKEN_AND ,{{"extern",KEYWORD_TOKEN},
+		/** the extern Statement */
+		EBNF["extern-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"extern",KEYWORD_TOKEN},
 									{"string",DATATTYPE_TOKEN},
 									{"endextern",KEYWORD_TOKEN}}}};
 
-		/** the link statement */
-		EBNF["link-list"] = {{GRAMMAR_TOKEN_OR ,{{"link-statement",EXPANSION_TOKEN}, {"slink-statement",EXPANSION_TOKEN}}}};
+		/** the link Statement */
+		EBNF["link-list"] = {{GRAMMAR_TOKEN_OR ,{{"link-Statement",EXPANSION_TOKEN}, {"slink-Statement",EXPANSION_TOKEN}}}};
 
-		EBNF["link-statement"] = {{GRAMMAR_TOKEN_AND ,{{"link",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
-		EBNF["slink-statement"] = {{GRAMMAR_TOKEN_AND ,{{"slink",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
+		EBNF["link-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"link",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
+		EBNF["slink-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"slink",KEYWORD_TOKEN}, {"string",DATATTYPE_TOKEN}}}};
 
-		/** the distribute statement */
+		/** the distribute Statement */
 		EBNF["distribute"] = {{GRAMMAR_TOKEN_AND,{{"distribute",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
-		/** the break statement */
-		EBNF["break-statement"] = {{GRAMMAR_TOKEN_AND,{{"break",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		/** the break Statement */
+		EBNF["break-Statement"] = {{GRAMMAR_TOKEN_AND,{{"break",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 
-		/** the continue statement */
-		EBNF["continue-statement"] = {{GRAMMAR_TOKEN_AND,{{"continue",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		/** the continue Statement */
+		EBNF["continue-Statement"] = {{GRAMMAR_TOKEN_AND,{{"continue",KEYWORD_TOKEN}, {";",TERMINAL_TOKEN}}}};
 													
-		/** the reset statement */
-		EBNF["reset-statement"] = {{GRAMMAR_TOKEN_AND,{{"reset",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
+		/** the reset Statement */
+		EBNF["reset-Statement"] = {{GRAMMAR_TOKEN_AND,{{"reset",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
 		EBNF["reset"] = {{GRAMMAR_TOKEN_AND,{{"reset",KEYWORD_TOKEN}, {"full-expression-list",EXPANSION_TOKEN}}},
 						{GRAMMAR_TOKEN_AND,{{"reset",KEYWORD_TOKEN}}}};
 		
-		/** the setnode statement */
-		EBNF["setnode-statement"] = {{GRAMMAR_TOKEN_AND,{{"setnode-expr",EXPANSION_TOKEN},
+		/** the setnode Statement */
+		EBNF["setnode-Statement"] = {{GRAMMAR_TOKEN_AND,{{"setnode-expr",EXPANSION_TOKEN},
 															 {";",TERMINAL_TOKEN}}}};
 		EBNF["setnode-expr"] = {{GRAMMAR_TOKEN_AND,{{"setnode",KEYWORD_TOKEN},
 												   {"full-expression-list",EXPANSION_TOKEN}}},
 						{GRAMMAR_TOKEN_AND,{{"setnode",KEYWORD_TOKEN}}}};
-		/** the struct statement */
+		/** the struct Statement */
 		EBNF["struct-list"] = {{GRAMMAR_TOKEN_AND,{{"struct",KEYWORD_TOKEN},
 													{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 													{"struct-body",EXPANSION_TOKEN}}}};
@@ -740,9 +740,9 @@ namespace DM14::parser
 		EBNF["struct-definition"] = {{GRAMMAR_TOKEN_AND ,{{"{",TERMINAL_TOKEN},
 																{"struct-declaration-list",EXPANSION_TOKEN},
 																{"}",TERMINAL_TOKEN}}}};
-		EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE ,{{"declaration-full-statement",EXPANSION_TOKEN}}}};
+		EBNF["struct-declaration-list"] = {{GRAMMAR_TOKEN_ONE_MORE ,{{"declaration-full-Statement",EXPANSION_TOKEN}}}};
 		
-		/** the for loop statement */
+		/** the for loop Statement */
 		
 		EBNF["for-list"] = {{GRAMMAR_TOKEN_AND,{{"for",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
@@ -750,12 +750,12 @@ namespace DM14::parser
 													  {"loop-expression-condition",EXPANSION_TOKEN},
 													  {"loop-expression-step-list",EXPANSION_TOKEN},
 													  {"]",TERMINAL_TOKEN},
-													  {"compound-statement",EXPANSION_TOKEN}}}};
+													  {"compound-Statement",EXPANSION_TOKEN}}}};
 																		
 		EBNF["loop-expression-declarator"] = {{GRAMMAR_TOKEN_OR ,{{"declaration-list",EXPANSION_TOKEN, &parser::parseDeclaration},
 																		{";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 																		
-		EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+		EBNF["loop-expression-condition"] = {{GRAMMAR_TOKEN_OR ,{{"expression-Statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
 																	   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 		
 		EBNF["logical-expression-list"] = {{GRAMMAR_TOKEN_AND ,{{"logical-expression",EXPANSION_TOKEN},
@@ -768,44 +768,44 @@ namespace DM14::parser
 		EBNF["logical-expression-term"] = {{GRAMMAR_TOKEN_OR ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 																	 {".*",IMMEDIATE_TOKEN}}}};
 
-		EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_OR ,{{"expression-statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
+		EBNF["loop-expression-step-list"] = {{GRAMMAR_TOKEN_OR ,{{"expression-Statement",EXPANSION_TOKEN,  &parser::parseExpressionStatement},
 																	   {";",TERMINAL_TOKEN, &parser::parseNOPStatement}}}};
 
-		/** the if statement */
+		/** the if Statement */
 		EBNF["if-list"] = {{GRAMMAR_TOKEN_AND,{{"if",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
 													  {"full-expression-list",EXPANSION_TOKEN},
 													  {"]",TERMINAL_TOKEN},
-													  {"compound-statement",EXPANSION_TOKEN},
+													  {"compound-Statement",EXPANSION_TOKEN},
 													  {"elseif-list",EXPANSION_TOKEN},
 													  {"else-list",EXPANSION_TOKEN}}}};
 
-		EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"elseif-statement",EXPANSION_TOKEN}}}};
+		EBNF["elseif-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"elseif-Statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["elseif-statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
+		EBNF["elseif-Statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
 															{"if-list",EXPANSION_TOKEN}}}};
 
-		EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"else-statement",EXPANSION_TOKEN}}}};
+		EBNF["else-list"] = {{GRAMMAR_TOKEN_ZERO_MORE,{{"else-Statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["else-statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
-															{"compound-statement",EXPANSION_TOKEN}}}};
-		/** the while loop statement */
+		EBNF["else-Statement"] = {{GRAMMAR_TOKEN_AND,{{"else",KEYWORD_TOKEN},
+															{"compound-Statement",EXPANSION_TOKEN}}}};
+		/** the while loop Statement */
 		EBNF["while-list"] = {{GRAMMAR_TOKEN_AND,{{"while",KEYWORD_TOKEN},
 													  {"[",TERMINAL_TOKEN},
 													  //{"logical-expression",EXPANSION_TOKEN},
 													  {"full-expression-list",EXPANSION_TOKEN},
 													  {"]",TERMINAL_TOKEN},
-													  {"compound-statement",EXPANSION_TOKEN}}}};
+													  {"compound-Statement",EXPANSION_TOKEN}}}};
 		
 		/** variable */
 		EBNF["variable"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 													   {"declaration-index-list",EXPANSION_TOKEN}}}};
 
 		/** the variables declaration list */
-		EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR ,{{"declaration-full-statement",EXPANSION_TOKEN},
-															{"declaration-statement",EXPANSION_TOKEN}}}};
+		EBNF["declaration-list"] = {{GRAMMAR_TOKEN_OR ,{{"declaration-full-Statement",EXPANSION_TOKEN},
+															{"declaration-Statement",EXPANSION_TOKEN}}}};
 		
-		EBNF["declaration-statement"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
+		EBNF["declaration-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",REGEX_TOKEN},
 															   //{"declaration-dataflow-specifier",EXPANSION_TOKEN},
 															   //{"declaration-dist-specifiers-list",EXPANSION_TOKEN},
 															   //{"declaration-global-specifier",EXPANSION_TOKEN},
@@ -823,7 +823,7 @@ namespace DM14::parser
 						{"recurrent", KEYWORD_TOKEN},
 						{"noblock", KEYWORD_TOKEN}}}};
 
-		EBNF["declaration-full-statement"] = {{GRAMMAR_TOKEN_AND ,{{"declaration-statement",EXPANSION_TOKEN},
+		EBNF["declaration-full-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"declaration-Statement",EXPANSION_TOKEN},
 									{";",TERMINAL_TOKEN}}}};
 
 		/*EBNF["declaration-dataflow-specifier"] = {{GRAMMAR_TOKEN_ONLY_ONE ,{{"backprop",KEYWORD_TOKEN}}}}; // should not be ok with nodist...
@@ -860,7 +860,7 @@ namespace DM14::parser
 		EBNF["declaration-value"] = {{GRAMMAR_TOKEN_AND , {{"=",TERMINAL_TOKEN}, 
 								   {"expression-list",EXPANSION_TOKEN}}}};
 
-		/** the function call statement */
+		/** the function call Statement */
 		
 		EBNF["function-call-list"] = {{GRAMMAR_TOKEN_AND,{{"function-call",EXPANSION_TOKEN}, {";",TERMINAL_TOKEN}}}};
 														  
@@ -875,7 +875,7 @@ namespace DM14::parser
 																	 {",",TERMINAL_TOKEN}}},
 										   {GRAMMAR_TOKEN_AND,{{"full-expression-list",EXPANSION_TOKEN}}}};
 		
-		EBNF["expression-statement"] = {{GRAMMAR_TOKEN_AND,{{"expression-list",EXPANSION_TOKEN},
+		EBNF["expression-Statement"] = {{GRAMMAR_TOKEN_AND,{{"expression-list",EXPANSION_TOKEN},
 														{";",TERMINAL_TOKEN, &parser::parseExpressionStatement}}}};
 
 		EBNF["expression-list"] = {{GRAMMAR_TOKEN_ONE_MORE ,{{"full-expression-list",EXPANSION_TOKEN, &parser::parseExpressionStatement}}}};
@@ -908,21 +908,21 @@ namespace DM14::parser
 		EBNF["expression-extend"] = {{GRAMMAR_TOKEN_OR,{{"function-call",EXPANSION_TOKEN},
 															 {"variable",EXPANSION_TOKEN},
 															  {"IMMEDIATE",IMMEDIATE_TOKEN}}}};
-		/** the thread statement */
+		/** the thread Statement */
 
-		EBNF["thread-statement"] = {{GRAMMAR_TOKEN_AND ,{{"thread-list",EXPANSION_TOKEN},
+		EBNF["thread-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"thread-list",EXPANSION_TOKEN},
 														 {";",TERMINAL_TOKEN}}}};
 
 		EBNF["thread-list"] = {{GRAMMAR_TOKEN_AND ,{{"thread",KEYWORD_TOKEN},
 														 {"function-call",EXPANSION_TOKEN}}}};
 		
-		/** the function statement */
+		/** the function Statement */
 		EBNF["function-list"] = {{GRAMMAR_TOKEN_AND ,{{"function-prototype",EXPANSION_TOKEN},
 														   {"function-definition-list",EXPANSION_TOKEN}}}};
 		
 		
 		EBNF["function-definition-list"] = {{GRAMMAR_TOKEN_OR ,{{";",TERMINAL_TOKEN},
-																		{"compound-statement",EXPANSION_TOKEN}}}};
+																		{"compound-Statement",EXPANSION_TOKEN}}}};
 																 
 		EBNF["function-prototype"] = {{GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([_]*[0-9]*)*",REGEX_TOKEN},
 																{"(",TERMINAL_TOKEN},
@@ -943,17 +943,17 @@ namespace DM14::parser
 		
 		EBNF["function-return"] = {{GRAMMAR_TOKEN_ZERO_MORE ,{{"function-parameter",EXPANSION_TOKEN}}}};
 																	
-		EBNF["compound-statement"] = {{GRAMMAR_TOKEN_AND ,{{"{",TERMINAL_TOKEN},
-																{"statement-list",EXPANSION_TOKEN},
+		EBNF["compound-Statement"] = {{GRAMMAR_TOKEN_AND ,{{"{",TERMINAL_TOKEN},
+																{"Statement-list",EXPANSION_TOKEN},
 																{"}",TERMINAL_TOKEN}}}};
-		/** return statement */
+		/** return Statement */
 		
 		EBNF["return-list"] = {{GRAMMAR_TOKEN_AND,{{"return",KEYWORD_TOKEN},
-														{"expression-statement",EXPANSION_TOKEN}}},
+														{"expression-Statement",EXPANSION_TOKEN}}},
 							   {GRAMMAR_TOKEN_AND,{{"return",KEYWORD_TOKEN},
 														{";",TERMINAL_TOKEN}}}};
-		/* nop statement */
-		EBNF["nop-statement"] = {{GRAMMAR_TOKEN_AND,{{";",TERMINAL_TOKEN}}}};
+		/* nop Statement */
+		EBNF["nop-Statement"] = {{GRAMMAR_TOKEN_AND,{{";",TERMINAL_TOKEN}}}};
 	};
 
 
@@ -964,16 +964,16 @@ namespace DM14::parser
 		delete identifiers;
 		delete	functionsInfo;
 		//delete distIdentifiers;
-		delete diststatementTemp;
+		delete distStatementTemp;
 		//delete ExternCodes;
 	};
 
-	statement* parser::parseContinue()
+	Statement* parser::parseContinue()
 	{
 		return new continueStatement();
 	}
 
-	statement* parser::parseBreak()
+	Statement* parser::parseBreak()
 	{
 		return new breakStatement();
 	}
@@ -1044,7 +1044,7 @@ namespace DM14::parser
 	/** in includes folder , there is folders named after packages , 
 	 * and then cpps and hpps named after libraries , so when calling mapFunctions , 
 	 * pass package AND library , add the File including too , call parser on it */
-	statement* parser::parseIncludes() 
+	Statement* parser::parseIncludes() 
 	{	
 		popToken();
 		popToken();
@@ -1187,7 +1187,7 @@ namespace DM14::parser
 					}
 				}*/
 
-				//Parser.getMapCodes()->at(i).globalDeclarations = Array<statement*>();
+				//Parser.getMapCodes()->at(i).globalDeclarations = Array<Statement*>();
 				mapCodes->push_back(Parser.getMapCodes()->at(i));
 			//mapCodes->at(mapCodes->size()-1).Print();
 			}
@@ -1234,7 +1234,7 @@ namespace DM14::parser
 		return 0;
 	}
 
-	statement* parser::parseLink()
+	Statement* parser::parseLink()
 	{
 		Link* stmt = new Link();
 		
@@ -1262,17 +1262,17 @@ namespace DM14::parser
 	}
 
 
-	statement* parser::parseReturn()
+	Statement* parser::parseReturn()
 	{
 		popToken();
-		returnStatement* returnstatement = new returnStatement;
-		returnstatement->line = getToken().lineNumber;
-		returnstatement->scope = scope;
+		returnStatement* Statement = new returnStatement();
+		Statement->line = getToken().lineNumber;
+		Statement->scope = scope;
 		
 		if(!peekToken(";"))
 		{
-			//returnstatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnstatement);
-			returnstatement->retValue = parseStatement("statement");
+			//returnStatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnStatement);
+			Statement->retValue = parseStatement("Statement");
 		}
 		else
 		{
@@ -1280,12 +1280,12 @@ namespace DM14::parser
 			RequireValue(";","expected ; and not:", true);
 		}
 
-		return returnstatement;
+		return Statement;
 	}
 
-	statement* parser::parseStatement(const std::string starting_rule, parser_callback custom_callback)
+	Statement* parser::parseStatement(const std::string starting_rule, parser_callback custom_callback)
 	{
-		statement* retStmt = NULL;
+		Statement* retStmt = NULL;
 		increaseScope(retStmt);
 		
 		bool pushStatements = false;
@@ -1341,7 +1341,7 @@ namespace DM14::parser
 		return retStmt;
 	};
 
-	statement* parser::parseNOPStatement()
+	Statement* parser::parseNOPStatement()
 	{
 		popToken();
 		NOPStatement* result = new NOPStatement;
@@ -1352,33 +1352,33 @@ namespace DM14::parser
 		return result;
 	};
 
-	statement* parser::parseMatrixIndex()
+	Statement* parser::parseMatrixIndex()
 	{
-		//@TODO: need to handle 2nd or multiple diemnsions , have to implement in the AST first then parseDeclraration and ParseOpstatement...
+		//@TODO: need to handle 2nd or multiple diemnsions , have to implement in the AST first then parseDeclraration and ParseOpStatement...
 		popToken();
 		RequireValue("[", "Expected [ and not : ", true);
 		int from = 0;
 		int to = reachToken("]", false, true, false, true, true)-1;
-		statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
+		Statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
 		result->line = getToken().lineNumber;
 		popToken();
 		return result;
 	}
 
-	statement* parser::parseArrayIndex()
+	Statement* parser::parseArrayIndex()
 	{
 		popToken();
 		RequireValue("[", "Expected [ and not : ", true);
 		int from = 0;
 		int to = reachToken("]", false, true, false, true, true)-1;
-		statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
+		Statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
 		result->line = getToken().lineNumber;
 		popToken();
 		return result;
 	};
 
 
-	statement* parser::parseAddParent()
+	Statement* parser::parseAddParent()
 	{
 		parentAddStatement* ps = new parentAddStatement();
 		nextIndex();
@@ -1406,14 +1406,14 @@ namespace DM14::parser
 		return ps;
 	};
 
-	statement* parser::parseSetNode()
+	Statement* parser::parseSetNode()
 	{
 		setNodeStatement* sn = new setNodeStatement();
 		//sn->node = 
 		return sn;
 	};
 
-	statement* parser::parseReset()
+	Statement* parser::parseReset()
 	{
 		resetStatement* rs = new resetStatement();
 		popToken(); // reset
@@ -1426,7 +1426,7 @@ namespace DM14::parser
 		return rs;
 	};
 
-	statement* parser::parseDistribute()
+	Statement* parser::parseDistribute()
 	{
 		currentFunction.distributed = true;
 		
@@ -1436,22 +1436,22 @@ namespace DM14::parser
 		currentFunction.functionNodes.push_back(currentFunction.name+SS.str());
 		SS.str("");
 		
-		//distStatement* diststatement = new distStatement();
-		diststatementTemp->line = getToken().lineNumber;
-		diststatementTemp->scope = scope;
-		//*diststatement->variables = *distIdentifiers;
+		//distStatement* distStatement = new distStatement();
+		distStatementTemp->line = getToken().lineNumber;
+		distStatementTemp->scope = scope;
+		//*distStatement->variables = *distIdentifiers;
 		//fix105
 		distributedNodesCount++;
-		distStatement* stmt = diststatementTemp;
-		diststatementTemp = new distStatement();
+		distStatement* stmt = distStatementTemp;
+		distStatementTemp = new distStatement();
 		distributedScope++;
 		return stmt;
 	};
 
 	/*
-	statement* parser::parseTempDeclaration()
+	Statement* parser::parseTempDeclaration()
 	{
-		statement* result = NULL;
+		Statement* result = NULL;
 		
 		if(tmpScope)
 		{
@@ -1550,18 +1550,18 @@ namespace DM14::parser
 		}
 		
 		// we modified it before in this scope!
-		for(uint32_t i =0; i<diststatementTemp->modifiedVariables->size(); i++)
+		for(uint32_t i =0; i<distStatementTemp->modifiedVariables->size(); i++)
 		{
 			string listParentName;
 			
-			if(diststatementTemp->modifiedVariables->at(i).parent)
+			if(distStatementTemp->modifiedVariables->at(i).parent)
 			{
-				listParentName = diststatementTemp->modifiedVariables->at(i).parent->name;
+				listParentName = distStatementTemp->modifiedVariables->at(i).parent->name;
 			}
 			
-			if(diststatementTemp->modifiedVariables->at(i).name == id.name &&
+			if(distStatementTemp->modifiedVariables->at(i).name == id.name &&
 				listParentName == parentName &&
-				diststatementTemp->modifiedVariables->at(i).scope <= id.scope)
+				distStatementTemp->modifiedVariables->at(i).scope <= id.scope)
 			{
 				if(!id.array)
 				{
@@ -1574,18 +1574,18 @@ namespace DM14::parser
 		}
 		
 		// we requested it before !
-		for(uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+		for(uint32_t i =0; i<distStatementTemp->dependenciesVariables->size(); i++)
 		{
 			string listParentName;
 			
-			if(diststatementTemp->dependenciesVariables->at(i).parent)
+			if(distStatementTemp->dependenciesVariables->at(i).parent)
 			{
-				listParentName = diststatementTemp->dependenciesVariables->at(i).parent->name;
+				listParentName = distStatementTemp->dependenciesVariables->at(i).parent->name;
 			}
 			
-			if(diststatementTemp->dependenciesVariables->at(i).name == id.name &&
+			if(distStatementTemp->dependenciesVariables->at(i).name == id.name &&
 				listParentName == parentName &&
-				diststatementTemp->dependenciesVariables->at(i).scope <= id.scope)
+				distStatementTemp->dependenciesVariables->at(i).scope <= id.scope)
 			{
 				if(!id.array)
 				{
@@ -1597,7 +1597,7 @@ namespace DM14::parser
 			}
 		}
 		
-		// we already requested it before this statement !
+		// we already requested it before this Statement !
 		for(uint32_t i =0; i<currentStatement->distStatements.size(); i++)
 		{
 			string listParentName;
@@ -1637,13 +1637,13 @@ namespace DM14::parser
 			return 0;
 		}
 		
-		distributingVariablesStatement* dvstatement = new distributingVariablesStatement();
-		dvstatement->variable = id;
-		dvstatement->type = distributingVariablesStatement::DEPS;
+		distributingVariablesStatement* dvStatement = new distributingVariablesStatement();
+		dvStatement->variable = id;
+		dvStatement->type = distributingVariablesStatement::DEPS;
 		
 		if(id.channel)
 		{
-			dvstatement->dependencyNode = -2;
+			dvStatement->dependencyNode = -2;
 		}
 		else
 		{
@@ -1665,28 +1665,28 @@ namespace DM14::parser
 				{
 					if(id.backProp && distModifiedGlobal->at(i).distributedScope <= id.distributedScope)
 					{
-						dvstatement->dependencyNode = -3;
+						dvStatement->dependencyNode = -3;
 						break;
 					}
 					else if(distModifiedGlobal->at(i).distributedScope != id.distributedScope)
 					{
-						dvstatement->dependencyNode = distModifiedGlobal->at(i).distributedScope;
+						dvStatement->dependencyNode = distModifiedGlobal->at(i).distributedScope;
 						break;
 					}
 				}
 			}
 			
-			if(dvstatement->dependencyNode == -3)
+			if(dvStatement->dependencyNode == -3)
 			{
-				dvstatement->dependencyNode = id.distributedScope;
+				dvStatement->dependencyNode = id.distributedScope;
 			}
 		}
 		
-		//cout << id.name << ":" << dvstatement->dependencyNode << endl;
+		//cout << id.name << ":" << dvStatement->dependencyNode << endl;
 		//cout << "\n \n \n \n "<< endl;
-		currentStatement->distStatements.push_back(dvstatement);
-		dvList->push_back(dvstatement);
-		diststatementTemp->dependenciesVariables->push_back(id);
+		currentStatement->distStatements.push_back(dvStatement);
+		dvList->push_back(dvStatement);
+		distStatementTemp->dependenciesVariables->push_back(id);
 		return 0;
 	};
 
@@ -1751,7 +1751,7 @@ namespace DM14::parser
 		if(op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "++" || op == "--")
 		{
 			
-			// also make sure it is not modified twice in the same op statement like : A = B + C(A), where C() will modify A
+			// also make sure it is not modified twice in the same op Statement like : A = B + C(A), where C() will modify A
 			// use same code like below(for array index ? )
 			for(uint32_t i =0; i< dvList->size(); i++)
 			{
@@ -1775,25 +1775,25 @@ namespace DM14::parser
 				}
 			}
 			
-			distributingVariablesStatement* dvstatement = new distributingVariablesStatement();
-			dvstatement->variable = id;
-			dvstatement->type = distributingVariablesStatement::MODS;
+			distributingVariablesStatement* dvStatement = new distributingVariablesStatement();
+			dvStatement->variable = id;
+			dvStatement->type = distributingVariablesStatement::MODS;
 			
-			currentStatement->distStatements.push_back(dvstatement);
-			dvList->push_back(dvstatement);
+			currentStatement->distStatements.push_back(dvStatement);
+			dvList->push_back(dvStatement);
 			
 			if(op == "++" || op == "--")
 			{
 				pushDependency(id);
 			}
 			
-			for(uint32_t i =0; i<diststatementTemp->dependenciesVariables->size(); i++)
+			for(uint32_t i =0; i<distStatementTemp->dependenciesVariables->size(); i++)
 			{
 				
 				int sameParentArrayIndex = false;
-				if(id.parent && diststatementTemp->dependenciesVariables->at(i).parent)
+				if(id.parent && distStatementTemp->dependenciesVariables->at(i).parent)
 				{
-					if(id.parent->arrayIndex == diststatementTemp->dependenciesVariables->at(i).parent->arrayIndex)
+					if(id.parent->arrayIndex == distStatementTemp->dependenciesVariables->at(i).parent->arrayIndex)
 					{
 						sameParentArrayIndex = true;
 					}
@@ -1808,22 +1808,22 @@ namespace DM14::parser
 				}
 				
 				
-				if(diststatementTemp->dependenciesVariables->at(i).parent)
+				if(distStatementTemp->dependenciesVariables->at(i).parent)
 				{
-					listParentName = diststatementTemp->dependenciesVariables->at(i).parent->name;
+					listParentName = distStatementTemp->dependenciesVariables->at(i).parent->name;
 				}
 					
-				if(diststatementTemp->dependenciesVariables->at(i).name == id.name
-	//				&&diststatementTemp->dependenciesVariables->at(i).parent == id.parent)
+				if(distStatementTemp->dependenciesVariables->at(i).name == id.name
+	//				&&distStatementTemp->dependenciesVariables->at(i).parent == id.parent)
 					&& parentName == listParentName
 					&& sameParentArrayIndex
-					&& diststatementTemp->dependenciesVariables->at(i).arrayIndex == id.arrayIndex)
+					&& distStatementTemp->dependenciesVariables->at(i).arrayIndex == id.arrayIndex)
 				{
-					diststatementTemp->dependenciesVariables->erase(diststatementTemp->dependenciesVariables->begin()+i);
+					distStatementTemp->dependenciesVariables->erase(distStatementTemp->dependenciesVariables->begin()+i);
 				}
 			}
 			
-			diststatementTemp->modifiedVariables->push_back(id);
+			distStatementTemp->modifiedVariables->push_back(id);
 			pushModifiedGlobal(id);
 		}
 		else
@@ -1843,13 +1843,13 @@ namespace DM14::parser
 		return 0;
 	};
 
-	statement* parser::parseFunctionCall()
+	Statement* parser::parseFunctionCall()
 	{
-		statement* result = parseFunctionCallInternal(true, "", "");
+		Statement* result = parseFunctionCallInternal(true, "", "");
 		return result;
 	}
 
-	statement* parser::parseFunctionCallInternal(bool terminated,const string& returnType, const string& classID)
+	Statement* parser::parseFunctionCallInternal(bool terminated,const string& returnType, const string& classID)
 	{
 		popToken();
 		functionCall* funcCall = new functionCall; // for every comma , call parseOP
@@ -1881,7 +1881,7 @@ namespace DM14::parser
 			currentStatement = funcCall;
 			while(!peekToken(")"))
 			{
-				statement* parameter = parseStatement("full-expression-list");
+				Statement* parameter = parseStatement("full-expression-list");
 				funcCall->absorbDistStatements(parameter);
 				funcCall->parameters->push_back(parameter);
 				parameters->push_back(parameter->type);
@@ -1955,7 +1955,7 @@ namespace DM14::parser
 		return funcCall;
 	};
 
-	statement* parser::parseForloop()
+	Statement* parser::parseForloop()
 	{
 		popToken();
 		
@@ -1973,15 +1973,16 @@ namespace DM14::parser
 
 		if(!peekToken(";"))
 		{
-			//statement* stmt =  parseDeclarationInternal(";");
-			statement* stmt =  parseStatement("loop-expression-declarator");
+			//Statement* stmt =  parseDeclarationInternal(";");
+			Statement* stmt =  parseStatement("loop-expression-declarator");
+			cerr << "declarator :" << stmt << endl;
 			stmt->line = getToken().lineNumber;
-			if(stmt->statementType != dStatement && stmt->statementType != eStatement)
+			if(stmt->StatementType != dStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected declaration statement");
+				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected declaration Statement");
 			}
 			
-			if(stmt->statementType == dStatement)
+			if(stmt->StatementType == dStatement)
 			{
 				floop->fromCondition->push_back(stmt);
 			}
@@ -1991,14 +1992,14 @@ namespace DM14::parser
 		
 		if(!peekToken(";"))
 		{
-			statement* stmt= parseStatement("loop-expression-condition");
+			Statement* stmt= parseStatement("loop-expression-condition");
 			stmt->line = getToken().lineNumber;
-			if(stmt->statementType != oStatement && stmt->statementType != eStatement)
+			if(stmt->StatementType != oStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected conditional statement");
+				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected conditional Statement");
 			}
 			
-			if(stmt->statementType == oStatement)
+			if(stmt->StatementType == oStatement)
 			{
 				floop->toCondition->push_back(stmt);
 			}
@@ -2010,14 +2011,14 @@ namespace DM14::parser
 		
 		if(!peekToken("]"))
 		{
-			statement* stmt= parseStatement("loop-expression-step-list");
+			Statement* stmt= parseStatement("loop-expression-step-list");
 			stmt->line = getToken().lineNumber;
-			if(stmt->statementType != oStatement && stmt->statementType != eStatement)
+			if(stmt->StatementType != oStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected operational statement");
+				displayError(fName, getToken().lineNumber, getToken().columnNumber, "Expected operational Statement");
 			}
 			
-			if(stmt->statementType == oStatement)
+			if(stmt->StatementType == oStatement)
 			{
 				floop->stepCondition->push_back(stmt);
 			}
@@ -2036,7 +2037,7 @@ namespace DM14::parser
 
 		while(!peekToken("}"))
 		{
-			statement* stmt = parseStatement("statement");
+			Statement* stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			floop->body->push_back(stmt);
 		}
@@ -2047,17 +2048,17 @@ namespace DM14::parser
 		return floop;
 	};
 
-	int parser::addStatementDistributingVariables(statement* stmt)
+	int parser::addStatementDistributingVariables(Statement* stmt)
 	{
 		
 		for(uint32_t i=0; i < currentFunction.body->appendBeforeList.size(); i++)
 		{
 			//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-			if((termStatment*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
+			if((termStatement*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
 			{
 				cerr << currentFunction.body->appendBeforeList.at(i) << endl << flush;
 				stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendBeforeList.at(i));
-				//currentFunction.body->append_after(dvstatement);
+				//currentFunction.body->append_after(dvStatement);
 				currentFunction.body->appendBeforeList.erase(currentFunction.body->appendBeforeList.begin()+i);
 				i--;
 			}
@@ -2065,10 +2066,10 @@ namespace DM14::parser
 		for(uint32_t i=0; i < currentFunction.body->appendAfterList.size(); i++)
 		{
 			//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-			if((termStatment*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
+			if((termStatement*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
 			{
 				stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendAfterList.at(i));
-				//currentFunction.body->append_after(dvstatement);
+				//currentFunction.body->append_after(dvStatement);
 				currentFunction.body->appendAfterList.erase(currentFunction.body->appendAfterList.begin()+i);
 				i--;
 			}
@@ -2077,7 +2078,7 @@ namespace DM14::parser
 		return 0;
 	}
 
-	statement* parser::parseFunction() // add functions prototypes to userFunctions Array too :)
+	Statement* parser::parseFunction() // add functions prototypes to userFunctions Array too :)
 	{
 		// always keep global ids
 		Array<idInfo>* tmpIdentifiers = identifiers;
@@ -2117,12 +2118,12 @@ namespace DM14::parser
 			while(getToken().value != "->")
 			{
 				//TODO: FIX 102
-				// should make a Array of declaration statements and add the statements to it, for the compiler to parse them
+				// should make a Array of declaration Statements and add the Statements to it, for the compiler to parse them
 				// with their initialized values ?
 				//declareStatement* stmt =(declareStatement*)parseDeclarationInternal("->");
-				//declareStatement* stmt =(declareStatement*)parseStatement("statement");
+				//declareStatement* stmt =(declareStatement*)parseStatement("Statement");
 				
-				declareStatement* stmt =(declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+				declareStatement* stmt =(declareStatement*)parseStatement("declaration-Statement", &parser::parseDeclarationInternal);
 				
 				stmt->line = getToken().lineNumber;
 				for(uint32_t i = 0; i < stmt->identifiers->size(); i++ )
@@ -2166,7 +2167,7 @@ namespace DM14::parser
 			while(getToken().value != ")")
 			{
 				//declareStatement* stmt =(declareStatement*)parseDeclarationInternal();
-				declareStatement* stmt =(declareStatement*)parseStatement("declaration-statement", &parser::parseDeclarationInternal);
+				declareStatement* stmt =(declareStatement*)parseStatement("declaration-Statement", &parser::parseDeclarationInternal);
 				popToken();
 				RequireValue(")", "Expected ) and not "+getToken().value + " after function definition ", false);
 				stmt->line = getToken().lineNumber;
@@ -2245,24 +2246,24 @@ namespace DM14::parser
 				}
 			}
 					
-			Array<statement*>* declarations = new Array<statement*>();
+			Array<Statement*>* declarations = new Array<Statement*>();
 			
 			//while(popToken().value != "}")
 			while(!peekToken("}"))
 			{
-				statement* stmt = parseStatement("statement");
+				Statement* stmt = parseStatement("Statement");
 
 				if(stmt == NULL)
 				{
 					displayError(fName, getToken().lineNumber, getToken().columnNumber,"error parsing function : "+Funcinfo.name);
 				}
 
-				if(stmt->statementType == dStatement)
+				if(stmt->StatementType == dStatement)
 				{
 					if(((declareStatement*)stmt)->Initilazed && !((declareStatement*)stmt)->global)
 					{
 						declareStatement* decStatement =((declareStatement*)stmt);
-						statement* value = decStatement->value;
+						Statement* value = decStatement->value;
 						decStatement->value = NULL;
 						//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
 						declarations->push_back(decStatement);
@@ -2271,7 +2272,7 @@ namespace DM14::parser
 						{
 							//fix add type and scope ....
 							operationalStatement* os = new operationalStatement();
-							os->left = new termStatment(decStatement->identifiers->at(i).name);
+							os->left = new termStatement(decStatement->identifiers->at(i).name);
 							os->op = "=";
 							os->right = value;
 							os->type = stmt->type;
@@ -2293,7 +2294,7 @@ namespace DM14::parser
 							functionStatementsCount++;
 						}
 						
-						statement* stmt2 = currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size()));
+						Statement* stmt2 = currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size()));
 						stmt2->distStatements = stmt->distStatements;
 						stmt->distStatements.clear();
 					}
@@ -2304,7 +2305,7 @@ namespace DM14::parser
 				}
 				else
 				{
-					if(stmt->statementType == rStatement)
+					if(stmt->StatementType == rStatement)
 					{
 						currentFunction.body->clearQueue();
 					}
@@ -2336,16 +2337,16 @@ namespace DM14::parser
 			//TODO: here :D fix all functions to fill the type field , and add type to functionInfo too
 			functionsInfo->push_back(Funcinfo);
 			
-			//TODO:before this, loop through origianl body and push the modfifyNotify statements at their right position i
+			//TODO:before this, loop through origianl body and push the modfifyNotify Statements at their right position i
 			
 			//TODO:fix what if , two initiated variables are pushed at the same place ?
 
-			termStatment* termstatement = new termStatment("DM14FUNCTIONBEGIN", "NIL" );
-			termstatement->scope = scope;
-			//termstatement->scopeLevel = scopeLevel;
-			//termstatement->arrayIndex = aIndex;
-			//termstatement->identifier = true;
-			declarations->push_back(termstatement);
+			termStatement* statement = new termStatement("DM14FUNCTIONBEGIN", "NIL" );
+			statement->scope = scope;
+			//termStatement->scopeLevel = scopeLevel;
+			//termStatement->arrayIndex = aIndex;
+			//termStatement->identifier = true;
+			declarations->push_back(statement);
 			for(uint32_t i=0; i < currentFunction.body->size(); i++)
 			{
 				declarations->push_back(currentFunction.body->at(i));
@@ -2368,7 +2369,7 @@ namespace DM14::parser
 		
 		distModifiedGlobal	= new Array<idInfo>;
 		//distIdentifiers	= new Array<idInfo>;
-		diststatementTemp	= new distStatement();
+		distStatementTemp	= new distStatement();
 		modifiedVariablesList = Array < pair<idInfo,int> >();
 		//FIX only increment on if conditions, loops and case... ?
 		increaseScope(NULL);
@@ -2596,30 +2597,30 @@ namespace DM14::parser
 	};
 
 	// should return a vector of all matching leafs ?
-	statement* parser::findTreeNode(statement* opstatement, int statementType) 
+	Statement* parser::findTreeNode(Statement* opStatement, int StatementType) 
 	{
-		if(!opstatement)
+		if(!opStatement)
 		{
 			return NULL;
 		}
 		
-		if(opstatement->statementType == statementType)
+		if(opStatement->StatementType == StatementType)
 		{
-			return opstatement;
+			return opStatement;
 		}
 		
-		statement* result = NULL;
+		Statement* result = NULL;
 		
-		if(opstatement->statementType == oStatement)
+		if(opStatement->StatementType == oStatement)
 		{
-			if(((operationalStatement*)opstatement)->left)
+			if(((operationalStatement*)opStatement)->left)
 			{
-				result = findTreeNode(((operationalStatement*)opstatement)->left, statementType);
+				result = findTreeNode(((operationalStatement*)opStatement)->left, StatementType);
 			}
 				
-			if(!result &&((operationalStatement*)opstatement)->right)
+			if(!result &&((operationalStatement*)opStatement)->right)
 			{
-				result = findTreeNode(((operationalStatement*)opstatement)->right, statementType);
+				result = findTreeNode(((operationalStatement*)opStatement)->right, StatementType);
 			}
 		}
 		
@@ -2628,18 +2629,18 @@ namespace DM14::parser
 
 
 
-	int parser::searchVariables(statement* opstatement, int depencyType, string op)
+	int parser::searchVariables(Statement* opStatement, int depencyType, string op)
 	{
 		
 		//distributingVariablesStatement::DEPS
-		if(!opstatement)
+		if(!opStatement)
 		{
 			return 1;
 		}
 		
-		if(opstatement->statementType == tStatement)
+		if(opStatement->StatementType == tStatement)
 		{
-			idInfo* id =((termStatment*)opstatement)->id;
+			idInfo* id =((termStatement*)opStatement)->id;
 			if(id)
 			{
 				if(depencyType == distributingVariablesStatement::MODS)
@@ -2655,27 +2656,27 @@ namespace DM14::parser
 		}
 		
 			
-		if(opstatement->statementType == oStatement)
+		if(opStatement->StatementType == oStatement)
 		{
-			if(((operationalStatement*)opstatement)->left)
+			if(((operationalStatement*)opStatement)->left)
 			{
-				if(((operationalStatement*)opstatement)->op == "." ||((operationalStatement*)opstatement)->op == "::")
+				if(((operationalStatement*)opStatement)->op == "." ||((operationalStatement*)opStatement)->op == "::")
 				{
-					if(((operationalStatement*)opstatement)->left->statementType == oStatement)
+					if(((operationalStatement*)opStatement)->left->StatementType == oStatement)
 					{
-						statement* leftLeft =((operationalStatement*)((operationalStatement*)opstatement)->left)->left;
+						Statement* leftLeft =((operationalStatement*)((operationalStatement*)opStatement)->left)->left;
 						searchVariables(leftLeft, depencyType, op);
 					}
 				}
 				else
 				{
-					searchVariables(((operationalStatement*)opstatement)->left, depencyType, op);
+					searchVariables(((operationalStatement*)opStatement)->left, depencyType, op);
 				}
 			}
 				
-			if(((operationalStatement*)opstatement)->right)
+			if(((operationalStatement*)opStatement)->right)
 			{
-				searchVariables(((operationalStatement*)opstatement)->right, depencyType, op);
+				searchVariables(((operationalStatement*)opStatement)->right, depencyType, op);
 			}
 		}
 		
@@ -2683,10 +2684,10 @@ namespace DM14::parser
 	}
 
 
-	statement* parser::parseExpressionStatement()
+	Statement* parser::parseExpressionStatement()
 	{
-		//cerr << "parse expression statement" << endl;
-		statement* result = nullptr;
+		//cerr << "parse expression Statement" << endl;
+		Statement* result = nullptr;
 		
 		if(working_tokens->at(working_tokens->size()-1).value == ";")
 		{
@@ -2696,7 +2697,7 @@ namespace DM14::parser
 		{
 			result = parseOpStatement(0, working_tokens->size()-1, "-2", scope, parentStatement);
 		}
-		//cerr << "DONE parse expression statement" << endl;
+		//cerr << "DONE parse expression Statement" << endl;
 
 		return result;
 	}
@@ -2716,7 +2717,7 @@ namespace DM14::parser
 			{
 				type  = getFunc(getToken(0).value, classID).returnType;
 			}
-			else if(DM14::types::isDataType(getToken(0).value)) /// if it is  datatype, use it as the statement type
+			else if(DM14::types::isDataType(getToken(0).value)) /// if it is  datatype, use it as the Statement type
 			{
 				type  = getToken(0).value;
 			}		
@@ -2783,8 +2784,8 @@ namespace DM14::parser
 		return extract_temp_vector;
 	}
 
-	statement* parser::parseOpStatement(int32_t from, int32_t to, 
-										const string& stmtType, const int& scopeLevel, statement* caller, 
+	Statement* parser::parseOpStatement(int32_t from, int32_t to, 
+										const string& stmtType, const int& scopeLevel, Statement* caller, 
 										idInfo* parent, const string& parentOp)
 	{
 		int plevel =0; // precedence levels
@@ -2828,7 +2829,7 @@ namespace DM14::parser
 			displayError(fName, getToken().lineNumber, getToken().columnNumber," missing \"(\" ");
 		}
 		
-		// big(..) statement
+		// big(..) Statement
 		if(getToken(from).value == "("  && getToken(to).value == ")" && removeBigParenthes)
 		{
 			popToken();
@@ -2840,10 +2841,10 @@ namespace DM14::parser
 		int origiIndex = index;
 		bool classMember = false;
 
-		operationalStatement* opstatement = new operationalStatement;
-		opstatement->line = getToken().lineNumber;
-		opstatement->scope = scope;
-		opstatement->scopeLevel = scopeLevel;
+		operationalStatement* opStatement = new operationalStatement;
+		opStatement->line = getToken().lineNumber;
+		opStatement->scope = scope;
+		opStatement->scopeLevel = scopeLevel;
 		
 		if(caller)
 		{
@@ -2851,10 +2852,10 @@ namespace DM14::parser
 		}
 		else
 		{
-			currentStatement = opstatement;
+			currentStatement = opStatement;
 		}
 
-		// [ split the opstatement to left and right if there is an operator ;)
+		// [ split the opStatement to left and right if there is an operator ;)
 		plevel= 0;
 		for(int32_t i = from; i <= to; i++ )
 		{
@@ -2874,16 +2875,16 @@ namespace DM14::parser
 				if((getToken(i).type == "operator") &&
 					!(getToken(i).value == ")" || getToken(i).value == "(" || getToken(i).value == "["  || getToken(i).value == "]"))
 				{
-					opstatement->op = getToken(i).value;
+					opStatement->op = getToken(i).value;
 					if(i != from) /** not a prefix operator like ++x */
 					{
 						auto* temp = extract(from, i-1);
-						opstatement->left = parseOpStatement(from, i-1, stmtType, opstatement->scopeLevel, currentStatement, parent, opstatement->op);
-						opstatement->absorbDistStatements(opstatement->left);
+						opStatement->left = parseOpStatement(from, i-1, stmtType, opStatement->scopeLevel, currentStatement, parent, opStatement->op);
+						opStatement->absorbDistStatements(opStatement->left);
 						restore(temp);
-						if(opstatement->left->type.size())
+						if(opStatement->left->type.size())
 						{
-							opstatement->type = opstatement->left->type;
+							opStatement->type = opStatement->left->type;
 						}
 					}
 			
@@ -2899,14 +2900,14 @@ namespace DM14::parser
 					idInfo* id = NULL;
 					// should we loop inside to get the term ?
 					
-					statement* res = findTreeNode(opstatement->left, tStatement);
+					Statement* res = findTreeNode(opStatement->left, tStatement);
 					
 					if(res)
 					{
-						id  =((termStatment*)res)->id;
+						id  =((termStatement*)res)->id;
 					}
 
-					if(opstatement->op == "." ||  opstatement->op == "::" )
+					if(opStatement->op == "." ||  opStatement->op == "::" )
 					{
 						if(!id)
 						{
@@ -2920,18 +2921,19 @@ namespace DM14::parser
 								displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"incomplete data member access at " +  getToken(i).value);
 							}
 
-							opstatement->right = parseOpStatement(from, to, "-2", opstatement->scopeLevel, currentStatement, id);
-							opstatement->left->type = opstatement->right->type;
-							opstatement->type = opstatement->right->type;
+							opStatement->right = parseOpStatement(from, to, "-2", opStatement->scopeLevel, currentStatement, id);
+							opStatement->left->type = opStatement->right->type;
+							opStatement->type = opStatement->right->type;
 
-							opstatement->absorbDistStatements(opstatement->right);
+							opStatement->absorbDistStatements(opStatement->right);
 							
 							
 							string classID = id->name;
 							
-							if(DM14::types::isDataType(classID))
+							//TODO: make sure :: is used onl with static enumns/variables ?
+							if(DM14::types::isDataType(classID) && opStatement->op != "::")
 							{
-								statement* staticFunction = findTreeNode(opstatement->right, fCall);
+								Statement* staticFunction = findTreeNode(opStatement->right, fCall);
 								if(staticFunction != nullptr)
 								{	
 									
@@ -2942,17 +2944,18 @@ namespace DM14::parser
 										
 										if(fInfoResult.second.noAutism == true)
 										{
-											opstatement->op = "::";
+											opStatement->op = "::";
 										}
 									}
 									else
 									{
-										displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class has no member static function ...");
+										displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class " + classID + " has no member static function " 
+ + (*(functionCall*)staticFunction).name);
 									}
 								}
 								else
 								{
-									statement* staticVariable = findTreeNode(opstatement->right, tStatement);
+									Statement* staticVariable = findTreeNode(opStatement->right, tStatement);
 									if(staticVariable != nullptr)
 									{
 										auto vInfoResult = DM14::types::getClassMemberFunction(classID, (*(functionCall*)staticVariable));
@@ -2961,12 +2964,12 @@ namespace DM14::parser
 											
 											if(vInfoResult.second.noAutism == true)
 											{
-												opstatement->op == "::";
+												opStatement->op == "::";
 											}
 										}
 										else
 										{
-											displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class has no member static variable ...");
+											displayError(fName, getToken(i).lineNumber, getToken(i).columnNumber,"class " + classID + " has no member static variable " + (*(functionCall*)staticVariable).name);
 										}
 									}
 									else
@@ -2977,84 +2980,84 @@ namespace DM14::parser
 							}
 							
 							
-							//statement* res = findTreeNode(opstatement->right, tStatement);
-							//idInfo* rightID  =((termStatment*)res)->id;
+							//Statement* res = findTreeNode(opStatement->right, tStatement);
+							//idInfo* rightID  =((termStatement*)res)->id;
 							//rightID->arrayIndex = id->arrayIndex;
 							//id->arrayIndex = NULL;
 							
 							/*if(stmtType != "-2" && !hasTypeValue(stmtType, findIDType(idInfo(variableName, 0, "", NULL)) ))
 							{
-								displayError(fName,(tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opstatement->type);
+								displayError(fName,(tokens->at(i+2)).lineNumber,(tokens->at(i+2)).columnNumber,"Wrong type variable : " + variableName + " expected : " + opStatement->type);
 							}*/
 						}
 					}
 					else if(to > -1)
 					{
-						opstatement->right = parseOpStatement(from, to, opstatement->type == "" ? stmtType : opstatement->type, opstatement->scopeLevel, currentStatement);
-						opstatement->absorbDistStatements(opstatement->right);
-						if(!opstatement->left)
+						opStatement->right = parseOpStatement(from, to, opStatement->type == "" ? stmtType : opStatement->type, opStatement->scopeLevel, currentStatement);
+						opStatement->absorbDistStatements(opStatement->right);
+						if(!opStatement->left)
 						{
-							opstatement->type = opstatement->right->type;
+							opStatement->type = opStatement->right->type;
 						}
 					}
 					
-					if(opstatement->type.size() == 0)
+					if(opStatement->type.size() == 0)
 					{
-						displayError("could not determine statement type");
+						displayError("could not determine Statement type");
 					}
 									
-					if(DM14::types::isbinOperator(opstatement->op) && to > -1)
+					if(DM14::types::isbinOperator(opStatement->op) && to > -1)
 					{
-						if(opstatement->op == "==" || opstatement->op == "||" || opstatement->op == ">" || opstatement->op == ">"
-						 || opstatement->op == ">=" || opstatement->op == "<=" || opstatement->op == "&&")
+						if(opStatement->op == "==" || opStatement->op == "||" || opStatement->op == ">" || opStatement->op == ">"
+						 || opStatement->op == ">=" || opStatement->op == "<=" || opStatement->op == "&&")
 						{
-							opstatement->type = "bool";
+							opStatement->type = "bool";
 						}
 						
-						if(!opstatement->right)
+						if(!opStatement->right)
 						{
 							displayError(fName, getToken().lineNumber, getToken().columnNumber,"Missing right operand");
 						}
 						
 						//FIXME:
-						/*else if(caller && caller->statementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opstatement->type) && opstatement->op != "::"  )
+						/*else if(caller && caller->StatementType == oStatement && !parent && !typeHasOperator(((operationalStatement*)caller)->op, opStatement->type) && opStatement->op != "::"  )
 						{
-							cerr  << opstatement->op << endl;
+							cerr  << opStatement->op << endl;
 							cerr << tokens->at(from).value << endl;
 							cerr << tokens->at(to).value << endl;
-							displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"typee \"" +opstatement->type + "\" does not support operator " +((operationalStatement*)caller)->op);
+							displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"typee \"" +opStatement->type + "\" does not support operator " +((operationalStatement*)caller)->op);
 						}*/
-						else if(!DM14::types::typeHasOperator(opstatement->op, opstatement->type) && opstatement->op != "." && opstatement->op != "::" )
+						else if(!DM14::types::typeHasOperator(opStatement->op, opStatement->type) && opStatement->op != "." && opStatement->op != "::" )
 						{
-							if(opstatement->left)
-							cerr << "left type :" << opstatement->left->type << endl;
-							displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+							if(opStatement->left)
+							cerr << "left type :" << opStatement->left->type << endl;
+							displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
 						}
 						
-						searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
-						searchVariables(opstatement->right, distributingVariablesStatement::DEPS);
+						searchVariables(opStatement->left, distributingVariablesStatement::MODS, opStatement->op);
+						searchVariables(opStatement->right, distributingVariablesStatement::DEPS);
 					}
-					else if(DM14::types::isSingleOperator(opstatement->op))
+					else if(DM14::types::isSingleOperator(opStatement->op))
 					{
-						if(!DM14::types::typeHasOperator(opstatement->op, opstatement->type) &&(opstatement->op != "@") )
+						if(!DM14::types::typeHasOperator(opStatement->op, opStatement->type) &&(opStatement->op != "@") )
 						{
-							displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+							displayError(fName, getToken().lineNumber, getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
 						}
-						searchVariables(opstatement->left, distributingVariablesStatement::MODS, opstatement->op);
+						searchVariables(opStatement->left, distributingVariablesStatement::MODS, opStatement->op);
 					}
-					else if(DM14::types::isCoreOperator(opstatement->op))
+					else if(DM14::types::isCoreOperator(opStatement->op))
 					{
-						if(opstatement->op == "@")
+						if(opStatement->op == "@")
 						{
-							//construct node address statement
+							//construct node address Statement
 							// should we loop inside to get the term ?
-							statement* res = findTreeNode(opstatement->right, tStatement);
+							Statement* res = findTreeNode(opStatement->right, tStatement);
 					
 							idInfo* rightId = NULL;
 								
 							if(res)
 							{
-								rightId  =((termStatment*)res)->id;
+								rightId  =((termStatement*)res)->id;
 								int isDistributed = findIDInfo(*rightId, DISTRIBUTED);
 								if(!isDistributed)
 								{
@@ -3068,7 +3071,7 @@ namespace DM14::parser
 							}
 							
 							// variable@node
-							if(opstatement->left && opstatement->left->statementType == tStatement) // variable@node
+							if(opStatement->left && opStatement->left->StatementType == tStatement) // variable@node
 							{
 								
 								if(rightId)
@@ -3080,32 +3083,32 @@ namespace DM14::parser
 									displayError("Coundl't find node address");
 								}
 								
-								if(opstatement->right->statementType == oStatement)
+								if(opStatement->right->StatementType == oStatement)
 								{
-									operationalStatement* stmt =(operationalStatement*) opstatement->right;
-									searchVariables(opstatement->left, distributingVariablesStatement::MODS, stmt->op);
-									searchVariables(opstatement->left, distributingVariablesStatement::DEPS);
-									opstatement->op  = stmt->op;
+									operationalStatement* stmt =(operationalStatement*) opStatement->right;
+									searchVariables(opStatement->left, distributingVariablesStatement::MODS, stmt->op);
+									searchVariables(opStatement->left, distributingVariablesStatement::DEPS);
+									opStatement->op  = stmt->op;
 									stmt->op = "";
 									delete stmt->left;
 									stmt->left = NULL;
 								}				
-								else if(opstatement->right->statementType == tStatement)
+								else if(opStatement->right->StatementType == tStatement)
 								{
-									delete opstatement->right;
-									opstatement->right = NULL;
-									opstatement->op  = "";
+									delete opStatement->right;
+									opStatement->right = NULL;
+									opStatement->op  = "";
 								}					
 
-								if((parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opstatement->op == "")
+								if((parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opStatement->op == "")
 								{
 									idInfo* leftId = NULL;
 									// should we loop inside to get the term ?
-									statement* res = findTreeNode(opstatement->left, tStatement);
+									Statement* res = findTreeNode(opStatement->left, tStatement);
 						
 									if(res)
 									{
-										leftId  =((termStatment*)res)->id;
+										leftId  =((termStatement*)res)->id;
 										pushDependency(*leftId);
 									}
 									else
@@ -3130,31 +3133,31 @@ namespace DM14::parser
 									}
 								}
 							}
-							opstatement->type="string";
+							opStatement->type="string";
 						}
 					}
 					else
 					{
-						displayError("Operator is not defined as single or binary  : " + opstatement->op);
+						displayError("Operator is not defined as single or binary  : " + opStatement->op);
 					}
 					
-					if(  !DM14::types::typeHasOperator(opstatement->op, opstatement->type) 
-					   && !(opstatement->left && opstatement->op == ".")
-					   && opstatement->op != "@")
+					if(  !DM14::types::typeHasOperator(opStatement->op, opStatement->type) 
+					   && !(opStatement->left && opStatement->op == ".")
+					   && opStatement->op != "@")
 					{
-						//displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"type \"" +opstatement->type + "\" does not support operator " + opstatement->op);
+						//displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
 					}
 					
 					/*
-					if(!hasTypeValue(opstatement->type, opstatement->right->type) && !classMember && stmtType!= "-2")
+					if(!hasTypeValue(opStatement->type, opStatement->right->type) && !classMember && stmtType!= "-2")
 					{
-						displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + opstatement->right->type + " with " +opstatement->type);
+						displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + opStatement->right->type + " with " +opStatement->type);
 					}
-					else if(!hasTypeValue(stmtType, opstatement->type) && stmtType != "-2")
+					else if(!hasTypeValue(stmtType, opStatement->type) && stmtType != "-2")
 					{
-						displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + stmtType + " with " +opstatement->type);
+						displayError(fName,(tokens->at(from)).lineNumber,(tokens->at(from+2)).columnNumber,"Wrong operands type : " + stmtType + " with " +opStatement->type);
 					}*/
-					return opstatement;
+					return opStatement;
 				}
 			}
 		}
@@ -3165,16 +3168,16 @@ namespace DM14::parser
 		if(getToken(0).value.size() == 0)// consumed all tokens !
 		{
 			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"Internal parser error !");
-			return opstatement;
+			return opStatement;
 		}
 
-		/** proceed to real statement */
-		/** [ find statement type */
+		/** proceed to real Statement */
+		/** [ find Statement type */
 		string type = getOpStatementType(stmtType, classID);
-		//if(type.size() && !opstatement->type.size())
+		//if(type.size() && !opStatement->type.size())
 		if(type == "")
 		{
-			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"unable to determine statement type "+ getToken(0).value);
+			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"unable to determine Statement type "+ getToken(0).value);
 		}
 
 		if(stmtType!="-2" && stmtType != type)
@@ -3182,24 +3185,24 @@ namespace DM14::parser
 			displayError(fName, getToken(0).lineNumber, getToken(0).columnNumber,"types mismatch ! "+ getToken(0).value);
 		}
 
-		opstatement->type = type;
+		opStatement->type = type;
 
 		if(to == -1 || getToken(0).value.size() == 0)// consumed all tokens !
 		{
-			return opstatement;
+			return opStatement;
 		}
 		
 		// ]
 		
 		//if(!typeHasOperator(tokens->at(currentIndex).value, findID(tokens->at(currentIndex+1).value, classID).type))
 		//{
-		//	displayError(fName,(tokens->at(currentIndex)).lineNumber,(tokens->at(currentIndex)).columnNumber,"single operator " +(tokens->at(currentIndex)).value + " is not supported by statements of type " + findID(tokens->at(currentIndex+1).value, classID).type);
+		//	displayError(fName,(tokens->at(currentIndex)).lineNumber,(tokens->at(currentIndex)).columnNumber,"single operator " +(tokens->at(currentIndex)).value + " is not supported by Statements of type " + findID(tokens->at(currentIndex+1).value, classID).type);
 		//	}
 		
 		
 		// [ find first term, function, variable or immediate ...
 		
-		statement* aIndex = NULL;
+		Statement* aIndex = NULL;
 		// if identifier , then it might be variable or user/builtin function
 		if(getToken(from).type == "identifier" ||  DM14::types::isDataType(getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
 		{
@@ -3207,12 +3210,12 @@ namespace DM14::parser
 			if(isBuiltinFunction(getToken(from).value) || isUserFunction(getToken(from).value, true) 
 				||(parent && DM14::types::classHasMemberFunction(classID, getToken(from).value)))
 			{
-				statement* stmt = NULL;
+				Statement* stmt = NULL;
 				if(parent)
 				{
-					if(opstatement->type != classID)
+					if(opStatement->type != classID)
 					{
-						stmt = parseFunctionCallInternal(false, opstatement->type, classID);
+						stmt = parseFunctionCallInternal(false, opStatement->type, classID);
 					}
 					else
 					{
@@ -3222,10 +3225,10 @@ namespace DM14::parser
 				}
 				else
 				{
-					stmt = parseFunctionCallInternal(false, opstatement->type);
+					stmt = parseFunctionCallInternal(false, opStatement->type);
 				}
-				stmt->distStatements = opstatement->distStatements;
-				delete opstatement;
+				stmt->distStatements = opStatement->distStatements;
+				delete opStatement;
 				return stmt;
 			}
 			// variable !
@@ -3236,7 +3239,7 @@ namespace DM14::parser
 				
 				if(DM14::types::isDataType(variableName))
 				{
-					;
+					displayInfo(fName, getToken().lineNumber, getToken().columnNumber, "FIX");
 				}
 				else if(parent && !DM14::types::classHasMemberVariable(classID, variableName))
 				{
@@ -3261,18 +3264,18 @@ namespace DM14::parser
 					}
 				}
 
-				//classMember = isClass(opstatement->type);
+				//classMember = isClass(opStatement->type);
 				classMember = DM14::types::isClass(classID);
-				termStatment* termstatement = new termStatment(variableName, opstatement->type );
+				termStatement* statement = new termStatement(variableName, opStatement->type );
 				
 				if(findIDType(idInfo(variableName, 0, "", NULL)) != "NIL")
 				{
-					termstatement->type = findIDType(idInfo(variableName, 0, "", NULL));
+					statement->type = findIDType(idInfo(variableName, 0, "", NULL));
 				}
-				termstatement->scope = scope;
-				termstatement->scopeLevel = scopeLevel;
-				termstatement->identifier = true;
-				termstatement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
+				statement->scope = scope;
+				statement->scopeLevel = scopeLevel;
+				statement->identifier = true;
+				statement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
 
 				if(getToken(0).value == "[")
 				{
@@ -3280,16 +3283,16 @@ namespace DM14::parser
 					{
 						displayError(fName, getToken().lineNumber, getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
 					}
-					//termstatement->arrayIndex = parseConditionalExpression(currentStatement);
-					//termstatement->arrayIndex = parseStatement("expression-list");
-					termstatement->arrayIndex = parseStatement("declaration-index-list");
-					aIndex = termstatement->arrayIndex;
+					//termStatement->arrayIndex = parseConditionalExpression(currentStatement);
+					//termStatement->arrayIndex = parseStatement("expression-list");
+					statement->arrayIndex = parseStatement("declaration-index-list");
+					aIndex = statement->arrayIndex;
 				}
 								
 				index = origiIndex;
 
-				//idInfo* id = new idInfo(termstatement->term, opstatement->scope, opstatement->type, aIndex);
-				idInfo* id = new idInfo(termstatement->term, opstatement->scope, termstatement->type , aIndex);
+				//idInfo* id = new idInfo(termStatement->term, opStatement->scope, opStatement->type, aIndex);
+				idInfo* id = new idInfo(statement->term, opStatement->scope, statement->type , aIndex);
 				id->distributedScope = distributedScope;
 				if(parent)
 				{
@@ -3316,16 +3319,16 @@ namespace DM14::parser
 				
 				if(DM14::types::isClass(findIDType(idInfo(variableName, 0, "", NULL))))
 				{
-					termstatement->type = findIDType(idInfo(variableName, 0, "", NULL));
-					id->type = termstatement->type;
+					statement->type = findIDType(idInfo(variableName, 0, "", NULL));
+					id->type = statement->type;
 				}
 				else
 				{
-					termstatement->type = opstatement->type;
+					statement->type = opStatement->type;
 				}
 				//id.requestAddress = nodeAddress;
 				
-				termstatement->id = id;
+				statement->id = id;
 				
 				if(parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@")
 				{
@@ -3339,33 +3342,33 @@ namespace DM14::parser
 				{
 					
 					//cerr << currentStatement << endl << flush;
-					//currentStatement->absorbDistStatements(opstatement);
+					//currentStatement->absorbDistStatements(opStatement);
 				}
 				//else
 				{
-					termstatement->distStatements = opstatement->distStatements;
+					statement->distStatements = opStatement->distStatements;
 				}
-				delete opstatement;
-				return termstatement;
+				delete opStatement;
+				return statement;
 			}
 		}
 		else if(isImmediate(getToken(from)))
 		{
-			if(!DM14::types::hasTypeValue(opstatement->type, getToken(from).type))
+			if(!DM14::types::hasTypeValue(opStatement->type, getToken(from).type))
 			{
 				displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"wrong immediate type : " + getToken(from).value);
 			}
 
 			popToken();
 			
-			termStatment* termstatement = new termStatment(getToken().value, opstatement->type);
-			termstatement->line = getToken().lineNumber;
-			termstatement->scope = scope;
-			termstatement->scopeLevel = scopeLevel;
-			termstatement->identifier = false;
-			termstatement->type = opstatement->type;
-			delete opstatement;
-			return termstatement;
+			termStatement* statement = new termStatement(getToken().value, opStatement->type);
+			statement->line = getToken().lineNumber;
+			statement->scope = scope;
+			statement->scopeLevel = scopeLevel;
+			statement->identifier = false;
+			statement->type = opStatement->type;
+			delete opStatement;
+			return statement;
 		}
 		else
 		{
@@ -3374,8 +3377,8 @@ namespace DM14::parser
 		
 		// ]
 		
-		delete opstatement;
-		displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"returning null statement ?!!");
+		delete opStatement;
+		displayError(fName, getToken(from).lineNumber, getToken(from).columnNumber,"returning null Statement ?!!");
 		return NULL;
 	};
 
@@ -3451,8 +3454,8 @@ namespace DM14::parser
 							{
 								if(mparameters->at(l) != datatypes.at(i).memberFunctions.at(k).parameters->at(l).first)
 								{
-									cerr << mparameters->at(l) << ":" << datatypes.at(i).memberFunctions.at(k).parameters->at(l).first << endl;
-									cerr << datatypes.at(i).memberFunctions.at(k).name << ":" <<  funcID << endl;
+									//cerr << mparameters->at(l) << ":" << datatypes.at(i).memberFunctions.at(k).parameters->at(l).first << endl;
+									//cerr << datatypes.at(i).memberFunctions.at(k).name << ":" <<  funcID << endl;
 									break;
 								}
 								
@@ -3503,10 +3506,10 @@ namespace DM14::parser
 						return functionsInfo->at(i);
 					}
 
-					cerr << functionsInfo->at(i).parameters->size() << ":" << mparameters->size() << endl;
+					//cerr << functionsInfo->at(i).parameters->size() << ":" << mparameters->size() << endl;
 					for(uint32_t k = 0, l =0; k < functionsInfo->at(i).parameters->size() && l < mparameters->size(); k++, l++)
 					{
-						cerr << mparameters->at(l)  << ":" << functionsInfo->at(i).parameters->at(k).first << endl << flush;
+						//cerr << mparameters->at(l)  << ":" << functionsInfo->at(i).parameters->at(k).first << endl << flush;
 						if(mparameters->at(l) != functionsInfo->at(i).parameters->at(k).first)
 						{
 							break;
@@ -3554,7 +3557,7 @@ namespace DM14::parser
 		Header = header;
 		nodesCount = nodesC;
 		dVariablesCount = variablesCount;
-		linkLibs = new Array<statement*>();
+		linkLibs = new Array<Statement*>();
 		ExternCodes = new Array<string>();
 	};
 
@@ -3651,7 +3654,7 @@ namespace DM14::parser
 		return set;
 	};
 
-	int parser::increaseScope(statement* stmt)
+	int parser::increaseScope(Statement* stmt)
 	{
 		if(stmt)
 		{
@@ -3667,7 +3670,7 @@ namespace DM14::parser
 	}
 
 
-	statement* parser::parseThread()
+	Statement* parser::parseThread()
 	{
 		popToken(); //thread
 		threadStatement* thread = new threadStatement();
@@ -3677,7 +3680,7 @@ namespace DM14::parser
 		SS << getToken().columnNumber << getToken().lineNumber;	// Number of character on the current line
 		thread->Identifier = SS.str();
 		
-		if(parentStatement &&(parentStatement->statementType ==  fLoop || parentStatement->statementType == wLoop))
+		if(parentStatement &&(parentStatement->StatementType ==  fLoop || parentStatement->StatementType == wLoop))
 		{
 			displayWarning(fName, getToken().lineNumber, getToken().columnNumber,"Thread call inside a loop ! careful ");
 		}
@@ -3700,10 +3703,10 @@ namespace DM14::parser
 			}
 		}
 
-		statement* stmt = parseStatement("statement");
+		Statement* stmt = parseStatement("Statement");
 		
 		//@TODO: FIX if parameters are not global or immediates, give error
-		if(stmt->statementType == oStatement)
+		if(stmt->StatementType == oStatement)
 		{
 			//fix also consider parameters to be unique identidier
 			thread->parentID =(tokens->at(from)).value;
@@ -3713,7 +3716,7 @@ namespace DM14::parser
 			thread->returnType =((operationalStatement*)stmt)->type;
 			thread->functioncall =((operationalStatement*)stmt)->right;
 		}
-		else if(stmt->statementType == fCall)
+		else if(stmt->StatementType == fCall)
 		{
 			//fix also consider parameters to be unique identidier
 			thread->ID =(tokens->at(from)).value;
@@ -3732,9 +3735,9 @@ namespace DM14::parser
 	}
 
 
-	statement* parser::parseIf()
+	Statement* parser::parseIf()
 	{
-		// if [ cond ] { statements } else {}
+		// if [ cond ] { Statements } else {}
 		popToken(); //if	
 		IF* If = new IF;
 		If->line = getToken().lineNumber;
@@ -3760,7 +3763,7 @@ namespace DM14::parser
 		//while(getToken().value != "}")
 		while(!peekToken("}"))
 		{
-			statement* stmt = parseStatement("statement");
+			Statement* stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			If->body->push_back(stmt);
 		}
@@ -3789,7 +3792,7 @@ namespace DM14::parser
 				
 				while(!peekToken("}"))
 				{
-					statement* stmt = parseStatement("statement");
+					Statement* stmt = parseStatement("Statement");
 					addStatementDistributingVariables(stmt);
 					elseIf->body->push_back(stmt);
 					
@@ -3804,7 +3807,7 @@ namespace DM14::parser
 				
 				while(!peekToken("}"))
 				{
-					statement* stmt = parseStatement("statement");
+					Statement* stmt = parseStatement("Statement");
 					addStatementDistributingVariables(stmt);
 					If->ELSE->push_back(stmt);
 					
@@ -3818,7 +3821,7 @@ namespace DM14::parser
 		return If;
 	};
 
-	statement* parser::parseStruct()
+	Statement* parser::parseStruct()
 	{
 		popToken(); //struct
 		
@@ -3833,7 +3836,7 @@ namespace DM14::parser
 
 		while(!peekToken("}"))
 		{
-			declareStatement* stmt =(declareStatement*)parseStatement("statement");
+			declareStatement* stmt =(declareStatement*)parseStatement("Statement");
 			//declareStatement* stmt =(declareStatement*)parseDeclaration();
 			//extract members ....	
 			for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
@@ -3861,15 +3864,15 @@ namespace DM14::parser
 		
 		//return new NOPStatement;
 		//return nullptr;
-		return(statement*)this;
+		return(Statement*)this;
 	}
 
-	statement* parser::parseExtern()
+	Statement* parser::parseExtern()
 	{
 		popToken();
-		EXTERN* externstatment = new EXTERN;
-		externstatment->line = getToken().lineNumber;
-		externstatment->scope = scope;
+		EXTERN* externStatement = new EXTERN;
+		externStatement->line = getToken().lineNumber;
+		externStatement->scope = scope;
 		
 		int from = index+1;
 		reachToken("endextern", false, true, true, true, true);
@@ -3877,24 +3880,24 @@ namespace DM14::parser
 		
 		for(int32_t i= from; i <= to; i++)
 		{
-			externstatment->body +=(tokens->at(i)).value;
+			externStatement->body +=(tokens->at(i)).value;
 		}
 		
 		if(scope == 0)
 		{
-			ExternCodes->push_back(externstatment->body);
+			ExternCodes->push_back(externStatement->body);
 		}
 		else
 		{
-			//add externstatment; ??
+			//add externStatement; ??
 		}
 		
-		return externstatment;
+		return externStatement;
 	};
 
 
 
-	int parser::extractSplitStatements(Array<statement*>* array, Array<statement*>* splitStatements)
+	int parser::extractSplitStatements(Array<Statement*>* array, Array<Statement*>* splitStatements)
 	{
 		while(splitStatements->size())
 		{
@@ -3904,7 +3907,7 @@ namespace DM14::parser
 		return array->size();
 	}
 
-	statement* parser::parseWhile()
+	Statement* parser::parseWhile()
 	{
 		popToken(); //while
 		whileloop* While = new whileloop;
@@ -3928,7 +3931,7 @@ namespace DM14::parser
 
 		while(!peekToken("}"))
 		{
-			statement* stmt = parseStatement("statement");
+			Statement* stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			While->body->push_back(stmt);
 			
@@ -3940,7 +3943,7 @@ namespace DM14::parser
 		return While;
 	};
 
-	statement* parser::parseCase()
+	Statement* parser::parseCase()
 	{
 		CASE* Case = new CASE;
 		Case->line =(tokens->at(index)).lineNumber;
@@ -3960,7 +3963,7 @@ namespace DM14::parser
 		{
 			//nextIndex();
 			tmpScope = true;
-			statement* CCondition = NULL;
+			Statement* CCondition = NULL;
 			//CCondition = parseConditionalExpression(CCondition);
 			currentStatement = CCondition;
 			CCondition = parseStatement("expression-list");
@@ -3974,7 +3977,7 @@ namespace DM14::parser
 			//check if it peek of current ???
 			while(tokens->at(index).value != "}" && tokens->at(index).value != "[")
 			{
-				Case->Body[CCondition].push_back(parseStatement("statement"));
+				Case->Body[CCondition].push_back(parseStatement("Statement"));
 				if(!peekToken("}") && !peekToken("["))
 				{
 					nextIndex();
@@ -4327,7 +4330,7 @@ namespace DM14::parser
 			{
 				if(scner->reachToken(i, ";", false, false, true) == -1)
 				{
-					displayError(scner->getFileName(), -1,-1,"Internal Compiler error, parsing using statement in package : " + fullLibraryName);
+					displayError(scner->getFileName(), -1,-1,"Internal Compiler error, parsing using Statement in package : " + fullLibraryName);
 				}
 				i = scner->reachToken(i, ";", false, false, true);
 			}
@@ -4369,7 +4372,7 @@ namespace DM14::parser
 			else if(DM14::types::isDataType(mapTokens->at(i).value) || mapTokens->at(i).value == "void" || mapTokens->at(i).value == "volatile")
 			{
 				funcInfo finfo = parseCFunction(scner, i, DatatypeBase());
-				cerr << "||" << finfo.name << ":" << finfo.returnType << endl;
+				//cerr << "||" << finfo.name << ":" << finfo.returnType << endl;
 				if(finfo.name.size())
 				{
 					functionsInfo->push_back(finfo);
@@ -5036,16 +5039,16 @@ namespace DM14::parser
 		return idInfo();
 	}
 
-	statement* parser::parseDeclaration()
+	Statement* parser::parseDeclaration()
 	{
-		statement* result = parseDeclarationInternal();
+		Statement* result = parseDeclarationInternal();
 		popToken();
 		RequireValue(";", "Expected ; and not ", true);
 		return result;
 	}
 
 
-	statement* parser::parseDeclarationInternal()
+	Statement* parser::parseDeclarationInternal()
 	{
 		popToken();
 		declareStatement* decStatement = new declareStatement;
@@ -5088,7 +5091,7 @@ namespace DM14::parser
 			
 			tempIdentifiers->push_back(idInfo(getToken().value, 0, "", NULL));	
 			decStatement->identifiers->push_back(idInfo(getToken().value, 0, "", NULL)) ;
-			cerr << "ID : " << getToken().value << endl;
+			//cerr << "ID : " << getToken().value << endl;
 			if(!decStatement->tmpScope)
 			{
 				distributedVariablesCount++;
@@ -5291,18 +5294,18 @@ namespace DM14::parser
 				{
 					for(uint32_t i =0; i < decStatement->values.size(); i++)
 					{
-						termStatment* termstatement = new termStatment(decStatement->identifiers->at(k).name, decStatement->type);
-						termstatement->scope = scope;
+						termStatement* statement = new termStatement(decStatement->identifiers->at(k).name, decStatement->type);
+						statement->scope = scope;
 						
 						SS << i;
-						termStatment* arrayIndex = new termStatment(SS.str(), decStatement->type);
+						termStatement* arrayIndex = new termStatement(SS.str(), decStatement->type);
 						arrayIndex->scope = scope;
 						
-						termstatement->arrayIndex = arrayIndex;
-						//termstatement->identifier = true;
+						statement->arrayIndex = arrayIndex;
+						//termStatement->identifier = true;
 						
 						operationalStatement* os = new operationalStatement();
-						os->left = termstatement;
+						os->left = statement;
 						os->op = "=";
 						os->right = decStatement->values.at(i);
 						os->type = decStatement->type;
@@ -5323,7 +5326,7 @@ namespace DM14::parser
 							id.global = decStatement->global;
 							id.global = decStatement->shared;
 							id.type = decStatement->type;
-							statement* origiCurrentStatement = currentStatement;
+							Statement* origiCurrentStatement = currentStatement;
 							currentStatement = os;
 							pushModified("=", id);
 							currentStatement = origiCurrentStatement;
@@ -5347,9 +5350,9 @@ namespace DM14::parser
 				//decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
 				
 				decStatement->value = parseStatement("expression-list", &parser::parseExpressionStatement);
-				for(auto* statement : decStatement->value->distStatements)
+				for(auto* Statement : decStatement->value->distStatements)
 				{
-					decStatement->distStatements.push_back(statement);
+					decStatement->distStatements.push_back(Statement);
 				}
 
 				decStatement->value->distStatements.clear();
@@ -5367,11 +5370,11 @@ namespace DM14::parser
 				{
 					for(uint32_t k =0; k < decStatement->identifiers->size(); k++)
 					{
-						termStatment* termstatement = new termStatment(decStatement->identifiers->at(k).name, decStatement->type);
-						termstatement->scope = scope;
+						termStatement* statement = new termStatement(decStatement->identifiers->at(k).name, decStatement->type);
+						statement->scope = scope;
 						
 						operationalStatement* os = new operationalStatement();
-						os->left = termstatement;
+						os->left = statement;
 						os->op = "=";
 						os->right = decStatement->value;
 						os->type = decStatement->type;
@@ -5405,7 +5408,7 @@ namespace DM14::parser
 		for(uint32_t i = 0; i < tempIdentifiers->size(); i++)
 		{
 			SS << i;
-			termStatment* arrayIndex = new termStatment(SS.str(), decStatement->type);
+			termStatement* arrayIndex = new termStatement(SS.str(), decStatement->type);
 			arrayIndex->scope = scope;
 			
 			idInfo idinfo(tempIdentifiers->at(i).name, decStatement->scope, decStatement->type, arrayIndex);
@@ -5458,7 +5461,6 @@ namespace DM14::parser
 		
 		if(decStatement->global)
 		{
-			cerr << "GLOBALLLLLLLLLLLLLL \n\n\n\n\n\n\n";
 			globalDeclarations.push_back(decStatement);
 		}
 		
