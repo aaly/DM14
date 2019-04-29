@@ -16,7 +16,6 @@ to accomplish some goals.
 
 @TODO: the parenthed expressions should be kept and added to the EBNF too
 @TODO: xa["x"] = 10; if xa is a map only .... and map key type is "x"
-@TODO: investigate using nblock isntead of noblock
 */
 
 #include "parser.hpp"

@@ -58,6 +58,27 @@ template <class T> class Array : public std::vector<T>
 			//}
 		};
 
+		Array(std::vector<T> init) : std::vector<T>(init.begin(), init.end())
+		{
+			;
+		};
+
+		Array<T> cut(uint32_t from, uint32_t to)
+		{
+			Array<T> result(std::vector<T>(std::vector<T>(this->begin()+from, this->begin()+to)));
+			this->erase(this->begin() + from, this->begin() + to);
+			return result;
+		};
+
+		void copy(Array<T>& value)
+		{
+			for(uint32_t i =0; i < value.size(); i++)
+			{
+				push_back(value.at(i));
+			}
+
+		};
+
 		void unlock()
 		{
 			lockCount--;

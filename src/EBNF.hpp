@@ -136,75 +136,74 @@ namespace DM14
 					Array<token> tokens_stack;
 				
 					int pushToken(token tok)
-		{
-			if(tok.value.size())
-			{
-				working_tokens->push_back(tok);
-			}
-			return working_tokens->size();
-		}
+					{
+						if(tok.value.size())
+						{
+							working_tokens->push_back(tok);
+						}
+						return working_tokens->size();
+					}
 
+					token popToken(const uint32_t index)
+					{
+						if(working_tokens->size() > 0)
+						{
+							current_token = working_tokens->at(index);
+							working_tokens->remove(index);
+						}
+						else
+						{
+							//displayError("Empty pop !!!");
+							current_token = token();
+						}
+						
+						return current_token;
+					}
 
-		token popToken(const uint32_t index)
-		{
-			if(working_tokens->size() > 0)
-			{
-				current_token = working_tokens->at(index);
-				working_tokens->remove(index);
-			}
-			else
-			{
-				//displayError("Empty pop !!!");
-				current_token = token();
-			}
-			
-			return current_token;
-		}
+					token popToken()
+					{
+						if(working_tokens->size() > 0)
+						{
+							current_token = working_tokens->at(0);
+							working_tokens->erase(working_tokens->begin());
+						}
+						else
+						{
+							//displayError("Empty pop !!!");
+							current_token = token();
+						}
+						
+						return current_token;
+					}
 
-		token popToken()
-		{
-			if(working_tokens->size() > 0)
-			{
-				current_token = working_tokens->at(0);
-				working_tokens->erase(working_tokens->begin());
-			}
-			else
-			{
-				//displayError("Empty pop !!!");
-				current_token = token();
-			}
-			
-			return current_token;
-		}
+					token getToken()
+					{
+						return current_token;
+					}
 
-		token getToken()
-		{
-			return current_token;
-		}
+					token getToken(const uint32_t index)
+					{
+						if(working_tokens->size() > 0 &&
+							index < working_tokens->size())
+						{
+							return working_tokens->at(index);
+						}
+						return token();
+					}
 
-		token getToken(const uint32_t index)
-		{
-			if(working_tokens->size() > 0 &&
-				index < working_tokens->size())
-			{
-				return working_tokens->at(index);
-			}
-			return token();
-		}
-
-		int removeToken()
-		{
-			if(working_tokens->size() > 0)
-			{
-				working_tokens->erase(working_tokens->end());
-			}
-			else
-			{
-				cerr << "error removing token from the working tokens vector" << endl;
-			}
-			
-			return 0;
-		}
+					int removeToken()
+					{
+						if(working_tokens->size() > 0)
+						{
+							working_tokens->erase(working_tokens->end());
+						}
+						else
+						{
+							cerr << "error removing token from the working tokens vector" << endl;
+						}
+						
+						return 0;
+					}
 
 
 				/**
@@ -379,26 +378,23 @@ namespace DM14
 										cerr << "|||" << working_tokens->at(i).value << endl;
 									}*/
 
-									Array<token> tempTokenStack;
-									for(uint32_t i =0; i < old_tokens_size; i++)
-									{
-										tempTokenStack.push_back(popToken());
-									}
+									Array<token> tempTokenStack = working_tokens->cut(0, old_tokens_size);
 									
-									/*for(uint32_t i =0; i < working_tokens->size(); i++)
+									//for(uint32_t i =0; i < working_tokens->size(); i++)
 									{
-										cerr << "///" << working_tokens->at(i).value << endl;
-									}*/
+										//cerr << "///" << working_tokens->at(i).value << endl;
+									}
 
 									displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 									//cerr << EBNF_level << endl << flush;
 									
 									result.second =(prser->*ebnf_token.callback)();
-									
-									for(uint32_t i =0; i < tempTokenStack.size(); i++)
+								
+									working_tokens->copy(tempTokenStack);
+									/*for(uint32_t i =0; i < tempTokenStack.size(); i++)
 									{
 										pushToken(tempTokenStack.at(i));
-									}
+									}*/
 								}
 							}
 							else
