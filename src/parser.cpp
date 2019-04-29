@@ -419,17 +419,14 @@ namespace DM14
 			parseIncludesInsider("core/DM14GLOBAL.m14", "", includePath::sourceFileType::FILE_DM14);
 		}
 
-		cerr << ">>>>>>>>>> START " << ebnf.EBNF_level <<  endl << flush;
 		while(ebnf.index < tokens->size()-1)
 		{	
-			//EBNF_level = -1;
 			if(ebnf.parseEBNF(tokens, "program", &ebnf.tokens_stack).first != DM14::EBNF::ebnfResultType::SUCCESS)
 			{
 				bad_program();
 			}
 
 		}
-		cerr << "<<<<<<<<<< END " << endl << flush;
 
 		// check for the main function // errr no need for file include , the compiler is the one that should that
 		if(!Header)

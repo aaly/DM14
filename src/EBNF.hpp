@@ -115,95 +115,95 @@ namespace DM14
 	 
 		class EBNF
 		{
-				public:
+			public:
 					
-					parser* setParserInstance(parser* prser)
-					{
-						this->prser = prser;
-						return prser;
-					}
-					
-					EBNF()
-					{
-						working_tokens = &tokens_stack;
-						index = 0;
-						input_tokens_index = &index;
-					};
-					
-					Array<token>* working_tokens = nullptr;
-					Array<token>* input_tokens = nullptr;
-					int *input_tokens_index = nullptr;
-					Array<token> tokens_stack;
+				parser* setParserInstance(parser* prser)
+				{
+					this->prser = prser;
+					return prser;
+				}
 				
-					int pushToken(token tok)
+				EBNF()
+				{
+					working_tokens = &tokens_stack;
+					index = 0;
+					input_tokens_index = &index;
+				};
+				
+				Array<token>* working_tokens = nullptr;
+				Array<token>* input_tokens = nullptr;
+				int *input_tokens_index = nullptr;
+				Array<token> tokens_stack;
+			
+				int pushToken(token tok)
+				{
+					if(tok.value.size())
 					{
-						if(tok.value.size())
-						{
-							working_tokens->push_back(tok);
-						}
-						return working_tokens->size();
+						working_tokens->push_back(tok);
 					}
+					return working_tokens->size();
+				}
 
-					token popToken(const uint32_t index)
+				token popToken(const uint32_t index)
+				{
+					if(working_tokens->size() > 0)
 					{
-						if(working_tokens->size() > 0)
-						{
-							current_token = working_tokens->at(index);
-							working_tokens->remove(index);
-						}
-						else
-						{
-							//displayError("Empty pop !!!");
-							current_token = token();
-						}
-						
-						return current_token;
+						current_token = working_tokens->at(index);
+						working_tokens->remove(index);
 					}
+					else
+					{
+						//displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
 
-					token popToken()
+				token popToken()
+				{
+					if(working_tokens->size() > 0)
 					{
-						if(working_tokens->size() > 0)
-						{
-							current_token = working_tokens->at(0);
-							working_tokens->erase(working_tokens->begin());
-						}
-						else
-						{
-							//displayError("Empty pop !!!");
-							current_token = token();
-						}
-						
-						return current_token;
+						current_token = working_tokens->at(0);
+						working_tokens->erase(working_tokens->begin());
 					}
+					else
+					{
+						//displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
 
-					token getToken()
-					{
-						return current_token;
-					}
+				token getToken()
+				{
+					return current_token;
+				}
 
-					token getToken(const uint32_t index)
+				token getToken(const uint32_t index)
+				{
+					if(working_tokens->size() > 0 &&
+						index < working_tokens->size())
 					{
-						if(working_tokens->size() > 0 &&
-							index < working_tokens->size())
-						{
-							return working_tokens->at(index);
-						}
-						return token();
+						return working_tokens->at(index);
 					}
+					return token();
+				}
 
-					int removeToken()
+				int removeToken()
+				{
+					if(working_tokens->size() > 0)
 					{
-						if(working_tokens->size() > 0)
-						{
-							working_tokens->erase(working_tokens->end());
-						}
-						else
-						{
-							cerr << "error removing token from the working tokens vector" << endl;
-						}
-						
-						return 0;
+						working_tokens->erase(working_tokens->end());
 					}
+					else
+					{
+						cerr << "error removing token from the working tokens vector" << endl;
+					}
+					
+					return 0;
+				}
 
 
 				/**
@@ -685,17 +685,16 @@ namespace DM14
 				return *input_tokens_index;
 			};
 				
-				EBNF_map_t grammar;
-				parser_depth old_depth;
+			EBNF_map_t grammar;
+			int index = 0;
+			parser_depth old_depth;
+			
+			private:					
+				int EBNF_level = -1;	
+				token current_token;
+				int token_index = -1;
+				parser* prser = nullptr;
 				parser_depth old_successful_depth;
-				int								index = 0;
-				int EBNF_level = -1;
-				
-				private:					
-					
-					token current_token;
-					int token_index = -1;
-					parser* prser = nullptr;
 		};
 		
 	} /** namespace EBNF */
