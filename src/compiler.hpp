@@ -18,9 +18,8 @@
 #include <iomanip> // std::setw
 #include <sstream>
 
-namespace DM14::compiler
+namespace DM14
 {
-extern Array<DatatypeBase>	datatypes;
 
 enum compilerOptimizations
 {
@@ -31,7 +30,7 @@ enum compilerOptimizations
 class compiler
 {
 	public:
-		compiler(Array<parser::mapcode>* const);
+		compiler(Array<mapcode>* const);
 		~compiler();
 		
 		int	setVersion(const double&);
@@ -75,7 +74,7 @@ class compiler
 		int		writeDepedency(idInfo&, int);
 		void	printStatement(Statement* stmt, int indent);
 
-		static bool compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2);
+		static bool compareIncludes(DM14::includePath include1, DM14::includePath include2);
 		
 		
 	private:
@@ -89,7 +88,7 @@ class compiler
 		std::string				fName;
 		std::fstream			srcFile;
 		std::fstream			m14FileDefs;
-		Array<parser::mapcode>*	mapCodes;
+		Array<mapcode>*	mapCodes;
 		//Array < pair<string, int> >*		nodesModifiers;
 		
 		int						index; // index of mapCodes ( current file )	

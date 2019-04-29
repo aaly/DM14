@@ -21,11 +21,11 @@
 
 #include "compiler.hpp"
 
-namespace DM14::compiler
+namespace DM14
 {
 int scopeLevel = 0;
 
-compiler::compiler(Array<parser::mapcode>* const codes)
+compiler::compiler(Array<mapcode>* const codes)
 {
 	//mapCodes =	new	Array<mapcode>;
 	mapCodes = codes;
@@ -164,7 +164,7 @@ int compiler::writeLine(const std::string& output)
 	return 0;
 };
 
-/*bool compiler::compareIncludes(DM14::parser::includePath include1, DM14::parser::includePath include2)
+/*bool compiler::compareIncludes(DM14::includePath include1, DM14::includePath include2)
 {
 	if(include1.package == include2.package &&
 		include1.library == include2.library)
@@ -174,7 +174,7 @@ int compiler::writeLine(const std::string& output)
 		return false;
 }*/
 
-void cleanIncludes(std::vector<DM14::parser::includePath> &v)
+void cleanIncludes(std::vector<DM14::includePath> &v)
 {
 	auto end = v.end();
 	for(auto it = v.begin(); it != end; ++it)
@@ -265,14 +265,14 @@ int compiler::compile()
 		if(!(mapCodes->at(index)).isHeader())
 		{
 			com += "g++ " + fName;	
-			Array<DM14::parser::includePath> incs =(mapCodes->at(index)).getIncludes();
+			Array<DM14::includePath> incs =(mapCodes->at(index)).getIncludes();
 			
-			incs.push_back(DM14::parser::includePath("core", "common", DM14::parser::includePath::sourceFileType::LIBRARY));
-			incs.push_back(DM14::parser::includePath("core", "M14Helper", DM14::parser::includePath::sourceFileType::LIBRARY));
-			incs.push_back(DM14::parser::includePath("core", "Socket", DM14::parser::includePath::sourceFileType::LIBRARY));
-			//incs.push_back(DM14::parser::includePath("core", "Node", DM14::parser::includePath::sourceFileType::LIBRARY));
-			incs.push_back(DM14::parser::includePath("core", "message", DM14::parser::includePath::sourceFileType::LIBRARY));
-			incs.push_back(DM14::parser::includePath("io", "string", DM14::parser::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::includePath("core", "common", DM14::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::includePath("core", "M14Helper", DM14::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::includePath("core", "Socket", DM14::includePath::sourceFileType::LIBRARY));
+			//incs.push_back(DM14::includePath("core", "Node", DM14::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::includePath("core", "message", DM14::includePath::sourceFileType::LIBRARY));
+			incs.push_back(DM14::includePath("io", "string", DM14::includePath::sourceFileType::LIBRARY));
 
 			cleanIncludes(incs);
 			
@@ -280,12 +280,12 @@ int compiler::compile()
 			{
 				std::string headerName;
 
-				if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
+				if(incs.at(i).includeType == DM14::includePath::sourceFileType::FILE_DM14)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 					//headerName = headerName.substr(headerName.find_last_of(pathSeperator));
 				}
-				else if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
+				else if(incs.at(i).includeType == DM14::includePath::sourceFileType::FILE_C)
 				{
 					//headerName = incs.at(i).library + ".hpp";
 				}
@@ -400,12 +400,12 @@ int compiler::compileIncludes()
 {
 	// copy includes
 	
-	std::vector<DM14::parser::includePath> incs =(mapCodes->at(index)).getIncludes();
+	std::vector<DM14::includePath> incs =(mapCodes->at(index)).getIncludes();
 	std::string headerName;
 	
 	for(uint32_t i =0; i < incs.size(); i++)
 	{
-		if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_DM14)
+		if(incs.at(i).includeType == DM14::includePath::sourceFileType::FILE_DM14)
 		{
 			headerName = incs.at(i).package + ".hpp";
 			if(headerName.find_last_of(pathSeperator) != std::string::npos)
@@ -413,7 +413,7 @@ int compiler::compileIncludes()
 				headerName = headerName.substr(headerName.find_last_of(pathSeperator)+1);
 			}
 		}
-		else if(incs.at(i).includeType == DM14::parser::includePath::sourceFileType::FILE_C)
+		else if(incs.at(i).includeType == DM14::includePath::sourceFileType::FILE_C)
 		{
 			headerName = incs.at(i).package + ".hpp";
 		}
@@ -678,14 +678,7 @@ int compiler::compileFunction()
 		
 		if((funcs->at(fIndex)).name == "main" )
 		{
-			writeLine("Distributed.serve(true);");
-			if((mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
-			{
-				//write("return ");
-				//write((mapCodes->at(index)).getFunctions()->at(fIndex).returnID);
-				//writeLine(";");
-			}
-			//writeLine("while(true){}");
+			writeLine("Distributed.setServe(true);");
 		}
 		
 		if((mapCodes->at(index)).getFunctions()->at(fIndex).returnID != "NIL")

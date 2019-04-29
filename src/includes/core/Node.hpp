@@ -147,7 +147,7 @@ class Node
 		string			receiveMessage(nodePeer* node);
 		int			setServer(const string& address, const string& port, const int& clients);
 		int			startListener(bool);
-		int			serve(bool);
+		int			setServe(bool);
 		nodeThread		listenerThread;
 		nodeThread		listenerThread2;
 		int			nodesMaximum;
@@ -214,7 +214,7 @@ class Node
 		long		getNodeIndex(nodePeer& node);
 	
 
-		MessageTCPSocket	Self;
+		MessageTCPSocket	self;
 		nodePeerArray		clients;
 		nodePeerArray		nodes;
 		nodeMessageArray	messagesQueue;
@@ -222,7 +222,7 @@ class Node
 		string			bindPort;
 		int			clientsSize;
 		volatile bool		readready;
-		atomicBool		Serve;
+		atomicBool		serve;
 		int			pollTrigger[2];
 		int			EPollFD;
 		

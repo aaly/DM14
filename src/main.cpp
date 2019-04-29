@@ -82,15 +82,15 @@ int main(int argc, char** argv)
 	
 	//cout << " Scanning ... [" << fname << "]" << endl;
 	displayInfo(" Scanning  ... [" + fname + "]");
-	scanner* scner = new scanner(fname);
+	DM14::scanner* scner = new DM14::scanner(fname);
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
-	//scner->printTokens();
+	scner->printTokens();
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
-	DM14::parser::parser* prser = new DM14::parser::parser(scner->getTokens(), fname, false);
+	DM14::parser* prser = new DM14::parser(scner->getTokens(), fname, false);
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	
 	
 	displayInfo(" Compiling  ... [" + fname + "]");
-	DM14::compiler::compiler* Compiler = new DM14::compiler::compiler(prser->getMapCodes());
+	DM14::compiler* Compiler = new DM14::compiler(prser->getMapCodes());
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		

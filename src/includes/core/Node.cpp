@@ -113,7 +113,7 @@ string nodePeer::recvMessage()
 
 Node::Node()
 {
-	Self.setNonBlocking(true);
+	self.setNonBlocking(true);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pollTrigger) < 0)
 	{
@@ -124,7 +124,7 @@ Node::Node()
     EPollFD = epoll_create1(EPOLL_CLOEXEC);
     
 	pollOnSocket(pollTrigger[1], EPOLLIN);
-	pollOnSocket(Self.getSocketDescriptor(), EPOLLIN|EPOLLOUT);
+	pollOnSocket(self.getSocketDescriptor(), EPOLLIN|EPOLLOUT);
 
 	readready = false;
 	dataVectorReady = false;
@@ -293,7 +293,7 @@ int Node::setServer(const string& address, const string& port, const int& client
 	bindPort = port;
 	clientsSize = clients;
 	
-	if (Self.setLocalAddressAndPort(localIP, bindPort) == -1)
+	if (self.setLocalAddressAndPort(localIP, bindPort) == -1)
 	{
 		displayError("Error starting own server");
 	}
@@ -371,14 +371,14 @@ nodePeer* Node::findNodeByFd(int fd)
 void* Node::listener(void* par) // thread;
 {
 
-	Self.listen(clientsSize);
-	Serve = true;
+	self.listen(clientsSize);
+	serve = true;
 	int eventsnum = 100;
 	//struct epoll_event events[eventsnum];
 	struct epoll_event* events = (struct epoll_event*)calloc(eventsnum, sizeof(struct epoll_event ));
 	
 	// keep loop and accept new clients, push them to clients;
-	while(Serve)
+	while(serve)
 	{
 		processMessages();
 		int rc = epoll_wait(EPollFD, events, eventsnum, -1);
@@ -414,11 +414,11 @@ void* Node::listener(void* par) // thread;
 			
 			
 			//1. accept clients if exists; should be while and not if ?
-			if (events[i].data.fd == Self.getSocketDescriptor())// && (monitoredDescriptors[i].revents & POLLIN))
+			if (events[i].data.fd == self.getSocketDescriptor())// && (monitoredDescriptors[i].revents & POLLIN))
 			{
 				MessageTCPSocket* tcpsock = NULL;
 				
-				while ( (tcpsock=Self.accept()) != NULL)
+				while ( (tcpsock=self.accept()) != NULL)
 				{					
 					//int poll_result = pollOnSocket(nodes.at(index).peer->getSocketDescriptor());
 					int poll_result = pollOnSocket(tcpsock->getSocketDescriptor());
@@ -688,8 +688,8 @@ int Node::handleRequest(nodeMessage& R)
 			reply.setType(Node::R_JOIN_BOOTSTRAP);
 		}
 		
-		reply.pushToken(Self.getLocalAddress());
-		reply.pushToken(numberToStr(Self.getLocalPort()));
+		reply.pushToken(self.getLocalAddress());
+		reply.pushToken(numberToStr(self.getLocalPort()));
 		reply.pushToken(numberToStr(nodeNumber));
 		
 
@@ -1019,14 +1019,14 @@ int Node::handleRequest(nodeMessage& R)
 			variable->init=true;
 		}
 
-        if ( variable->recurrent || variable->channel )
-        {
-            variable->buffer->push_back(object);
-        }
-        else
-        {
-            variable->stack = (void*)object;
-        }
+	        if (variable->recurrent || variable->channel)
+	        {
+	            variable->buffer->push_back(object);
+	        }
+	        else
+	        {
+	            variable->stack = (void*)object;
+	        }
 
 		// 3 get the value	
 		*object += R.getToken(3, size);
@@ -1094,7 +1094,7 @@ int Node::startListener(bool wait)
 };
 
 
-int Node::serve(bool wait)
+int Node::setServe(bool wait)
 {
 	if (wait)
 	{
@@ -1127,7 +1127,7 @@ int Node::Exit(int status)
 		nodes.at(n).sendMessage(&Req);
 	}
 	nodes.unlock();
-	Serve = false;
+	serve = false;
 	triggerEvents();
 	if (!listenerThread.wait())
 	{
