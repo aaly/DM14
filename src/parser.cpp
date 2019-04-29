@@ -16,6 +16,7 @@ to accomplish some goals.
 
 @TODO: the parenthed expressions should be kept and added to the EBNF too
 @TODO: xa["x"] = 10; if xa is a map only .... and map key type is "x"
+@TODO: investigate using nblock isntead of noblock
 */
 
 #include "parser.hpp"
@@ -2282,7 +2283,6 @@ namespace DM14
 					if(i != from) /** not a prefix operator like ++x */
 					{
 						auto* temp = extract(from, i-1);
-						cerr << "parsing left " << endl;
 						opStatement->left = parseOpStatement(from, i-1, stmtType, opStatement->scopeLevel, currentStatement, parent, opStatement->op);
 						opStatement->absorbDistStatements(opStatement->left);
 						restore(temp);
@@ -2290,7 +2290,6 @@ namespace DM14
 						{
 							opStatement->type = opStatement->left->type;
 						}
-						cerr << "done parsing left " << endl;
 					}
 			
 					if(i<=to)

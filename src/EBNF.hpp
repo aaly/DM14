@@ -385,10 +385,10 @@ namespace DM14
 										tempTokenStack.push_back(popToken());
 									}
 									
-									for(uint32_t i =0; i < working_tokens->size(); i++)
+									/*for(uint32_t i =0; i < working_tokens->size(); i++)
 									{
 										cerr << "///" << working_tokens->at(i).value << endl;
-									}
+									}*/
 
 									displayInfo("Calling callback for rule : " +  ebnf_token.expansion);
 									//cerr << EBNF_level << endl << flush;

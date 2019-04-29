@@ -1,6 +1,5 @@
 ~~ all variables outside main must be nodist by default ! or we get error at compiling
 
-with io use *
 with io		 use io
 with io      use File
 with io      use string
@@ -32,7 +31,7 @@ struct nodeInfo
 	location Point_st;
 }
 
-~~processNodeInformation (distanceUpdateValue int, nodeID string->);
+processNodeInformation (distanceUpdateValue int, nodeID string->);
 monitorBoat (->);
 findNodeIndex(nodeID string -> nodeIndex int);
 updateAverageDistance(->);
@@ -54,13 +53,220 @@ main (args string -> result int)
 	objectMonitor nodist global objectDistance;
 	
 	Init nodist global bool = false;
+	while [str_size(Line)]
+	{
+		if [ str_at(Line, 0) != '~' ]
+		{
+			objectMonitor.realWidth = strToNumber(getToken(Line, ';', 0));
+			objectMonitor.realHeight = strToNumber(getToken(Line, ';', 1));
+			objectMonitor.realDistance = strToNumber(getToken(Line, ';', 2));
+			objectMonitor.pixelsPerCM = strToFloat(getToken(Line, ';', 3));
+			objectMonitor.focalLength = strToFloat(getToken(Line, ';', 4));
+
+			currentToken nodist global string = getToken(Line, ';', 5);
+			hsv1 nodist global int = strToNumber(getToken(currentToken, ',', 0));
+			hsv2 nodist global int = strToNumber(getToken(currentToken, ',', 1));
+			hsv3 nodist global int = strToNumber(getToken(currentToken, ',', 2));
+			objectMonitor.setLowHSV(hsv1, hsv2, hsv3);
+
+			~~currentToken nodist string = getToken(Line, ';', 6);
+			currentToken = getToken(Line, ';', 6);
+			hsv1  = strToNumber(getToken(currentToken, ',', 0));
+			hsv2  = strToNumber(getToken(currentToken, ',', 1));
+			hsv3  = strToNumber(getToken(currentToken, ',', 2));
+			objectMonitor.setHighHSV(hsv1, hsv2, hsv3);
+
+			objectMonitor.minimumArea = strToNumber(getToken(Line, ';', 7));
+
+			nodesInfo[0].location.x = strToNumber(getToken(Line, ';', 8));
+
+			nodesInfo[0].location.y = strToNumber(getToken(Line, ';', 9));
+		
+			~~nspill("Args count : " + numberToStr(tokenCount(Line,';')+1));
+			
+			Init = true;
+			break;
+		}
+		Line = file.readLine();
+	}
+	
+	if [!Init]
+	{
+		nspill("Error reading configuration file");
+		Distributed.Exit(-1);
+		return -1;
+	}
+
+	~~nspill("Args : " + args);
+	~~nspill("Args count : " + numberToStr(tokenCount(args,' ')+1));
+	
+	for [i int=0; i <= tokenCount(args,' '); i++;]
+	{
+		if [getToken(args, ' ', i) == "-C"]
+		{
+			objectMonitor.setSrcType(sourceType::CAMSRC);
+		}
+		else if [getToken(args, ' ', i) == "-I"]
+		{
+			objectMonitor.setSrcType(sourceType::IMAGESRC);
+		}
+		else if [getToken(args, ' ', i) == "-V"]
+		{
+			objectMonitor.setSrcType(sourceType::VIDEOSRC);
+		}
+		else
+		{
+			objectMonitor.setSrcPath(getToken(args, ' ', i));
+		}
+		~~nspill("arg : " + getToken(args, ' ', i));
+	}
+		
+	objectMonitor.Init();
+	
+	thread monitorBoat();
+	
+	~~~~~~~~~~~~~~~~~~~~~~~~
 	
 	while [true]
 	{
 		~~ do not pass directly so we block for it !
-		localDistanceUpdate nodist global int = lastUpdate;
-		~~thread processNodeInformation(localDistanceUpdate, @lastUpdate);
+		localDistanceUpdate nodist global int = lastUpdate; 
+		thread processNodeInformation(localDistanceUpdate, @lastUpdate);
 		~~ do not call a thread directly like the following !
 		~~ thread processNodeInformation(lastUpdate, @lastUpdate);
 	}
+}
+
+processNodeInformation (distanceUpdateValue int, nodeID string->)
+{
+	nodeindex nodist int = findNodeIndex(nodeID);
+	if [ nodeindex != -1 ]
+	{
+		displayInfo("remote update1 :"+ numberToStr(distanceUpdateValue)+ "cm");
+		displayInfo("remote update1 :"+ nodeID);
+		nodesInfo[nodeindex].readValue = distanceUpdateValue;
+	}
+	else
+	{
+	
+		displayInfo("remote update2 :"+ numberToStr(distanceUpdateValue) + "cm");
+		displayInfo("remote update2 :"+ nodeID);
+		nodesInfo[nodesInfoCurrentSize].nodeID = nodeID;
+		nodesInfo[nodesInfoCurrentSize].readValue = distanceUpdateValue;
+		nodesInfoCurrentSize++;
+	}
+	
+	~~displayInfo("remote update :"+ numberToStr(distanceUpdateValue));
+	~~displayInfo("local update :"+ numberToStr(localLastUpdate));
+	~~displayInfo("average distance :"+ numberToStr((distanceUpdateValue + localLastUpdate) / 2));
+	updateAverageDistance();
+}
+
+monitorBoat(->)
+{
+	Timer nodist global Time;
+	Timer.updateTime();
+	
+	Timer2 nodist global Time;
+	timerDiff nodist global int;
+	while [objectMonitor.newDataAvailable()]
+	{
+		Timer2.updateTime();
+		timerDiff = Timer2.Substract(Timer);
+		if[timerDiff >= 1]
+		{
+			localLastUpdate = objectMonitor.getCurrentDistance();
+			if [localLastUpdate > -1]
+			{
+				lastUpdate = localLastUpdate;
+				Timer.updateTime();
+				displayInfo("Local Distance : " + numberToStr(localLastUpdate) + "cm");
+				
+				~~Distributed.Exit(-1);
+				~~Exit(1);
+				
+				updateAverageDistance();
+			}
+		}
+		~~Sleep(1);
+		~~USleep(100);
+	}
+	displayInfo("end");
+}
+
+findNodeIndex(nodeID string -> nodeIndex int)
+{
+	for [i int = 0; i < nodesInfoSize; i++;]
+	{
+		if [nodesInfo[i].nodeID == nodeID]
+		{
+			return i;
+		}
+	}
+	
+	return -1;
+}
+
+
+updateAverageDistance(->result int)
+{
+	size nodist global int = nodesInfoCurrentSize;
+	totalDistance nodist global int = 0;
+	averageCoordinates nodist global Point_st;
+	
+	for [i int = 1; i < size; i++;]
+	{
+		calculateCoordinates(i);
+		~~totalDistance = totalDistance + nodesInfo[i].readValue;
+		~~averageCoordinates.x = averageCoordinates.x nodesInfo[i].
+	}
+	
+	if[size < 1]
+	{
+		return 0;
+	}
+	
+	if [localLastUpdate > 0]
+	{
+		size = size+1;
+		totalDistance = totalDistance + localLastUpdate;
+	}
+	
+	~~displayInfo("Size : " + numberToStr(size));
+	~~displayInfo("Total : " + numberToStr(totalDistance));
+
+	displayInfo("Average Distance : " + numberToStr(totalDistance/size) + "cm");
+}
+
+
+calculateCoordinates(nodeIndex int -> loc Point_st)
+{
+	~~ calculate the distance between our node and the other node
+	Distance nodist float = FAbsoulte(nodesInfo[0].location.x - nodesInfo[nodeIndex].location.x) + FAbsoulte(nodesInfo[nodeIndex].location.y - nodesInfo[nodeIndex].location.y);
+
+	if [Distance > (nodesInfo[0].distance + nodesInfo[nodeIndex].distance)]
+	{
+		displayInfo("no intersection points exist and the circles are separate.");
+	}
+	else if [Distance < FAbsoulte(nodesInfo[0].distance - nodesInfo[nodeIndex].distance)]
+	{
+		displayInfo("no intersection points exist, as one circle contains the other.");
+	}
+	else if [(Distance == 0) && (nodesInfo[0].distance == nodesInfo[nodeIndex].distance)]
+	{
+		displayInfo(" circles are coincident and there is an infinite number of solutions");
+	}
+		
+	a nodist float;
+	a = (((nodesInfo[nodeIndex].distance*nodesInfo[nodeIndex].distance) - (nodesInfo[0].distance*nodesInfo[0].distance)) + (Distance*Distance)) / (2*Distance);
+	b nodist float = Distance - a;
+
+	midPoint nodist Point_st;
+	midPoint.x = ((a*nodesInfo[0].location.x) + (b*nodesInfo[nodeIndex].location.x))/ Distance;
+	midPoint.y = ((a*nodesInfo[0].location.y) + (b*nodesInfo[nodeIndex].location.y)) / Distance;
+
+	T nodist float = Sqrtf(nodesInfo[0].distance * nodesInfo[0].distance)- (b*b);
+
+	loc.x = midPoint.x + (T*((nodesInfo[0].location.y-nodesInfo[nodeIndex].location.y)/Distance));
+	loc.y = midPoint.y + (T*((nodesInfo[0].location.x-nodesInfo[nodeIndex].location.x)/Distance));
 }
