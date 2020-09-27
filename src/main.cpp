@@ -86,11 +86,11 @@ int main(int argc, char** argv)
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
-	scner->printTokens();
+	//scner->printTokens();
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
-	DM14::parser* prser = new DM14::parser(scner->getTokens(), fname, false);
+	DM14::Parser* prser = new DM14::Parser(scner->getTokens(), fname, false);
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		

@@ -93,12 +93,12 @@ namespace DM14
 
 
 
-	class parser
+	class Parser
 	{
 		public:
 		
-			 parser(Array<token>*, const string&, const bool);
-			~parser();
+			 Parser(Array<token>*, const string&, const bool);
+			~Parser();
 
 			int							nextIndex();
 			Array<ast_function>*			getFunctions();
@@ -126,7 +126,6 @@ namespace DM14
 			//DatatypeBase				parseClass();
 			Statement*					parseExtern();
 			Statement*					parseLink();
-			Statement*					parseStatement(const std::string starting_rule,  EBNF::parser_callback = nullptr);
 			Statement*					parseDistribute();
 			Statement*					parseReset();
 			Statement*					parseSetNode();
@@ -140,6 +139,7 @@ namespace DM14
 			int							increaseScope(Statement*);
 			int							decreaseScope();
 			int							parseIncludesInsider(const string&, const string&, const includePath::sourceFileType);
+			Statement*					parseStatement(const std::string starting_rule, EBNF::parser_callback custom_callback = nullptr);
 			//string 						getDataType(const string&);
 			
 			// helper functions
@@ -214,8 +214,10 @@ namespace DM14
 			int addIncludePath(string path);
 			
 			Statement*					bad_program();
-			private:
-
+			string							fName;
+			
+		private:
+				Array<token>* tokens;
 				DM14::EBNF::EBNF ebnf;
 
 				Array<DatatypeBase>	mapcodeDatatypes;
@@ -231,8 +233,7 @@ namespace DM14
 				bool							globalNoDist;
 				Array<Statement*>	globalDeclarations;
 				Array<Statement*>	globalDefinitions;
-				string							fName;
-				Array<token>*			tokens;
+				
 				int								scope;
 				int								distributedScope;
 				bool							Header;

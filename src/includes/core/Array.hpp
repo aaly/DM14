@@ -1,12 +1,20 @@
+/**
+@file             Array.hpp
+@brief            Array
+@details          Array class, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-current
+@version          1.1a
+@copyright        See file "/license"
+*/
+
 #ifndef	ARRAY_HPP
 #define	ARRAY_HPP
 
 class vector;
 
 #include <vector>
-//#include <deque>
 #include <iostream>
-//#include <string>
 #include <mutex.hpp>
 #include <stdio.h>
 
@@ -24,17 +32,15 @@ typedef spinLock Mutex;
 template <class T> class Array : public std::vector<T>
 {
 	public:
-	
-		//string name;
+
 		int lockCount;
-		Array(unsigned long n = 0, const T& val = T())
+		Array()
 		{		
-			//resize(n,val);
+		};
+		
+		Array(uint64_t n, const T& val = T()) : std::vector<T>(n, val)
+		{		
 			lockCount = 0;
-			for (unsigned long i =0; i < n; i++)
-			{
-				push_back(val);
-			}
 		};
 
 		void lock()
@@ -194,8 +200,13 @@ template <class T> class Array : public std::vector<T>
 			appendAfterList.clear();
 			return 0;
 		};
-		void			remove(unsigned int i){this->erase(this->begin()+i);};
-		//int			remove(int i);
+		
+		void remove(uint32_t i)
+		{
+			//@TODO: throw exception !
+			this->erase(this->begin()+i);
+		};
+
 	//private:
 		std::vector<T> 	appendBeforeList;
 		std::vector<T> 	appendAfterList;
