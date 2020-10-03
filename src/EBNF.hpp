@@ -30,14 +30,17 @@ namespace DM14
 				int64_t input_tokens_index = 0;
 				bool operator <(const parser_depth& depth)
 				{
+					bool result = false;
 					if(input_tokens_index < depth.input_tokens_index)
 					{
-						return true;
+						result = true;
 					}
 					else
 					{
-						return false;
+						result = false;
 					}
+					
+					return result;
 				};
 
 				uint32_t print()
@@ -122,7 +125,12 @@ namespace DM14
 						cerr << " ";
 					}
 					
-					cerr << "Rule : " << rule << " nested_stacks size :" << nested_stacks.size() << endl;
+					cerr << "Rule : " << rule << " nested_stacks size:" << nested_stacks.size() << " tokens:[";
+					for(auto token : tokens)
+					{
+						cerr << token.value << ",";
+					}
+					cerr << "]" << endl;
 					for(auto nested_stack : nested_stacks)
 					{
 						nested_stack.Print(indent+1);
@@ -164,12 +172,28 @@ namespace DM14
 				
 				EBNF()
 				{
-					working_tokens = &tokens_stack;
 					index = 0;
+					working_tokens = &tokens_stack;
 					input_tokens_index = &index;
 				};
+				
+				
+				
+				int32_t nextIndex()
+				{
+					if(working_tokens->size() > 0 &&
+						index < working_tokens->size())
+					{
+						index++;
+					}
+					else
+					{
+						displayError("prser>fName", (tokens->at(getIndex())).lineNumber,(tokens->at(getIndex())).columnNumber,"Unexpected EOF");
+					}
+					return index;
+				};
 			
-				int pushToken(token tok)
+				int32_t pushToken(token tok)
 				{
 					if(tok.value.size())
 					{
@@ -178,54 +202,8 @@ namespace DM14
 					return working_tokens->size();
 				}
 
-				token popToken(const uint32_t index)
-				{
-					if(working_tokens->size() > 0)
-					{
-						current_token = working_tokens->at(index);
-						working_tokens->remove(index);
-					}
-					else
-					{
-						displayError("Empty pop !!!");
-						current_token = token();
-					}
-					
-					return current_token;
-				}
-
-				token popToken()
-				{
-					if(working_tokens->size() > 0)
-					{
-						current_token = working_tokens->at(0);
-						working_tokens->erase(working_tokens->begin());
-					}
-					else
-					{
-						displayError("Empty pop !!!");
-						current_token = token();
-					}
-					
-					return current_token;
-				}
-
-				token getToken()
-				{
-					return current_token;
-				}
-
-				token getToken(const uint32_t index)
-				{
-					if(working_tokens->size() > 0 &&
-						index < working_tokens->size())
-					{
-						return working_tokens->at(index);
-					}
-					return token();
-				}
-
-				int removeToken()
+		
+				int32_t removeToken()
 				{
 					if(working_tokens->size() > 0)
 					{
@@ -236,7 +214,7 @@ namespace DM14
 						cerr << "error removing token from the working tokens vector" << endl;
 					}
 					
-					return 0;
+					return working_tokens->size();
 				}
 
 				
@@ -291,7 +269,7 @@ namespace DM14
 				};
 
 				/** @details print the Extended BNF grammar */
-				int printEBNF()
+				int32_t printEBNF()
 				{
 					EBNF_map_t::iterator it;
 
@@ -404,7 +382,7 @@ namespace DM14
 					return 0;
 				};
 
-				int advance_EBNFindex(uint16_t steps = 1)
+				int32_t advance_EBNFindex(uint16_t steps = 1)
 				{
 					for(uint16_t i =0; i < steps; i++)
 					{
@@ -422,7 +400,7 @@ namespace DM14
 					return *input_tokens_index;
 				};
 
-				int deadvance_EBNFindex(uint16_t steps = 1)
+				int32_t deadvance_EBNFindex(uint16_t steps = 1)
 				{
 					for(uint16_t i =0; i < steps; i++)
 					{
@@ -448,16 +426,23 @@ namespace DM14
 					}
 				};
 				
+				const int32_t getIndex()
+				{
+					return index;
+				};
 				
-				Statement* parseStatement(Statement* output, const std::string starting_rule = "", parser_callback custom_callback = nullptr)
+				
+				
+				Statement* parseStatement(Statement* output, const std::string starting_rule, parser_callback custom_callback)
 				{
 					Statement* retStmt = output;
-						
-					int *temp_input_tokens_index_ptr = input_tokens_index;
-					int temp_input_tokens_index = 0;
+					
+					
+					int32_t *temp_input_tokens_index_ptr = input_tokens_index;
+					int32_t temp_input_tokens_index = 0;
 					input_tokens_index = &temp_input_tokens_index;
 					Array<token>* output_tokens = new Array<token>();
-					int working_tokens_size_before = working_tokens->size();
+					int32_t working_tokens_size_before = working_tokens->size();
 					
 					rule_groups_depth = 0;
 				
@@ -502,12 +487,68 @@ namespace DM14
 						//displayError(prser->fName, errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
 						displayError("prser->fName", errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
 					}
-		
+
 					return retStmt;
 				};
 				
+				int32_t setIndex(int32_t index)
+				{
+					this->index = index;
+					return this->index;
+				}
+							
+				token getToken(const uint32_t index)
+				{
+					if(working_tokens->size() > 0 &&
+						index < working_tokens->size())
+					{
+						return working_tokens->at(index);
+					}
+					return token();
+				}
+
+
+				token getToken()
+				{
+					return current_token;
+				}
+
+
+
+				token popToken(const uint32_t index)
+				{
+					if(working_tokens->size() > 0)
+					{
+						current_token = working_tokens->at(index);
+						working_tokens->remove(index);
+					}
+					else
+					{
+						displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
+
+				token popToken()
+				{
+					if(working_tokens->size() > 0)
+					{
+						current_token = working_tokens->at(0);
+						working_tokens->erase(working_tokens->begin());
+					}
+					else
+					{
+						displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
+				
+				
 				EBNF_map_t 		grammar;
-				int 			index = 0;
 				parser_depth 	old_depth;
 				Array<token>*	tokens;
 				Array<token>* working_tokens = nullptr;
@@ -518,7 +559,7 @@ namespace DM14
 				/**
 				 * @details This function takes a set of input tokens, and a start map key, and a pointer to the output tokens vector
 				 */
-				ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens)
+				ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens, parser_callback callback = nullptr)
 				{
 					//cerr << "inside parseEBF : " << start_map_index << " :" <<  *input_tokens_index << endl;
 					if(!grammar[start_map_index].size())
@@ -559,6 +600,9 @@ namespace DM14
 						localInsideGroup = true;
 					}
 
+					uint32_t current_working_tokens_size = output_tokens->size();
+
+
 					/// loop over std::vector<grammar_token_array_t>
 					for(uint32_t i = 0; i < grammar[start_map_index].size() && continue_searching_rules == true; i++)
 					{
@@ -572,12 +616,12 @@ namespace DM14
 						/** loop over std::vector<EBNF_entity_t> */
 						grammar_rule_t current_rule = grammar[start_map_index].at(i);
 						//DELETE uint32_t old_stack_size = tokens_stack.size();
-						int rule_old_index = *input_tokens_index; /// used for ONLY_ONE rules
-						
+						int32_t rule_old_index = *input_tokens_index; /// used for ONLY_ONE rules
+
 						for(uint32_t k = 0; k < current_rule.tokens.size() && continue_searching_rules == true; k++)
 						{
 							EBNF_token_t ebnf_token = current_rule.tokens.at(k);
-							int token_old_index = *input_tokens_index; /// used for ONLY_ONE rules
+							int32_t token_old_index = *input_tokens_index; /// used for ONLY_ONE rules
 							/** process the invidual token first */
 							ebnfResult previous_result = result;
 							result.status = ebnfResultType::FAILURE; /// initial value assumes error , prove otherwise
@@ -618,11 +662,33 @@ namespace DM14
 							}
 							else if(ebnf_token.tokenType == EXPANSION_TOKEN)
 							{
-								auto expansion_result = parseEBNF(input_tokens, ebnf_token.expansion, output_tokens);
+								auto expansion_result = parseEBNF(input_tokens, ebnf_token.expansion, output_tokens, ebnf_token.callback);
 								result.status = expansion_result.status;
 								if(result.status == ebnfResultType::SUCCESS)
 								{
-									result.stack.nested_stacks.push_back(expansion_result.stack);
+									if(groupByRules[ebnf_token.expansion])
+									{
+										result.stack.nested_stacks.push_back(expansion_result.stack);
+									}
+									
+									//
+									
+									/*if(groupByRules[ebnf_token.expansion])
+									{
+										callstack_t expansion_stack;
+										expansion_stack.expansion =  ebnf_token.expansion;
+										expansion_stack.rule =  start_map_index;
+										expansion_stack.callback =  ebnf_token.callback;
+										expansion_stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
+										result.stack.nested_stacks.push_back(expansion_stack);
+									}
+									else
+									{
+										for(auto& token : expansion_result.stack.tokens)
+										{
+											result.stack.tokens.push_back(token);
+										}
+									}*/
 								}
 							}
 							else if(ebnf_token.tokenType == SINGLE_OP_TOKEN)
@@ -689,6 +755,7 @@ namespace DM14
 
 								if(ebnf_token.tokenType != EXPANSION_TOKEN) /// only terminals
 								{
+									
 									advance_EBNFindex();
 								}
 								else
@@ -715,10 +782,10 @@ namespace DM14
 										///cerr << endl << endl << "nested rule : " << nested_stack.expansion << " / tokens size : " << nested_stack.tokens.size() << endl;
 										///cerr << endl << endl << "main rule : " << result.stack.rule << " / nested stacks size : " << result.stack.nested_stacks.size() << endl;
 										
-										result.stack.expansion =  ebnf_token.expansion;
-										result.stack.rule =  start_map_index;
-										result.stack.callback =  ebnf_token.callback;
-										result.stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
+										///result.stack.expansion =  ebnf_token.expansion;
+										///result.stack.rule =  start_map_index;
+										///result.stack.callback =  ebnf_token.callback;
+										///result.stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
 									}
 								}
 							}
@@ -732,7 +799,7 @@ namespace DM14
 								#if PARSER_EBNF_SHOW_TRACE == 1
 								cerr << string(EBNF_level, ' ') << "...PROCESSING TOKEN : " << ebnf_token.expansion << " => fail " << endl << flush;
 								#endif
-								int diff = *input_tokens_index - token_old_index;
+								int32_t diff = *input_tokens_index - token_old_index;
 								deadvance_EBNFindex(diff);
 							}
 
@@ -816,14 +883,38 @@ namespace DM14
 
 						if(result.status == ebnfResultType::FAILURE)
 						{
-							int diff = *input_tokens_index - rule_old_index;
+							int32_t diff = *input_tokens_index - rule_old_index;
 							deadvance_EBNFindex(diff);
 						}
+						else
+						{
+							//if(groupByRules[start_map_index] && grammar.count(start_map_index))
+							///if(grammar.count(start_map_index))
+							{
+								//result.stack.expansion =  ebnf_token.expansion;
+								///result.stack.rule =  start_map_index;
+								//result.stack.callback =  ebnf_token.callback;
+								///result.stack.tokens =  working_tokens->cut(current_working_tokens_size, working_tokens->size());
+							}
+						}
 					}
+					
 
-					EBNF_level--;
-					working_tokens = current_working_tokens;
-					this->input_tokens = current_input_tokens;
+					if(result.status == ebnfResultType::SUCCESS && groupByRules[start_map_index])
+					{
+						
+						result.stack.callback = callback;
+						result.stack.rule =  start_map_index;
+						result.stack.tokens =  working_tokens->cut(current_working_tokens_size, working_tokens->size());
+						
+						cerr << "SUCCESS:" << start_map_index << " [";
+						for(auto& token : result.stack.tokens)
+						{
+							std::cerr << token.value<< ",";
+						}
+						
+						cerr << " ]" << endl;
+					}
 					
 					if(localInsideGroup)
 					{
@@ -831,20 +922,32 @@ namespace DM14
 						rule_groups_depth--;
 					}
 					
+					
+					EBNF_level--;
+					working_tokens = current_working_tokens;
+					this->input_tokens = current_input_tokens;
+					
 					return result;
 				};
 				
+				
+				
+				
 				std::map<std::string, bool> groupByRules; 	/** list of the groups to be used in the for the parseEBNF fuction */
-				int EBNF_level = -1; 				/** current EBNF level */	
-				token current_token; 				/** current poped token */
-				int token_index = -1; 				/** internal token index */
+				int32_t EBNF_level = -1; 				/** current EBNF level */	
+				
+				int32_t token_index = -1; 				/** internal token index */
 				Parser* prser = nullptr; 			/** internal parser pointer, used for the callbacks */
 				parser_depth old_successful_depth; 		/** lat successfil EBND parsed statement  */
 				callstack_t callStack; 				/** */
 				uint32_t rule_groups_depth = 0; 	/** counter of the current ebnf group level inside parseEBNF */
 				uint32_t max_rule_groups_depth = 2; 	/** maximum level of the ebnf groups depth */
-				int *input_tokens_index = nullptr;
+				int32_t *input_tokens_index = nullptr;
 				Array<token> tokens_stack;
+				
+				int32_t 			index = 0;
+				token current_token; 				/** current poped token */
+
 		};
 	} /** namespace EBNF */
 } /** namespace DM14 */

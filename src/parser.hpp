@@ -100,7 +100,6 @@ namespace DM14
 			 Parser(Array<token>*, const string&, const bool);
 			~Parser();
 
-			int							nextIndex();
 			Array<ast_function>*			getFunctions();
 			Array<string>*				getExternCodes();
 			//multimap<string,string>		getIncludes();
@@ -219,6 +218,10 @@ namespace DM14
 		private:
 				Array<token>* tokens;
 				DM14::EBNF::EBNF ebnf;
+				Array<EBNF::callstack_t> stackList; /// the stack nodes produced the the EBNF Parser
+				
+				token current_token; 				/** current poped token */
+				Array<token>* working_tokens = nullptr;
 
 				Array<DatatypeBase>	mapcodeDatatypes;
 				
@@ -277,6 +280,15 @@ namespace DM14
 				bool restore(std::vector<token>*);
 				std::vector<token>* extract(int32_t from, int32_t to);
 				//std::vector<token>* extract_temp_vector;
+				
+				
+				/*token popToken();
+				token popToken(const uint32_t index);
+				token getToken();
+				token getToken(const uint32_t index);
+				int 			index = 0;
+				int *input_tokens_index = nullptr;
+				Statement* parseStatementInternal(Statement* output, const std::string starting_rule = "", EBNF::parser_callback custom_callback = nullptr);*/
 	};
 	
 } //namespace DM14::parser

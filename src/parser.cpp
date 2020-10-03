@@ -96,10 +96,11 @@ namespace DM14
 														{"unknown-list", EBNF::EXPANSION_TOKEN, &DM14::Parser::bad_program}}}};
 		
 		ebnf.grammar["unknown-list"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{".*",EBNF::REGEX_TOKEN}}}};
+		ebnf.grammar["identifier"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z]+([a-zA-Z_0-9])*",EBNF::REGEX_TOKEN}}}};
 		ebnf.grammar["Statement-list"] = {{EBNF::GRAMMAR_TOKEN_ZERO_MORE ,{{"Statement",EBNF::EXPANSION_TOKEN}}}};
 
 		ebnf.grammar["Statement"] = {{EBNF::GRAMMAR_TOKEN_OR,{
-			{"include-Statement",EBNF::EXPANSION_TOKEN,&DM14::Parser::parseIncludes},
+							{"include-Statement",EBNF::EXPANSION_TOKEN,&DM14::Parser::parseIncludes},
 								{"declaration-full-Statement",EBNF::EXPANSION_TOKEN, &DM14::Parser::parseDeclaration},
 								{"for-list",EBNF::EXPANSION_TOKEN, &DM14::Parser::parseForloop}, /** for(from -> to : step) { Statements; } */
 								//{"extern-Statement", EBNF::EXPANSION_TOKEN, &DM14::Parser::parseExtern}, /** extern  { c/c++ code } endextern */
@@ -118,17 +119,12 @@ namespace DM14
 								{"break-Statement",EBNF::EXPANSION_TOKEN, &DM14::Parser::parseBreak},
 								{"continue-Statement",EBNF::EXPANSION_TOKEN, &DM14::Parser::parseContinue},
 								{"nop-Statement",EBNF::EXPANSION_TOKEN, &DM14::Parser::parseNOPStatement},
-								{"expression-Statement", EBNF::EXPANSION_TOKEN, &DM14::Parser::parseExpressionStatement},
-																	  }}};
+								{"expression-Statement", EBNF::EXPANSION_TOKEN, &DM14::Parser::parseExpressionStatement}}}};
 
 		/// the with Statement
 		ebnf.grammar["include-Statement"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"with",EBNF::KEYWORD_TOKEN}, {"include-Statement-body",EBNF::EXPANSION_TOKEN}}}};
-
 		ebnf.grammar["include-Statement-body"] = {{EBNF::GRAMMAR_TOKEN_OR ,{{"include-Statement-package",EBNF::EXPANSION_TOKEN}, {"include-Statement-file",EBNF::EXPANSION_TOKEN}}}};
-
-		ebnf.grammar["include-Statement-package"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}, {"include-Statement-subpackage",EBNF::EXPANSION_TOKEN}}}};
-		ebnf.grammar["include-Statement-subpackage"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"use",EBNF::KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}}}};
-
+		ebnf.grammar["include-Statement-package"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}, {"use",EBNF::KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}}}};
 		ebnf.grammar["include-Statement-file"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",EBNF::REGEX_TOKEN}}}};
 		
 		/// the extern Statement
@@ -296,7 +292,8 @@ namespace DM14
 		
 		ebnf.grammar["function-call-list"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"function-call",EBNF::EXPANSION_TOKEN}, {";",EBNF::TERMINAL_TOKEN}}}};
 														  
-		ebnf.grammar["function-call"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z]+([a-zA-Z_0-9])*",EBNF::REGEX_TOKEN},
+		//ebnf.grammar["function-call"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z]+([a-zA-Z_0-9])*",EBNF::REGEX_TOKEN},
+		ebnf.grammar["function-call"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"identifier",EBNF::EXPANSION_TOKEN},
 																   {"(",EBNF::TERMINAL_TOKEN},
 																   {"function-call-arguments-list",EBNF::EXPANSION_TOKEN},
 																   {")",EBNF::TERMINAL_TOKEN}}}};
@@ -356,7 +353,7 @@ namespace DM14
 		ebnf.grammar["function-definition-list"] = {{EBNF::GRAMMAR_TOKEN_OR ,{{";",EBNF::TERMINAL_TOKEN},
 																		{"compound-Statement",EBNF::EXPANSION_TOKEN}}}};
 																 
-		ebnf.grammar["function-prototype"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([_]*[0-9]*)*",EBNF::REGEX_TOKEN},
+		ebnf.grammar["function-prototype"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"identifier",EBNF::EXPANSION_TOKEN},
 																{"(",EBNF::TERMINAL_TOKEN},
 																{"function-parameter-list",EBNF::EXPANSION_TOKEN},
 																{"->",EBNF::TERMINAL_TOKEN},
@@ -370,7 +367,7 @@ namespace DM14
 		ebnf.grammar["function-extra-parameter"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{",",EBNF::TERMINAL_TOKEN},
 																	  {"function-parameter",EBNF::EXPANSION_TOKEN}}}};															  
 		
-		ebnf.grammar["function-parameter"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"[a-zA-Z]+([a-zA-Z_0-9])*",EBNF::REGEX_TOKEN},
+		ebnf.grammar["function-parameter"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"identifier",EBNF::EXPANSION_TOKEN},
 																{"declaration-datatype-list",EBNF::EXPANSION_TOKEN}}}};
 		
 		ebnf.grammar["function-return"] = {{EBNF::GRAMMAR_TOKEN_ZERO_MORE ,{{"function-parameter",EBNF::EXPANSION_TOKEN}}}};
@@ -388,10 +385,10 @@ namespace DM14
 		ebnf.grammar["nop-Statement"] = {{EBNF::GRAMMAR_TOKEN_AND,{{";",EBNF::TERMINAL_TOKEN}}}};
 		
 		
-		ebnf.groupBy({"function-list", "include-Statement", "declaration-full-Statement", "for-list", "extern-Statement", 
+		ebnf.groupBy({"program", "function-list", "function-prototype", "function-definition-list", "include-Statement", "declaration-full-Statement", "for-list", "extern-Statement", 
 		"link-list", "struct-list", "if-list", "distribute", "reset-Statement", "setnode-Statement", 
 		"while-list", "case-list", "addparent-Statement", "thread-Statement", "function-call-list", 
-		"return-list", "break-Statement", "continue-Statement", "nop-Statement", "expression-Statement"});
+		"return-list", "break-Statement", "continue-Statement", "nop-Statement", "expression-Statement", "compound-Statement", "Statement", "Statement-list"});
 		
 	};
 
@@ -424,7 +421,7 @@ namespace DM14
 			parseIncludesInsider("core/DM14GLOBAL.m14", "", includePath::sourceFileType::FILE_DM14);
 		}
 
-		while(ebnf.index < tokens->size()-1)
+		while(ebnf.getIndex() < tokens->size()-1)
 		{
 			displayInfo(fName, -1, -1, "calling parseEBNF for program!");	
 			EBNF::ebnfResult ebnf_parse_result = ebnf.parse("program");
@@ -433,7 +430,8 @@ namespace DM14
 				bad_program();
 			}
 			
-			//ebnf_parse_result.stack.Print();
+			ebnf_parse_result.stack.Print();
+			//stackList.push_back(ebnf_parse_result.stack);
 		}
 
 		// check for the main function 
@@ -482,7 +480,7 @@ namespace DM14
 		string package = "";
 		string library = "";
 		includePath::sourceFileType includeType = includePath::sourceFileType::LIBRARY;
-		if(ebnf.getToken().type != "string" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))//tokens->at(ebnf.index).type != "datatype")
+		if(ebnf.getToken().type != "string" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))//tokens->at(ebnf.getIndex()).type != "datatype")
 		{
 			displayError(fName, ebnf.getToken().lineNumber,ebnf.getToken().columnNumber,"Expected Package name and not " + ebnf.getToken().value );
 		}
@@ -515,7 +513,7 @@ namespace DM14
 				RequireValue("use", "Expected \"Use\" and not ", true);
 				ebnf.popToken();
 				
-				if(ebnf.getToken().value != "*" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))// tokens->at(ebnf.index).type != "datatype")
+				if(ebnf.getToken().value != "*" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))// tokens->at(ebnf.getIndex()).type != "datatype")
 				{
 					displayError(fName, ebnf.getToken().lineNumber,ebnf.getToken().columnNumber,"Expected Package name");	
 				}
@@ -754,27 +752,27 @@ namespace DM14
 	Statement* Parser::parseAddParent()
 	{
 		parentAddStatement* ps = new parentAddStatement();
-		nextIndex();
+		ebnf.nextIndex();
 		
-		if((tokens->at(ebnf.index)).value == "(")
+		if((tokens->at(ebnf.getIndex())).value == "(")
 		{
-			int cindex = ebnf.index;
+			int cindex = ebnf.getIndex();
 			ps->ip = parseOpStatement(cindex, reachToken(")", false, true, true, true, true ), "string", 0, ps);
 		}
 		else
 		{
-			ps->ip = parseOpStatement(ebnf.index, ebnf.index, "string", 0, ps);
+			ps->ip = parseOpStatement(ebnf.getIndex(), ebnf.getIndex(), "string", 0, ps);
 		}
 		
-		nextIndex();
-		if((tokens->at(ebnf.index)).value == "(")
+		ebnf.nextIndex();
+		if((tokens->at(ebnf.getIndex())).value == "(")
 		{
-			int cindex = ebnf.index;
+			int cindex = ebnf.getIndex();
 			ps->socket = parseOpStatement(cindex, reachToken(")", false, true, true, true, true ), "int", 0, ps);
 		}
 		else
 		{
-			ps->socket = parseOpStatement(ebnf.index, ebnf.index, "int", 0, ps);
+			ps->socket = parseOpStatement(ebnf.getIndex(), ebnf.getIndex(), "int", 0, ps);
 		}
 		return ps;
 	};
@@ -802,8 +800,8 @@ namespace DM14
 		if(!peekToken(";"))
 		{
 			ebnf.popToken();
-			int cindex = ebnf.index;
-			rs->count = parseOpStatement(cindex,(reachToken(";", true, true, true, false, false) - 1), getType(ebnf.index-1), 0, rs);
+			int cindex = ebnf.getIndex();
+			rs->count = parseOpStatement(cindex,(reachToken(";", true, true, true, false, false) - 1), getType(ebnf.getIndex()-1), 0, rs);
 		}
 		return rs;
 	};
@@ -1516,7 +1514,7 @@ namespace DM14
 					Id.type =(stmt->identifiers->at(i)).type;
 					Id.type = stmt->type;
 					Id.scope = stmt->scope;
-					Id.index = ebnf.index;
+					Id.index = ebnf.getIndex();
 					currentFunction.parameters->push_back(Id);
 					Funcinfo.parameters->push_back(pair<string,bool>(Id.type,stmt->value));
 				}
@@ -1760,15 +1758,6 @@ namespace DM14
 		return NULL;
 	};
 
-	int Parser::nextIndex()
-	{
-		if((unsigned) ebnf.index ==(tokens->size() - 1))
-		{
-			displayError(fName,(tokens->at(ebnf.index)).lineNumber,(tokens->at(ebnf.index)).columnNumber,"Unexpected EOF");
-		}
-		ebnf.index++;
-		return ebnf.index;
-	};
 
 	bool Parser::isIdentifier(const string& ID)
 	{
@@ -2202,7 +2191,7 @@ namespace DM14
 		}
 		// ]
 		
-		int origiIndex = ebnf.index;
+		int origiIndex = ebnf.getIndex();
 		bool classMember = false;
 
 		operationalStatement* opStatement = new operationalStatement;
@@ -2655,7 +2644,7 @@ namespace DM14
 					aIndex = statement->arrayIndex;
 				}
 								
-				ebnf.index = origiIndex;
+				ebnf.setIndex(origiIndex);
 
 				//idInfo* id = new idInfo(termStatement->term, opStatement->scope, opStatement->type, aIndex);
 				idInfo* id = new idInfo(statement->term, opStatement->scope, statement->type , aIndex);
@@ -3057,7 +3046,7 @@ namespace DM14
 		{
 			string parent;
 			
-			if(ebnf.getToken(1).value == ".")
+			if(getToken(1).value == ".")
 			{
 				parent = ebnf.getToken(0).value;
 			}
@@ -3240,9 +3229,9 @@ namespace DM14
 		externStatement->line = ebnf.getToken().lineNumber;
 		externStatement->scope = scope;
 		
-		int from = ebnf.index+1;
+		int from = ebnf.getIndex()+1;
 		reachToken("endextern", false, true, true, true, true);
-		int to = ebnf.index-1;
+		int to = ebnf.getIndex()-1;
 		
 		for(int32_t i= from; i <= to; i++)
 		{
@@ -3312,7 +3301,7 @@ namespace DM14
 	Statement* Parser::parseCase()
 	{
 		CASE* Case = new CASE;
-		Case->line =(tokens->at(ebnf.index)).lineNumber;
+		Case->line =(tokens->at(ebnf.getIndex())).lineNumber;
 		Case->scope = scope;	
 		
 		increaseScope(Case);
@@ -3335,18 +3324,18 @@ namespace DM14
 			CCondition = parseStatement("expression-list");
 			tmpScope = false;
 			
-			if(tokens->at(ebnf.index).value == "}")
+			if(tokens->at(ebnf.getIndex()).value == "}")
 			{
-				ebnf.index--;
+				ebnf.setIndex(ebnf.getIndex()-1);
 				break;
 			}
 			//check if it peek of current ???
-			while(tokens->at(ebnf.index).value != "}" && tokens->at(ebnf.index).value != "[")
+			while(tokens->at(ebnf.getIndex()).value != "}" && tokens->at(ebnf.getIndex()).value != "[")
 			{
 				Case->Body[CCondition].push_back(parseStatement("Statement"));
 				if(!peekToken("}") && !peekToken("["))
 				{
-					nextIndex();
+					ebnf.nextIndex();
 				}
 				else
 				{
@@ -3356,7 +3345,7 @@ namespace DM14
 			}
 		}
 		
-		nextIndex();
+		ebnf.nextIndex();
 		RequireValue("}", "Expected } and not : ", true);
 		
 		decreaseScope();
@@ -4404,7 +4393,7 @@ namespace DM14
 		}
 		return idInfo();
 	}
-
+	
 	Statement* Parser::parseDeclaration()
 	{
 		Statement* result = parseDeclarationInternal();
@@ -4496,7 +4485,7 @@ namespace DM14
 					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "nodist variable can not be recurrent !");
 				}
 				
-				////displayWarning(fName,(tokens->at(ebnf.index)).lineNumber,(tokens->at(ebnf.index)).columnNumber, "Warning, nodist variable");
+				////displayWarning(fName,(tokens->at(ebnf.getIndex())).lineNumber,(tokens->at(ebnf.getIndex())).columnNumber, "Warning, nodist variable");
 				distributed = false;
 				decStatement->distributed = false;
 			}
@@ -4832,5 +4821,8 @@ namespace DM14
 		
 		return decStatement;
 	};
+	
+	
+	
 
 } //namespace DM14::parser
