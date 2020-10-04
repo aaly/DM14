@@ -670,25 +670,6 @@ namespace DM14
 									{
 										result.stack.nested_stacks.push_back(expansion_result.stack);
 									}
-									
-									//
-									
-									/*if(groupByRules[ebnf_token.expansion])
-									{
-										callstack_t expansion_stack;
-										expansion_stack.expansion =  ebnf_token.expansion;
-										expansion_stack.rule =  start_map_index;
-										expansion_stack.callback =  ebnf_token.callback;
-										expansion_stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
-										result.stack.nested_stacks.push_back(expansion_stack);
-									}
-									else
-									{
-										for(auto& token : expansion_result.stack.tokens)
-										{
-											result.stack.tokens.push_back(token);
-										}
-									}*/
 								}
 							}
 							else if(ebnf_token.tokenType == SINGLE_OP_TOKEN)
@@ -757,36 +738,6 @@ namespace DM14
 								{
 									
 									advance_EBNFindex();
-								}
-								else
-								{
-									//if(ebnf_token.callback && groupByRules[ebnf_token.expansion] && (rule_groups_depth>=0))
-									if(ebnf_token.callback && groupByRules[ebnf_token.expansion])
-									{
-										//cerr << endl << endl << "main rule : " << ebnf_token.expansion << " / stack size : " << callStack.nested_stacks.size() << endl;
-										//cerr << "main rule : " << start_map_index << " EXPANSION :" << ebnf_token.expansion << " / stack size : " << callStack.nested_stacks.size() << endl;
-										//cerr << endl << endl << "main rule : " << ebnf_token.expansion;
-										///for(uint32_t i =current_tokens_size; i < working_tokens->size(); i++)
-										///{
-											///cerr << "///" << working_tokens->at(i).value << endl;
-										///}
-
-										//callStack.push_back({start_map_index, {ebnf_token.callback, working_tokens->cut(current_tokens_size, working_tokens->size())}});
-
-										///callstack_t nested_stack;
-										///nested_stack.expansion =  ebnf_token.expansion;
-										///nested_stack.rule =  start_map_index;
-										///nested_stack.callback =  ebnf_token.callback;
-										///nested_stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
-										///result.stack.nested_stacks.push_back(nested_stack);
-										///cerr << endl << endl << "nested rule : " << nested_stack.expansion << " / tokens size : " << nested_stack.tokens.size() << endl;
-										///cerr << endl << endl << "main rule : " << result.stack.rule << " / nested stacks size : " << result.stack.nested_stacks.size() << endl;
-										
-										///result.stack.expansion =  ebnf_token.expansion;
-										///result.stack.rule =  start_map_index;
-										///result.stack.callback =  ebnf_token.callback;
-										///result.stack.tokens =  working_tokens->cut(current_tokens_size, working_tokens->size());
-									}
 								}
 							}
 							else
@@ -886,17 +837,6 @@ namespace DM14
 							int32_t diff = *input_tokens_index - rule_old_index;
 							deadvance_EBNFindex(diff);
 						}
-						else
-						{
-							//if(groupByRules[start_map_index] && grammar.count(start_map_index))
-							///if(grammar.count(start_map_index))
-							{
-								//result.stack.expansion =  ebnf_token.expansion;
-								///result.stack.rule =  start_map_index;
-								//result.stack.callback =  ebnf_token.callback;
-								///result.stack.tokens =  working_tokens->cut(current_working_tokens_size, working_tokens->size());
-							}
-						}
 					}
 					
 
@@ -906,14 +846,6 @@ namespace DM14
 						result.stack.callback = callback;
 						result.stack.rule =  start_map_index;
 						result.stack.tokens =  working_tokens->cut(current_working_tokens_size, working_tokens->size());
-						
-						cerr << "SUCCESS:" << start_map_index << " [";
-						for(auto& token : result.stack.tokens)
-						{
-							std::cerr << token.value<< ",";
-						}
-						
-						cerr << " ]" << endl;
 					}
 					
 					if(localInsideGroup)

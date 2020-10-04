@@ -3,19 +3,15 @@
 @brief            compiler implementation
 @details          compiler implementation
 @author           AbdAllah Aly Saad <aaly90@gmail.com>
-@date			  2010-2018
+@date			  2010-2020
 @version          1.1a
 @copyright        See file "license" for bsd license
 
 
-// hmm , the cin function must be awesome such that if a user enters char in a int it wont give him C++ error but a M14 error
-// add argv and argc to main
-
-// we should add the count of the last mapcode as the new base to add to ???
-
-//if a new node added, all parents should send this child to all other childs
-//or
-//all childs should send parents to this nodes
+@TODO add argv and argc to main
+@TODO improve the sockets lye, maybe using zmq ?
+@TODO for marshalling, use msgpack ?
+@TODO for seriliaztion, use typeid like make all types into classes and have a string getType() {return typeid(this).name();}; ?
 
 */
 

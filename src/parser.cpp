@@ -125,7 +125,7 @@ namespace DM14
 		ebnf.grammar["include-Statement"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"with",EBNF::KEYWORD_TOKEN}, {"include-Statement-body",EBNF::EXPANSION_TOKEN}}}};
 		ebnf.grammar["include-Statement-body"] = {{EBNF::GRAMMAR_TOKEN_OR ,{{"include-Statement-package",EBNF::EXPANSION_TOKEN}, {"include-Statement-file",EBNF::EXPANSION_TOKEN}}}};
 		ebnf.grammar["include-Statement-package"] = {{EBNF::GRAMMAR_TOKEN_AND,{{"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}, {"use",EBNF::KEYWORD_TOKEN}, {"[a-zA-Z0-9]+",EBNF::REGEX_TOKEN}}}};
-		ebnf.grammar["include-Statement-file"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\.]?[[a-zA-Z0-9]+]?\"",EBNF::REGEX_TOKEN}}}};
+		ebnf.grammar["include-Statement-file"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"\"[a-zA-Z0-9]+[\\.]?[[a-zA-Z0-9]+]?\"",EBNF::REGEX_TOKEN}}}};
 		
 		/// the extern Statement
 		ebnf.grammar["extern-Statement"] = {{EBNF::GRAMMAR_TOKEN_AND ,{{"extern",EBNF::KEYWORD_TOKEN},
@@ -423,7 +423,7 @@ namespace DM14
 
 		while(ebnf.getIndex() < tokens->size()-1)
 		{
-			displayInfo(fName, -1, -1, "calling parseEBNF for program!");	
+			//displayInfo(fName, -1, -1, "calling parseEBNF for program!");	
 			EBNF::ebnfResult ebnf_parse_result = ebnf.parse("program");
 			if(ebnf_parse_result.status != EBNF::ebnfResultType::SUCCESS)
 			{
@@ -431,7 +431,7 @@ namespace DM14
 			}
 			
 			ebnf_parse_result.stack.Print();
-			//stackList.push_back(ebnf_parse_result.stack);
+			stackList.push_back(ebnf_parse_result.stack);
 		}
 
 		// check for the main function 
@@ -440,7 +440,7 @@ namespace DM14
 		{
 			if(!isUserFunction("main", true))
 			{
-				displayError(fName, -1, -1, "no main function defined !");
+				displayError(fName, -1, -1, "no main function defined!");
 			}
 			funcInfo fun = getFunc("main");
 			
