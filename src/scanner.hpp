@@ -1,8 +1,12 @@
-// Copyright (c) 2010, <Abdallah Aly> <l3thal8@gmail.com>
-//
-// Part of Mission14 programming language
-//
-// See file "license" for bsd license
+/**
+@file             scanner.hpp
+@brief            scanner
+@details          Ad-hoc Scanner, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2020
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
 
 #ifndef	SCANNER_H
 #define	SCANNER_H
@@ -14,7 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
-
+#include <memory>
 // we need escape sequence :|
 
 // fix Lines counting
@@ -33,7 +37,7 @@ namespace DM14
 			~scanner();
 			string				getFileName();
 			int					scan();			// start scanning process
-			Array<token>*		getTokens();	// return a pointer to the tokens Array
+			std::shared_ptr<Array<token>>		getTokens();	// return a pointer to the tokens Array
 			char				getNextChar();	// return File.get() and increase the column by 1
 			int					unGetChar();	// go back one character
 			int					printTokens();	// Loop through the vctor of tokens and print each
@@ -45,7 +49,7 @@ namespace DM14
 			int					addLetter();	// start adding (letters) process to tmp token
 			int					addChar();		// Adds a character
 			
-			Array<token>*		tokens;				// scanned tokens
+			std::shared_ptr<Array<token>>		tokens;				// scanned tokens
 			int					line;			// Current line number
 			int					column;			// Current character number on line
 			bool				space;			// we have space , then we need to push the token :)

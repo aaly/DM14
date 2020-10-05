@@ -1,10 +1,12 @@
-// Copyright (c) 2010, <Abdallah Aly> <l3thal8@gmail.com>
-//
-// Part of Mission14 programming language
-//
-// See file "license" for bsd license
-
-//if there is no "enter" or new line at the end of the file, it will keep loopin :s
+/**
+@file             scanner.cpp
+@brief            scanner
+@details          Ad-hoc Scanner, Part of DM14 programming language
+@author           AbdAllah Aly Saad <aaly90@gmail.com>
+@date			  2010-2020
+@version          1.1a
+@copyright        See file "license" for bsd license
+*/
 #include "scanner.hpp"
 
 namespace DM14
@@ -37,7 +39,7 @@ namespace DM14
 			displayError(fName, 0,0,"source file : " + fileName + "is corrupted?");
 		}
 		
-		tokens = new Array<token>;
+		tokens = std::shared_ptr<Array<token>>(new Array<token>);
 		line = 0;
 		column = 0;
 		tmptoken.lineNumber = line = 1;
@@ -52,19 +54,14 @@ namespace DM14
 		{
 			iFile.close();
 		}
-		
-		if (tokens && tokens->size() != 0)
-		{
-			delete tokens;
-		}
 	};
 
-	Array<token>* scanner::getTokens()
+	std::shared_ptr<Array<token>> scanner::getTokens()
 	{
 		if ((tokens->size() == 0) ||
-			(tokens == NULL))
+			(tokens == nullptr))
 		{
-			return (NULL);
+			return nullptr;
 		}
 		return tokens;
 	};
@@ -105,7 +102,7 @@ namespace DM14
 		{
 			return (1);
 		}
-		return (0);
+		return 0;
 	};
 
 	int scanner::pushToken()
@@ -118,7 +115,7 @@ namespace DM14
 		}
 		tmptoken.type = "NIL";
 		tmptoken.value.clear();
-		return (0);
+		return 0;
 	};
 
 	int scanner::addNumber()
@@ -180,7 +177,7 @@ namespace DM14
 		}
 		
 		pushToken();
-		return (0);
+		return 0;
 	};
 
 	int scanner::addString()
@@ -206,7 +203,7 @@ namespace DM14
 		{
 			displayError(fName, line,column,"unterminated string");
 		}
-		return (0);
+		return 0;
 	};
 
 
@@ -237,13 +234,12 @@ namespace DM14
 			tmptoken.type = "char";
 			pushToken();
 		}
-		return (0);
+		return 0;
 	};
 
 	int scanner::addKeyword()
 	{
-		
-		return (0);
+		return 0;
 	};
 
 	int scanner::addOperator()
@@ -306,7 +302,7 @@ namespace DM14
 			}
 		}
 		
-		return (0);
+		return 0;
 	};
 
 	int	scanner::scan()

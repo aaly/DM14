@@ -21,7 +21,7 @@ namespace DM14
 {
 int scopeLevel = 0;
 
-compiler::compiler(Array<mapcode>* const codes)
+compiler::compiler(std::shared_ptr<Array<mapcode>>const codes)
 {
 	//mapCodes =	new	Array<mapcode>;
 	mapCodes = codes;
@@ -37,7 +37,6 @@ compiler::compiler(Array<mapcode>* const codes)
 
 compiler::~compiler()
 {
-	delete mapCodes;
 	//delete nodesModifiers;
 	
 };
@@ -47,7 +46,7 @@ compiler::~compiler()
 {
   int i;
  
-  if(stmt != NULL )
+  if(stmt != nullptr )
   {
 	if(stmt->StatementType == oStatement)
 	{
@@ -68,13 +67,13 @@ compiler::~compiler()
 }*/
 
 
-void compiler::printStatement(Statement* stmt, int indent)
+void compiler::printStatement(std::shared_ptr<Statement> stmt, int indent)
 {
-    if(stmt != NULL && stmt->StatementType == oStatement)
+    if(stmt != nullptr && stmt->StatementType == oStatement)
     {
-        if(((operationalStatement*)stmt)->left)
+        if(std::static_pointer_cast<operationalStatement>(stmt)->left)
         {
-            printStatement(((operationalStatement*)stmt)->left, indent+4);
+            printStatement(std::static_pointer_cast<operationalStatement>(stmt)->left, indent+4);
         }
         
         if(indent)
@@ -82,23 +81,23 @@ void compiler::printStatement(Statement* stmt, int indent)
             std::cout << std::setw(indent) << ' ';
         }
         
-        if(((operationalStatement*)stmt)->left)
+        if(std::static_pointer_cast<operationalStatement>(stmt)->left)
         {
 			std::cout<<" /\n" << std::setw(indent) << ' ';
 		}
 		
 		//std::cout<<((operationalStatement*)stmt)->op << "\n ";
-		std::cout<<((operationalStatement*)stmt)->op << "\n ";
+		std::cout<<std::static_pointer_cast<operationalStatement>(stmt)->op << "\n ";
         
-        if(((operationalStatement*)stmt)->right)
+        if(std::static_pointer_cast<operationalStatement>(stmt)->right)
         {
             std::cout << std::setw(indent) << ' ' <<" \\\n";
-            printStatement(((operationalStatement*)stmt)->right, indent+4);
+            printStatement(std::static_pointer_cast<operationalStatement>(stmt)->right, indent+4);
         }
     }
-    else if(stmt != NULL && stmt->StatementType == tStatement)
+    else if(stmt != nullptr && stmt->StatementType == tStatement)
     {
-		std::cout<<((termStatement*)stmt)->term << "\n ";
+		std::cout<<std::static_pointer_cast<termStatement>(stmt)->term << "\n ";
 	}
 }
 
@@ -255,7 +254,7 @@ int compiler::compile()
 		
 		// close source file
 		write(bufferedOutput);
-		outStream = NULL;
+		outStream = nullptr;
 		srcFile.close();
 		
 		if(!(mapCodes->at(index)).isHeader())
@@ -325,7 +324,7 @@ int compiler::compile()
 				bool cont = false;
 				for(uint32_t i =k+1; i <(mapCodes->at(index)).linkLibs->size(); i++)
 				{
-					if(((Link*)mapCodes->at(index).linkLibs->at(i))->libs ==((Link*)mapCodes->at(index).linkLibs->at(k))->libs)
+					if(std::static_pointer_cast<Link>(mapCodes->at(index).linkLibs->at(i))->libs == std::static_pointer_cast<Link>(mapCodes->at(index).linkLibs->at(k))->libs)
 					{
 						 cont = true;
 					}
@@ -336,15 +335,15 @@ int compiler::compile()
 					continue;
 				}
 				
-				if(((Link*)mapCodes->at(index).linkLibs->at(k))->Static)
+				if(std::static_pointer_cast<Link>(mapCodes->at(index).linkLibs->at(k))->Static)
 				{
 					com += " ";
-					com +=((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
+					com += std::static_pointer_cast<Link>(mapCodes->at(index).linkLibs->at(k))->libs;
 				}
 				else
 				{
 					com += " -l";
-					com +=((Link*)mapCodes->at(index).linkLibs->at(k))->libs;
+					com += std::static_pointer_cast<Link>(mapCodes->at(index).linkLibs->at(k))->libs;
 					/*for(uint32_t l =0; l <((Link*)mapCodes->at(index).libs->at(k))->libs.size(); l++)
 					{
 						if(((Link*)mapCodes->at(index).libs->at(k))->libs.at(l) == ',')
@@ -503,7 +502,7 @@ int compiler::compileFunction()
 	////dVariablesNames.clear();
 	currentNode = 0;
 	//nodesModifiers = new Array < pair<string, int> >();
-	Array<ast_function>* funcs;
+	std::shared_ptr<Array<ast_function>> funcs;
 	funcs =(mapCodes->at(index)).getFunctions();
 	// push main to end
 	for(fIndex =0; fIndex < funcs->size(); fIndex++)
@@ -633,7 +632,7 @@ int compiler::compileFunction()
 					{
 						for(uint32_t l =0; l < mapCodes->at(k).globalDeclarations.size(); l++)
 						{
-							declareStatement* decStatement =(declareStatement*) mapCodes->at(k).globalDeclarations.at(l);
+							std::shared_ptr<declareStatement> decStatement = std::static_pointer_cast<declareStatement>(mapCodes->at(k).globalDeclarations.at(l));
 							
 							for(uint32_t f =0; f < decStatement->identifiers->size(); f++)
 							{
@@ -649,7 +648,7 @@ int compiler::compileFunction()
 					}
 					
 					writeLine("Distributed.addVectorData<int>("+(funcs->at(fIndex)).name  +(funcs->at(fIndex)).returnID + ",-1, false, false, &" +(funcs->at(fIndex)).returnID + ", false, false, \"int\");");
-					compileDistributedVariable(idInfo((funcs->at(fIndex)).returnID, 0, "", NULL));
+					compileDistributedVariable(idInfo((funcs->at(fIndex)).returnID, 0, "", nullptr));
 				}
 			}
 		}
@@ -736,7 +735,7 @@ int	compiler::compileNodeSelector(ast_function& fun)
 	return 0;
 };
 
-int compiler::compileRetStatement(Statement*& stmt)
+int compiler::compileRetStatement(std::shared_ptr<Statement> stmt)
 {
 	if((mapCodes->at(index)).getFunctions()->at(fIndex).distributed )
 	{
@@ -745,10 +744,10 @@ int compiler::compileRetStatement(Statement*& stmt)
 		//return 1;
 	}
 	
-	if(((returnStatement*)stmt)->retValue != NULL)
+	if(std::static_pointer_cast<returnStatement>(stmt)->retValue != nullptr)
 	{
 		write((mapCodes->at(index)).getFunctions()->at(fIndex).returnID+ " = ");
-		compileInsider(((returnStatement*)stmt)->retValue);
+		compileInsider(std::static_pointer_cast<returnStatement>(stmt)->retValue);
 		writeLine(";");
 	}
 	//else
@@ -762,9 +761,9 @@ int compiler::compileRetStatement(Statement*& stmt)
 	return 0;
 }
 
-int compiler::compileForLoop(Statement*& stmt)
+int compiler::compileForLoop(std::shared_ptr<Statement> stmt)
 {
-	forloop* ForLoop =(forloop*)stmt;
+	std::shared_ptr<forloop> ForLoop = std::static_pointer_cast<forloop>(stmt);
 
 	write("for(");
 	for(uint32_t i =0; i < ForLoop->fromCondition->size(); i++)
@@ -813,9 +812,9 @@ int compiler::compileForLoop(Statement*& stmt)
 };
 
 
-int compiler::compileWhileLoop(Statement*& stmt)
+int compiler::compileWhileLoop(std::shared_ptr<Statement> stmt)
 {
-	whileloop* WhileLoop =(whileloop*)stmt;
+	std::shared_ptr<whileloop> WhileLoop = std::static_pointer_cast<whileloop>(stmt);
 	write("while(");
 	compileInsider(WhileLoop->condition);
 	writeLine(")");
@@ -837,7 +836,7 @@ bool compiler::isCompilingMain()
 	return compilingMain;
 }
 
-int compiler::compileDecStatement(Statement*& stmt)
+int compiler::compileDecStatement(std::shared_ptr<Statement> stmt)
 {
 	bool tscope = tmpScope;
 	bool dvars = declaringVars;
@@ -845,7 +844,7 @@ int compiler::compileDecStatement(Statement*& stmt)
 
 	//inline void Node::addVectorData(int var, int index, bool parray, bool pready, void* pvar, const string& ptype)
 	
-	declareStatement* decStatement =(declareStatement*)stmt;
+	std::shared_ptr<declareStatement> decStatement = std::static_pointer_cast<declareStatement>(stmt);
 
 	const bool global = decStatement->global;
 	
@@ -906,7 +905,7 @@ int compiler::compileDecStatement(Statement*& stmt)
 		}
 				
 		
-		if(decStatement->value != NULL)
+		if(decStatement->value != nullptr)
 		{
 			write(" = ");
 			compileInsider(decStatement->value);
@@ -945,9 +944,9 @@ int compiler::compileDecStatement(Statement*& stmt)
 };
 
 
-int compiler::compileAddVector(Statement*& stmt, const idInfo& id, const bool global)
+int compiler::compileAddVector(std::shared_ptr<Statement> stmt, const idInfo& id, const bool global)
 {
-	declareStatement* decStatement =(declareStatement*)stmt;
+	std::shared_ptr<declareStatement> decStatement = std::static_pointer_cast<declareStatement>(stmt);
 
 	if(!decStatement->distributed)
 	{
@@ -1150,22 +1149,22 @@ int compiler::compileAddVector(Statement*& stmt, const idInfo& id, const bool gl
 	
 	return 0;
 };
-int compiler::compileOpStatement(Statement*& stmt)
+int compiler::compileOpStatement(std::shared_ptr<Statement> stmt)
 {
 	if(!stmt)
 	{
 		return 0;
 	}
 	
-	operationalStatement* opStatement =(operationalStatement*)stmt;
+	std::shared_ptr<operationalStatement> opStatement = std::static_pointer_cast<operationalStatement>(stmt);
 
 	if(opStatement->op == "@")
 	{
 		
 		printStatement(stmt, 0);
-		if(!(operationalStatement*)opStatement->left)
+		if(!std::static_pointer_cast<operationalStatement>(opStatement)->left)
 		{
-			termStatement* innerOp =(termStatement*)opStatement->right;
+			std::shared_ptr<termStatement> innerOp = std::static_pointer_cast<termStatement>(opStatement->right);
 			//if(innerOp->right) // node address
 			write("Distributed.getLastActiveNode(");
 			write(generateDistributedVariableName(innerOp->id));
@@ -1190,7 +1189,7 @@ int compiler::compileOpStatement(Statement*& stmt)
 		//write("(");
 	}
 	
-	if(opStatement->left != NULL)
+	if(opStatement->left != nullptr)
 	{
 		if(opStatement->left->scopeLevel > scopeLevel)
 		{
@@ -1209,7 +1208,7 @@ int compiler::compileOpStatement(Statement*& stmt)
 	
 	
 	//write right side
-	if(opStatement->right != NULL)
+	if(opStatement->right != nullptr)
 	{
 		bool tt = false;
 		if(opStatement->right->scopeLevel > scopeLevel)
@@ -1256,9 +1255,9 @@ int compiler::compileOpStatement(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileFunctionCall(Statement*& stmt)
+int compiler::compileFunctionCall(std::shared_ptr<Statement> stmt)
 {
-	functionCall* funCall =(functionCall*)stmt;
+	std::shared_ptr<functionCall> funCall = std::static_pointer_cast<functionCall>(stmt);
 	// function name
 	write(funCall->name);
 	write("(");
@@ -1303,9 +1302,9 @@ int compiler::compileFunctionCall(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileIF(Statement*& stmt)
+int compiler::compileIF(std::shared_ptr<Statement> stmt)
 {
-	IF* IFStatement =(IF*)stmt;	
+	std::shared_ptr<IF> IFStatement =std::static_pointer_cast<IF>(stmt);
 	write("if(");
 	//compileOpStatement(IFStatement->condition);
 	compileInsider(IFStatement->condition);
@@ -1341,10 +1340,10 @@ int compiler::compileIF(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileCASE(Statement*& stmt)
+int compiler::compileCASE(std::shared_ptr<Statement> stmt)
 {
-	CASE* CASEStatement =(CASE*)stmt;
-	map<Statement*, Array<Statement*> >::iterator IT;
+	std::shared_ptr<CASE> CASEStatement = std::static_pointer_cast<CASE>(stmt);
+	map<std::shared_ptr<Statement>, Array<std::shared_ptr<Statement>>>::iterator IT;
 	for(IT = CASEStatement->Body.begin(); IT != CASEStatement->Body.end(); ++IT )
 	{
 		if(IT == CASEStatement->Body.begin() )
@@ -1357,7 +1356,7 @@ int compiler::compileCASE(Statement*& stmt)
 		}		
 		compileInsider(CASEStatement->condition);	
 		write(" == ");
-		compileInsider((Statement*&)IT->first);
+		compileInsider(IT->first);
 		writeLine(")");
 		writeLine("{");
 		for(uint32_t i =0; i < IT->second.size(); i++ )
@@ -1370,9 +1369,9 @@ int compiler::compileCASE(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileInsider(Statement*& stmt, iostream* outstream, bool overridedStream)
+int compiler::compileInsider(std::shared_ptr<Statement> stmt, iostream* outstream, bool overridedStream)
 {
-	if(stmt == NULL)
+	if(stmt == nullptr)
 	{
 		return 0;
 	}
@@ -1391,12 +1390,12 @@ int compiler::compileInsider(Statement*& stmt, iostream* outstream, bool overrid
 		}
 	}
 	
-	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
+	for(uint32_t i =0; i < stmt->distStatements->size(); i++)
 	{
-		if((stmt->distStatements.at(i))->type == distributingVariablesStatement::DEPS)
+		if((stmt->distStatements->at(i))->type == distributingVariablesStatement::DEPS)
 		{
-			compileDistributingVariables((Statement*&)stmt->distStatements.at(i));
-			stmt->distStatements.erase(stmt->distStatements.begin()+i);
+			compileDistributingVariables((std::shared_ptr<Statement>)stmt->distStatements->at(i));
+			stmt->distStatements->erase(stmt->distStatements->begin()+i);
 			i--;
 			
 		}
@@ -1441,19 +1440,19 @@ int compiler::compileInsider(Statement*& stmt, iostream* outstream, bool overrid
 	}
 	
 	
-	while(stmt->splitStatements.size())
+	while(stmt->splitStatements->size())
 	{
-		compileInsider(stmt->splitStatements.at(0));
-		stmt->splitStatements.remove(0);
+		compileInsider(stmt->splitStatements->at(0));
+		stmt->splitStatements->remove(0);
 	}
 	
-	for(uint32_t i =0; i < stmt->distStatements.size(); i++)
+	for(uint32_t i =0; i < stmt->distStatements->size(); i++)
 	{
-		if((stmt->distStatements.at(i))->type == distributingVariablesStatement::MODS)
+		if((stmt->distStatements->at(i))->type == distributingVariablesStatement::MODS)
 		{
 			writeLine(";");
-			compileDistributingVariables((Statement*&)stmt->distStatements.at(i));
-			stmt->distStatements.erase(stmt->distStatements.begin()+i);
+			compileDistributingVariables((std::shared_ptr<Statement>)stmt->distStatements->at(i));
+			stmt->distStatements->erase(stmt->distStatements->begin()+i);
 			i--;
 		}
 	}
@@ -1465,7 +1464,7 @@ int compiler::compileInsider(Statement*& stmt, iostream* outstream, bool overrid
 	return 0;
 };
 
-string compiler::generateDistributedVariableName(idInfo* id)
+string compiler::generateDistributedVariableName(std::shared_ptr<idInfo> id)
 {
 	if(!id)
 	{
@@ -1546,7 +1545,7 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 			idInfo id2;
 			id2.name = dType.second.memberVariables.at(i).name;
 			
-			id2.parent = new idInfo();
+			id2.parent = std::shared_ptr<idInfo>(new idInfo());
 			*id2.parent = id;
 			compileDistributedVariable(id2, global);
 		}
@@ -1555,9 +1554,9 @@ int compiler::compileDistributedVariable(const idInfo& id, const bool global)
 };
 
 
-int compiler::compileTerm(Statement*& stmt)
+int compiler::compileTerm(std::shared_ptr<Statement> stmt)
 {
-	termStatement* statement =(termStatement*)stmt;
+	std::shared_ptr<termStatement> statement = std::static_pointer_cast<termStatement>(stmt);
 	if(statement->term == "DM14FUNCTIONBEGIN")
 	{
 		writeLine("goto "+((mapCodes->at(index)).getFunctions()->at(fIndex)).name+"__nodeindex__"+";");
@@ -1587,7 +1586,7 @@ int compiler::compileTerm(Statement*& stmt)
 		srcFile << ")";
 	}*/
 	
-	if(statement->arrayIndex != NULL)
+	if(statement->arrayIndex != nullptr)
 	{
 		//cout~ << termStatement->term << ":" << termStatement->arrayIndex << endl;
 		write("->at(");
@@ -1648,9 +1647,9 @@ int compiler::compileOuterExtern()
 	return 0;
 };
 
-int compiler::compileThread(Statement*& stmt)
+int compiler::compileThread(std::shared_ptr<Statement> stmt)
 {
-	threadStatement* threadStmt =(threadStatement*)stmt;
+	std::shared_ptr<threadStatement> threadStmt = std::static_pointer_cast<threadStatement>(stmt);
 	
 	string ID = "_DM14THREAD";
 	ID += threadStmt->classID + threadStmt->parentID + threadStmt->ID + threadStmt->Identifier;
@@ -1677,7 +1676,7 @@ int compiler::compileThread(Statement*& stmt)
 	}
 	else
 	{
-		writeLine("NULL);");
+		writeLine("nullptr);");
 		//m14FileDefs <<  threadStmt->returnType << " " << functionID << "();" << endl;
 		m14FileDefs <<  "void* " << functionID << "();" << std::endl;
 		
@@ -1694,19 +1693,19 @@ int compiler::compileThread(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileExtern(Statement*& stmt)
+int compiler::compileExtern(std::shared_ptr<Statement> stmt)
 {
-	EXTERN* Extern =(EXTERN*)stmt;
+	std::shared_ptr<EXTERN> Extern = std::static_pointer_cast<EXTERN>(stmt);
 	write("{" + Extern->body + "}");
 
 	return 0;
 };
 
 
-int compiler::compileParentAddStatement(Statement*& stmt)
+int compiler::compileParentAddStatement(std::shared_ptr<Statement> stmt)
 {
 	//cout~ << "ARENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" <<endl;
-	parentAddStatement* ap =(parentAddStatement*) stmt;
+	std::shared_ptr<parentAddStatement> ap = std::static_pointer_cast<parentAddStatement>(stmt);
 	write("Distributed.addParent(");
 	compileInsider(ap->ip);
 	write(", ");
@@ -1716,15 +1715,15 @@ int compiler::compileParentAddStatement(Statement*& stmt)
 };
 
 
-int compiler::compileNOPStatement(Statement*& stmt)
+int compiler::compileNOPStatement(std::shared_ptr<Statement> stmt)
 {
 	writeLine(";");
 	return 0;
 };
 
-int compiler::compileSetNodeStatement(Statement*& stmt)
+int compiler::compileSetNodeStatement(std::shared_ptr<Statement> stmt)
 {
-	setNodeStatement* ns =(setNodeStatement*) stmt;
+	std::shared_ptr<setNodeStatement> ns = std::static_pointer_cast<setNodeStatement>(stmt);
 	write("Distributed.changeNodeNumber(");
 	compileInsider(ns->node);
 	writeLine(");");
@@ -1732,7 +1731,7 @@ int compiler::compileSetNodeStatement(Statement*& stmt)
 };
 
 
-int compiler::compileDistributingVariables(Statement*& stmt)
+int compiler::compileDistributingVariables(std::shared_ptr<Statement> stmt)
 {
 	if((mapCodes->at(index)).isHeader())
 	{
@@ -1741,18 +1740,18 @@ int compiler::compileDistributingVariables(Statement*& stmt)
 	 
 	//stringstream SS;
 
-	distributingVariablesStatement* dvStatement =(distributingVariablesStatement*)stmt;
+	std::shared_ptr<distributingVariablesStatement> dvStatement = std::static_pointer_cast<distributingVariablesStatement>(stmt);
 	//SS <<((dvStatement->variable.type & dvStatement->variable.scope) +(int)dvStatement->variable.name.at(0));
 	if(dvStatement->type == distributingVariablesStatement::MODS)
 	{
 		//cout~ << "NEED1111:" << dvStatement->variables.at(i).name << ":" << dvStatement->variables.at(i).arrayIndex << endl;
 		write("Distributed.done<");
-		if(dvStatement->variable.array &&(dvStatement->variable.arrayIndex == NULL))
+		if(dvStatement->variable.array &&(dvStatement->variable.arrayIndex == nullptr))
 		{
 			write(" Array< ");
 		}
 		write(dvStatement->variable.type);
-		if(dvStatement->variable.array &&(dvStatement->variable.arrayIndex == NULL) )
+		if(dvStatement->variable.array &&(dvStatement->variable.arrayIndex == nullptr) )
 		{
 			write(" > ");
 		}
@@ -1782,14 +1781,14 @@ int compiler::compileDistributingVariables(Statement*& stmt)
 			}
 		}
 	
-		if(dvStatement->variable.arrayIndex != NULL)
+		if(dvStatement->variable.arrayIndex != nullptr)
 		{
 			compileInsider(dvStatement->variable.arrayIndex);
 		}
 		else
 		{
 			
-			if(dvStatement->variable.parent &&  dvStatement->variable.parent->arrayIndex != NULL)
+			if(dvStatement->variable.parent &&  dvStatement->variable.parent->arrayIndex != nullptr)
 			{
 				compileInsider(dvStatement->variable.parent->arrayIndex);
 			}
@@ -1800,7 +1799,7 @@ int compiler::compileDistributingVariables(Statement*& stmt)
 		}
 		write(",");
 		
-		if(!dvStatement->variable.array ||(dvStatement->variable.arrayIndex != NULL))
+		if(!dvStatement->variable.array ||(dvStatement->variable.arrayIndex != nullptr))
 		{
 			write("&");
 		}
@@ -1818,7 +1817,7 @@ int compiler::compileDistributingVariables(Statement*& stmt)
 			write(".");
 		}
 		write(dvStatement->variable.name);
-		if(dvStatement->variable.arrayIndex != NULL)
+		if(dvStatement->variable.arrayIndex != nullptr)
 		{
 			write("->at(");
 			compileInsider(dvStatement->variable.arrayIndex);
@@ -1857,12 +1856,12 @@ int compiler::writeDepedency(idInfo& id, int node)
 	std::stringstream SS;
 				
 	write("Distributed.need<");
-	if(id.array &&(id.arrayIndex == NULL))
+	if(id.array &&(id.arrayIndex == nullptr))
 	{
 		write(" Array< ");
 	}
 	write(id.type);
-	if(id.array &&(id.arrayIndex == NULL))
+	if(id.array &&(id.arrayIndex == nullptr))
 	{
 		write(" > ");
 	}
@@ -1891,7 +1890,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 		}
 	}
 	
-	if(id.arrayIndex != NULL)
+	if(id.arrayIndex != nullptr)
 	{
 		compileInsider(id.arrayIndex);
 	}
@@ -1920,7 +1919,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 	SS.str("");
 	SS.clear();
 	
-	if(id.arrayIndex != NULL)
+	if(id.arrayIndex != nullptr)
 	{
 		//SS << -2;
 		SS << node;
@@ -1952,7 +1951,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 						
 	write(id.name);
 			
-	if(id.arrayIndex != NULL)
+	if(id.arrayIndex != nullptr)
 	{
 		write("->at(");
 		compileInsider(id.arrayIndex);
@@ -1980,7 +1979,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 						
 	SS.str("");
 	SS.clear();	 
-	if(id.arrayIndex == NULL)
+	if(id.arrayIndex == nullptr)
 	{
 		return 1;
 	}
@@ -1988,7 +1987,7 @@ int compiler::writeDepedency(idInfo& id, int node)
 	return 0;
 }
 
-int compiler::compileDistribute(Statement*& stmt)
+int compiler::compileDistribute(std::shared_ptr<Statement> stmt)
 {	
 	//distStatement* distStatement =(distStatement*)stmt;
 	std::string funcName =((mapCodes->at(index)).getFunctions()->at(fIndex)).name;
@@ -2007,9 +2006,9 @@ int compiler::compileDistribute(Statement*& stmt)
 	return 0;
 };
 
-int compiler::compileResetStatement(Statement*& stmt)
+int compiler::compileResetStatement(std::shared_ptr<Statement> stmt)
 {
-	resetStatement* rs =(resetStatement*) stmt;
+	std::shared_ptr<resetStatement> rs = std::static_pointer_cast<resetStatement>(stmt);
 	write("if(M14RESETCOUNTER !=(");
 	compileInsider(rs->count);
 	writeLine(") )");

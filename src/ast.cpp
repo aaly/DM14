@@ -3,7 +3,7 @@
 @brief            ast
 @details          Abstract Syntax Tree classes, Part of DM14 programming language
 @author           AbdAllah Aly Saad <aaly90@gmail.com>
-@date			  2010-2018
+@date			  2010-2020
 @version          1.1a
 @copyright        See file "license" for bsd license
 */
@@ -11,7 +11,8 @@
 
 funcInfo::funcInfo()
 {
-	parameters = new Array<pair<string, bool> >;
+	parameters = std::make_shared<Array<pair<string, bool>>>();
+
 	noAutism = false;
 	protoType = false;
 	classifier = DM14::types::CLASSIFIER::PUBLIC;
@@ -27,19 +28,18 @@ int funcInfo::clear()
 	//delete parameters;
 	//parameters = new Array<int>;
 	classConstructor = false;
-	return(0);
+	return 0;
 };
 
 with::with()
 {
-	package = new string;
-	library = new string;
+	package = std::make_shared<std::string>();
+	library = std::make_shared<std::string>();
 }
 
 with::~with()
 {
-	delete package;
-	delete library;
+
 }
 
 
@@ -74,17 +74,13 @@ Class::~Class()
 
 threadStatement::threadStatement()
 {
-	functioncall = NULL;
+	functioncall = nullptr;
 	ID = "";
 	classMember = false;
 	StatementType = THREADStatement;
 };
 threadStatement::~threadStatement()
 {
-	if(functioncall)
-	{
-		delete functioncall;
-	}
 };
 
 
@@ -110,7 +106,7 @@ idInfo::idInfo()
 	channel = false;
 	noblock = false;
 	//parent = "";
-	parent = NULL;
+	parent = nullptr;
 	functionParent = "";
 	global = false;
 	shared = false;
@@ -121,25 +117,25 @@ idInfo::idInfo()
 };
 
 
-idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, Statement* aIndex)
+idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, std::shared_ptr<Statement> aIndex)
 {
 	idInfo();
 	name = ID;
 	scope = IDscope;
 	type = IDtype;
 	arrayIndex = aIndex;
-	parent = NULL;
+	parent = nullptr;
 	
 };
 
-idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, const string& Value,Statement* aIndex)
+idInfo::idInfo(const string& ID, const int& IDscope, const string& IDtype, const string& Value,std::shared_ptr<Statement> aIndex)
 {
 	name = ID;
 	scope = IDscope;
 	type = IDtype;
 	value = Value;
 	arrayIndex = aIndex;
-	parent = NULL;
+	parent = nullptr;
 	idInfo();
 };
 
@@ -157,7 +153,7 @@ int	idInfo::setParent(const string& parentID)
 Statement::Statement()
 {
 	scopeLevel = 0;
-	//distStatements = new Array<distributingVariablesStatement*>();
+	//distStatements = new Array<distributingVariablesstd::shared_ptr<Statement>>();
 	
 	line = 0;
 	scope = 0;
@@ -165,19 +161,19 @@ Statement::Statement()
 	type = "";
 };
 
-void Statement::absorbDistStatements(Statement* arg)
+void Statement::absorbDistStatements(std::shared_ptr<Statement> arg)
 {
-	if(arg == NULL)
+	if(arg == nullptr)
 	{
 		return;
 	}
 
-	for(uint32_t i = 0; i < arg->distStatements.size(); i++)
+	for(uint32_t i = 0; i < arg->distStatements->size(); i++)
 	{
-		distStatements.push_back(arg->distStatements.at(i));
+		distStatements->push_back(arg->distStatements->at(i));
 	}
 
-	arg->distStatements.clear();
+	arg->distStatements->clear();
 }
 
 emptyStatement::emptyStatement()
@@ -188,14 +184,14 @@ emptyStatement::emptyStatement()
 returnStatement::returnStatement()
 {
 	StatementType = rStatement;
-	retValue = NULL;
+	retValue = nullptr;
 };
 
 declareStatement::declareStatement()
 {
 	StatementType = dStatement;
-	value = NULL;
-	identifiers = new Array<idInfo>;
+	value = nullptr;
+	identifiers = std::make_shared<Array<idInfo>>();
 	array = false;
 	tmpScope = false;
 	backProp = false;
@@ -210,30 +206,26 @@ declareStatement::declareStatement()
 
 declareStatement::~declareStatement()
 {
-	delete value;
-	delete identifiers;
 };
 
 operationalStatement::operationalStatement()
 {
 	StatementType = oStatement;
-	//right = new Array<Statement*>;
-	right = NULL;
-	left  = NULL;
+	//right = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	right = nullptr;
+	left  = nullptr;
 	op = "";
 };
 
 operationalStatement::~operationalStatement()
 {
-	delete right;
-	delete left;
 };
 
 
 termStatement::termStatement()
 {
 	StatementType = tStatement;
-	arrayIndex = NULL;
+	arrayIndex = nullptr;
 	identifier = false;
 	size = 0;
 };
@@ -243,21 +235,19 @@ distStatement::distStatement()
 	StatementType = DISTStatement;
 	//bigOrder++;
 	//order=distStatement::bigOrder;
-	dependenciesVariables	= new Array<idInfo>;
-	modifiedVariables		= new Array<idInfo>;
+	dependenciesVariables	= std::make_shared<Array<idInfo>>();
+	modifiedVariables		= std::make_shared<Array<idInfo>>();
 	
 };
 
 distStatement::~distStatement()
 {
-	delete dependenciesVariables;
-	delete modifiedVariables;
 	
 };
 
 resetStatement::resetStatement()
 {
-	count = NULL;
+	count = nullptr;
 	StatementType = RESETStatement;
 };
 
@@ -269,8 +259,8 @@ resetStatement::~resetStatement()
 
 parentAddStatement::parentAddStatement()
 {
-	socket = NULL;
-	ip = NULL;
+	socket = nullptr;
+	ip = nullptr;
 	StatementType = PAStatement;
 };
 
@@ -281,7 +271,7 @@ parentAddStatement::~parentAddStatement()
 
 setNodeStatement::setNodeStatement()
 {
-	node = NULL;
+	node = nullptr;
 	StatementType = SNStatement;
 };
 
@@ -296,8 +286,8 @@ termStatement::termStatement(const string& value)
 {
 	StatementType = tStatement;
 	term = value; // immediate or identifier :D
-	arrayIndex = NULL;
-	id = NULL;
+	arrayIndex = nullptr;
+	id = nullptr;
 	size = 0;
 };
 
@@ -306,90 +296,79 @@ termStatement::termStatement(const string& value, const string& Stype)
 	StatementType = tStatement;
 	term = value; // immediate or identifier :D
 	type = Stype;
-	arrayIndex = NULL;
-	id = NULL;
+	arrayIndex = nullptr;
+	id = nullptr;
 	size = 0;
 };
 
 functionCall::functionCall()
 {
 	StatementType = fCall;
-	parameters = new Array<Statement*>;
+	parameters = std::make_shared<Array<std::shared_ptr<Statement>>>();
 };
 
 
 functionCall::~functionCall()
 {
-	delete parameters;
 };
 
 
 forloop::forloop()
 {
 	StatementType = fLoop;
-	fromCondition = new Array<Statement*>;
-	toCondition = new Array<Statement*>;
-	stepCondition = new Array<Statement*>;
-	body = new Array<Statement*>;
+	fromCondition = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	toCondition = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	stepCondition = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	body = std::make_shared<Array<std::shared_ptr<Statement>>>();
 };
 
 forloop::~forloop()
 {
-	delete fromCondition;
-	delete toCondition;
-	delete stepCondition;
-	delete body;
+
 };
 
 
 whileloop::whileloop()
 {
 	StatementType = wLoop;
-	condition = new Statement();
-	body = new Array<Statement*>;
+	condition = std::make_shared<Statement>();
+	body = std::make_shared<Array<std::shared_ptr<Statement>>>();
 };
 
 
 whileloop::~whileloop()
 {
-	delete condition;
-	delete body;
 };
 
 
 IF::IF()
 {
 	StatementType = IFStatement;
-	condition = new Statement;
-	body = new Array<Statement*>;
-	ELSE = new Array<Statement*>;
-	elseIF = new Array<Statement*>;
+	condition = std::make_shared<Statement>();
+	body = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	ELSE = std::make_shared<Array<std::shared_ptr<Statement>>>();
+	elseIF = std::make_shared<Array<std::shared_ptr<Statement>>>();
 }
 
 IF::~IF()
 {
-	delete condition;
-	delete body;
-	delete ELSE;
-	delete elseIF;
 }
 
 CASE::CASE()
 {
 //	body = new map<expression,Statement>;
 	StatementType = CASEStatement;
-	condition = NULL;
+	condition = std::make_shared<Statement>();
 }
 
 CASE::~CASE()
 {
-	delete condition;
 }
 
 ast_function::ast_function()
 {
-	body = new Array<Statement*>;
-	parameters = new Array<idInfo>;
+	body = make_shared<Array<std::shared_ptr<Statement>>>();
+	parameters = make_shared<Array<idInfo>>();
 	distributed = false;
 }
 
@@ -404,16 +383,14 @@ distributingVariablesStatement::distributingVariablesStatement()
 EXTERN::EXTERN()
 {
 	StatementType = EXTERNStatement;
-	dependenciesVariables	= new Array<idInfo>;
-	modifiedVariables		= new Array<idInfo>;
+	dependenciesVariables	= std::make_shared<Array<idInfo>>();
+	modifiedVariables		= std::make_shared<Array<idInfo>>();
 	
 };
 
 EXTERN::~EXTERN()
 {
-	delete dependenciesVariables;
-	delete modifiedVariables;
-	
+
 };
 
 ast_function::~ast_function()

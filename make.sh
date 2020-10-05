@@ -5,7 +5,7 @@ rm -rf build
 mkdir build
 cd build
 cmake  ..
-make -j -l 4
+make -j -l 8
 
 #cd ../examples
 #../build/DMC --sources distarray.m14 -I ../src/includes/

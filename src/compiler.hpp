@@ -30,7 +30,7 @@ enum compilerOptimizations
 class compiler
 {
 	public:
-		compiler(Array<mapcode>* const);
+		compiler(std::shared_ptr<Array<mapcode>> const);
 		~compiler();
 		
 		int	setVersion(const double&);
@@ -44,35 +44,35 @@ class compiler
 		int 	compileOuterExtern();
 		int 	compileFunction();
 		int	compileGlobalStructs();
-		int 	compileNOPStatement(Statement*&);
+		int 	compileNOPStatement(std::shared_ptr<Statement>);
 		int	compileGlobalDeclarations();
-		int	compileRetStatement(Statement*&);
-		int 	compileForLoop(Statement*&);
-		int 	compileWhileLoop(Statement*&);
-		int 	compileDistribute(Statement*&);
-		int 	compileDistributingVariables(Statement*&);
-		int 	compileDecStatement(Statement*&);
-		int 	compileOpStatement(Statement*&);
-		int 	compileFunctionCall(Statement*&);
-		int	compileTerm(Statement*&);
-		int	compileInsider(Statement*&, iostream* = NULL, const bool = false);
-		int	compileIF(Statement*&);
-		int	compileCASE(Statement*&);
-		int	compileResetStatement(Statement*&);
-		int	compileParentAddStatement(Statement*&);
-		int	compileSetNodeStatement(Statement*&);
+		int	compileRetStatement(std::shared_ptr<Statement>);
+		int 	compileForLoop(std::shared_ptr<Statement>);
+		int 	compileWhileLoop(std::shared_ptr<Statement>);
+		int 	compileDistribute(std::shared_ptr<Statement>);
+		int 	compileDistributingVariables(std::shared_ptr<Statement>);
+		int 	compileDecStatement(std::shared_ptr<Statement>);
+		int 	compileOpStatement(std::shared_ptr<Statement>);
+		int 	compileFunctionCall(std::shared_ptr<Statement>);
+		int	compileTerm(std::shared_ptr<Statement>);
+		int	compileInsider(std::shared_ptr<Statement>, iostream* = nullptr, const bool = false);
+		int	compileIF(std::shared_ptr<Statement>);
+		int	compileCASE(std::shared_ptr<Statement>);
+		int	compileResetStatement(std::shared_ptr<Statement>);
+		int	compileParentAddStatement(std::shared_ptr<Statement>);
+		int	compileSetNodeStatement(std::shared_ptr<Statement>);
 		int	compileDistributedVariable(const idInfo&, const bool = false);
 		int	compileNodeSelector(ast_function&);
-		int	compileExtern(Statement*&);
-		int	compileThread(Statement*&);
-		int	compileAddVector(Statement*&, const idInfo&, const bool = false);
+		int	compileExtern(std::shared_ptr<Statement>);
+		int	compileThread(std::shared_ptr<Statement>);
+		int	compileAddVector(std::shared_ptr<Statement>, const idInfo&, const bool = false);
 		bool	setcompileStatic(const bool&);
 		bool	isCompilingMain();
 		
-		string	generateDistributedVariableName(idInfo* id);
+		string	generateDistributedVariableName(std::shared_ptr<idInfo> id);
 		
 		int		writeDepedency(idInfo&, int);
-		void	printStatement(Statement* stmt, int indent);
+		void	printStatement(std::shared_ptr<Statement> stmt, int indent);
 
 		static bool compareIncludes(DM14::includePath include1, DM14::includePath include2);
 		
@@ -88,7 +88,7 @@ class compiler
 		std::string				fName;
 		std::fstream			srcFile;
 		std::fstream			m14FileDefs;
-		Array<mapcode>*	mapCodes;
+		std::shared_ptr<Array<mapcode>>	mapCodes;
 		//Array < pair<string, int> >*		nodesModifiers;
 		
 		int						index; // index of mapCodes ( current file )	

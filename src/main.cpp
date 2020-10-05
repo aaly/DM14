@@ -2,7 +2,8 @@
 #include <vector>
 #include <map>
 #include <string>
-//std::map <std::string, std::vector<string> > EBNF;
+#include <memory>
+
 
 class parametersHandler
 {
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
 	
 	//cout << " Scanning ... [" << fname << "]" << endl;
 	displayInfo(" Scanning  ... [" + fname + "]");
-	DM14::scanner* scner = new DM14::scanner(fname);
+	std::shared_ptr<DM14::scanner> scner(new DM14::scanner(fname));
 	scner->setShortComment("~~");
 	scner->setLongComment("~*", "*~");
 	scner->scan();
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
 	//exit(1);
 	
 	displayInfo(" Parsing   ... [" + fname + "]");
-	DM14::Parser* prser = new DM14::Parser(scner->getTokens(), fname, false);
+	std::shared_ptr<DM14::Parser> prser(new DM14::Parser(scner->getTokens(), fname, false));
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
@@ -103,7 +104,7 @@ int main(int argc, char** argv)
 	
 	
 	displayInfo(" Compiling  ... [" + fname + "]");
-	DM14::compiler* Compiler = new DM14::compiler(prser->getMapCodes());
+	std::shared_ptr<DM14::compiler> Compiler(new DM14::compiler(prser->getMapCodes()));
 
 	for(uint32_t i =0; i < includePaths.size(); i++)
 	{		
@@ -116,9 +117,6 @@ int main(int argc, char** argv)
 	Compiler->setcompileStatic(false);
 	Compiler->compile();
 	
-	delete scner;
-	delete prser;
-	delete Compiler;
 	
 	return 0;
 }

@@ -73,7 +73,7 @@ namespace DM14
 
 		
 		//typedef std::pair<ebnfResultType, Statement*> ebnfResult;
-		typedef Statement* (Parser::*parser_callback)();
+		typedef std::shared_ptr<Statement> (Parser::*parser_callback)();
 
 
 		class EBNF_token_t
@@ -105,18 +105,29 @@ namespace DM14
 		}
 		grammar_rule_t;
 
-		typedef std::map <std::string, std::vector<grammar_rule_t>> EBNF_map_t;
+		typedef std::map<std::string, std::vector<grammar_rule_t>> EBNF_map_t;
 		
 		//typedef Array<std::pair<std::string, std::pair<parser_callback, Array<token>>>> callstack_t;
 		
 		class callstack_t
 		{
 			public:
+			
+				callstack_t()
+				{
+					nested_stacks = make_shared<Array<callstack_t>>();
+				}
+				
+				
+				std::shared_ptr<Array<callstack_t>> nestedStacks()
+				{
+					return nested_stacks;
+				}
+				
 				std::string rule;
 				std::string expansion;
 				parser_callback callback;
-				Array<token> tokens;
-				Array<callstack_t> nested_stacks;
+				
 				
 				void Print(uint32_t indent = 0)
 				{
@@ -125,17 +136,127 @@ namespace DM14
 						cerr << " ";
 					}
 					
-					cerr << "Rule : " << rule << " nested_stacks size:" << nested_stacks.size() << " tokens:[";
-					for(auto token : tokens)
+					cerr << "Rule : " << rule << " nested_stacks size:" << nested_stacks->size() << " tokens:[";
+					for(auto token : *tokens)
 					{
 						cerr << token.value << ",";
 					}
 					cerr << "]" << endl;
-					for(auto nested_stack : nested_stacks)
+					for(auto nested_stack : *nested_stacks)
 					{
 						nested_stack.Print(indent+1);
 					}
+				}
+				
+				bool selectRule(const std::string& rule)
+				{
+					bool result = false;
+					for(auto nested_stack : *nested_stacks)
+					{
+						if(nested_stack.rule == rule)
+						{
+							result = true;
+						}
+					}
+					return result;
+				}
+				
+				int32_t nextIndex()
+				{
+					if(tokens->size() > 0 &&
+						index < tokens->size())
+					{
+						index++;
+					}
+					else
+					{
+						displayError("prser>fName", (tokens->at(getIndex())).lineNumber,(tokens->at(getIndex())).columnNumber,"Unexpected EOF");
+					}
+					return index;
 				};
+			
+				
+				const int32_t getIndex()
+				{
+					return index;
+				}
+				
+				
+								
+				int32_t setIndex(int32_t index)
+				{
+					this->index = index;
+					return this->index;
+				}
+				
+							
+				token getToken(const uint32_t index)
+				{
+					if(tokens->size() > 0 &&
+						index < tokens->size())
+					{
+						return tokens->at(index);
+					}
+					return token();
+				}
+
+
+				token getToken()
+				{
+					return current_token;
+				}
+
+
+
+				token popToken(const uint32_t index)
+				{
+					if(tokens->size() > 0)
+					{
+						current_token = tokens->at(index);
+						tokens->remove(index);
+					}
+					else
+					{
+						displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
+
+				token popToken()
+				{
+					if(tokens->size() > 0)
+					{
+						current_token = tokens->at(0);
+						tokens->erase(tokens->begin());
+					}
+					else
+					{
+						displayError("Empty pop !!!");
+						current_token = token();
+					}
+					
+					return current_token;
+				}
+				
+				std::shared_ptr<Array<token>> Tokens()
+				{
+					return tokens;
+				}
+				
+				void setTokens(Array<token> tokens)
+				{
+					this->tokens = std::make_shared<Array<token>>(tokens);
+				}
+				
+			private:
+			
+				int32_t index = 0;	/** current tokens index */
+				token current_token; /** current poped token */
+				std::shared_ptr<Array<token>> tokens = nullptr;
+				std::shared_ptr<Array<callstack_t>> nested_stacks = nullptr;
+				
 		};
 		
 		enum class ebnfResultType
@@ -433,9 +554,9 @@ namespace DM14
 				
 				
 				
-				Statement* parseStatement(Statement* output, const std::string starting_rule, parser_callback custom_callback)
+				std::shared_ptr<Statement> parseStatement(std::shared_ptr<Statement> output, const std::string starting_rule, parser_callback custom_callback)
 				{
-					Statement* retStmt = output;
+					std::shared_ptr<Statement> retStmt = output;
 					
 					
 					int32_t *temp_input_tokens_index_ptr = input_tokens_index;
@@ -668,9 +789,27 @@ namespace DM14
 								{
 									if(groupByRules[ebnf_token.expansion])
 									{
-										result.stack.nested_stacks.push_back(expansion_result.stack);
+										result.stack.nestedStacks()->push_back(expansion_result.stack);
 									}
 								}
+								
+								/*auto expansion_result = parseEBNF(input_tokens, ebnf_token.expansion, output_tokens, ebnf_token.callback);
+								
+								if(expansion_result.status == ebnfResultType::SUCCESS)
+								{
+									if(groupByRules[ebnf_token.expansion])
+									{
+										if(ebnf_token.callback != nullptr)
+										{
+											result = expansion_result;
+										}
+										else
+										{
+											result.status = ebnfResultType::SUCCESS;
+											result.stack.nested_stacks.push_back(expansion_result.stack);
+										}
+									}
+								}*/
 							}
 							else if(ebnf_token.tokenType == SINGLE_OP_TOKEN)
 							{
@@ -843,9 +982,20 @@ namespace DM14
 					if(result.status == ebnfResultType::SUCCESS && groupByRules[start_map_index])
 					{
 						
-						result.stack.callback = callback;
-						result.stack.rule =  start_map_index;
-						result.stack.tokens =  working_tokens->cut(current_working_tokens_size, working_tokens->size());
+						
+						/// replace with nested statement if this has no tokens...
+						//if(result.stack.Tokens().size() == 0 
+						if(working_tokens->size()-current_working_tokens_size == 0
+						   &&result.stack.nestedStacks()->size() == 1)
+						{
+							result.stack = result.stack.nestedStacks()->at(0);
+						}
+						else
+						{
+							result.stack.callback = callback;
+							result.stack.rule =  start_map_index;
+							result.stack.setTokens(working_tokens->cut(current_working_tokens_size, working_tokens->size()));
+						}
 					}
 					
 					if(localInsideGroup)

@@ -22,7 +22,7 @@ to accomplish some goals.
 
 namespace DM14
 {
-	Statement* Parser::bad_program()
+	std::shared_ptr<Statement> Parser::bad_program()
 	{		
 		displayError(fName, -1,0,"unable to proceed file, error follows :", false);
 		//old_successful_depth.print();
@@ -48,39 +48,39 @@ namespace DM14
 	//bool EBNF_is_index_frozen = false; /** boolean used by freeze_EBNFindex() and unfreeze_EBNFindex() */
 	//int EBNF_frozen_index = -1; /** last index before freezing the EBNF index using freeze_EBNFindex(), to be used for restoration using unfreeze_EBNFindex()*/
 
-	Parser::Parser(Array<token>* gtokens, const string& filename, const bool insider = true)
+	Parser::Parser(std::shared_ptr<Array<token>> gtokens, const string& filename, const bool insider = true)
 	{
-		if(gtokens ==NULL || gtokens->size() == 0)
+		if(gtokens == nullptr || gtokens->size() == 0)
 		{
 			displayError(filename, 0,0,"Internal parser error !!!, no tokens , maybe empty source file ?");
 		}
 		tokens = gtokens;	
-		ebnf.tokens				=	gtokens;
+		ebnf.tokens				=	gtokens.get();
 		fName				=	filename;
 		
-		functions			=	new Array<ast_function>;
-		identifiers			=	new Array<idInfo>;
-		functionsInfo		=	new Array<funcInfo>;
-		ExternCodes			=	new Array<string>;
-		mapCodes 			=	new Array<mapcode>;
+		functions			=	std::make_shared<Array<ast_function>>();
+		identifiers			=	std::make_shared<Array<idInfo>>();
+		functionsInfo		=	std::make_shared<Array<funcInfo>>();
+		ExternCodes			=	std::make_shared<Array<string>>();
+		mapCodes 			=	std::make_shared<Array<mapcode>>();
 		scope				=	0;
 		Header				=	false;
-		distStatementTemp	=	new distStatement();
+		distStatementTemp	=	std::make_shared<distStatement>();
 		distributedVariablesCount = 0;
 		distributedNodesCount = 0;
 		tmpScope = false;
 		globalNoDist = false;
 		
-		ebnf.input_tokens = tokens;
+		ebnf.input_tokens = tokens.get();
 		
-		dvList				=	new Array<distributingVariablesStatement*>;
-		linkLibs			=	new Array<Statement*>();
+		dvList				=	std::make_shared<Array<std::shared_ptr<distributingVariablesStatement>>>();
+		linkLibs			=	std::make_shared<Array<std::shared_ptr<Statement>>>();
 
 		this->insider = insider;
 		
-		distModifiedGlobal	= new Array<idInfo>;
-		distStatementTemp	= new distStatement();
-		modifiedVariablesList = Array < pair<idInfo,int> >();
+		distModifiedGlobal	= std::make_shared<Array<idInfo>>();
+		distStatementTemp	= std::make_shared<distStatement>();
+		modifiedVariablesList = Array<pair<idInfo,int>>();
 		increaseScope(nullptr);
 		distributedScope = 0;
 		functionStatementsCount = 0;
@@ -385,10 +385,30 @@ namespace DM14
 		ebnf.grammar["nop-Statement"] = {{EBNF::GRAMMAR_TOKEN_AND,{{";",EBNF::TERMINAL_TOKEN}}}};
 		
 		
-		ebnf.groupBy({"program", "function-list", "function-prototype", "function-definition-list", "include-Statement", "declaration-full-Statement", "for-list", "extern-Statement", 
-		"link-list", "struct-list", "if-list", "distribute", "reset-Statement", "setnode-Statement", 
-		"while-list", "case-list", "addparent-Statement", "thread-Statement", "function-call-list", 
-		"return-list", "break-Statement", "continue-Statement", "nop-Statement", "expression-Statement", "compound-Statement", "Statement", "Statement-list"});
+		ebnf.groupBy({"program", "Statement",
+					 "include-Statement", "include-Statement-body",
+					 "function-list", "function-prototype", "function-definition-list", 
+					 "declaration-full-Statement", 
+					 "for-list", 
+					 "extern-Statement",
+					 "link-list",
+					 "struct-list",
+					 "if-list",
+					 "distribute",
+					 "reset-Statement",
+					 "setnode-Statement", 
+					 "while-list",
+					 "case-list", 
+					 "addparent-Statement", 
+					 "thread-Statement", 
+					 "function-call-list", 
+					 "return-list",
+					 "break-Statement",
+					 "continue-Statement",
+					 "nop-Statement",
+					 "expression-Statement",
+					 "compound-Statement",
+					 "Statement-list"});
 		
 	};
 
@@ -396,22 +416,18 @@ namespace DM14
 
 	Parser::~Parser()
 	{
-		delete functions;
-		delete identifiers;
-		delete	functionsInfo;
 		//delete distIdentifiers;
-		delete distStatementTemp;
 		//delete ExternCodes;
 	};
 
-	Statement* Parser::parseContinue()
+	std::shared_ptr<Statement> Parser::parseContinue()
 	{
-		return new continueStatement();
+		return std::shared_ptr<Statement>(new continueStatement());
 	}
 
-	Statement* Parser::parseBreak()
+	std::shared_ptr<Statement> Parser::parseBreak()
 	{
-		return new breakStatement();
+		return std::shared_ptr<Statement>(new breakStatement());
 	}
 
 	int Parser::parse()
@@ -421,9 +437,11 @@ namespace DM14
 			parseIncludesInsider("core/DM14GLOBAL.m14", "", includePath::sourceFileType::FILE_DM14);
 		}
 
+
+		displayInfo(fName, -1, -1, "Veryifying & Filling in the EBNF gaps!");
 		while(ebnf.getIndex() < tokens->size()-1)
 		{
-			//displayInfo(fName, -1, -1, "calling parseEBNF for program!");	
+			
 			EBNF::ebnfResult ebnf_parse_result = ebnf.parse("program");
 			if(ebnf_parse_result.status != EBNF::ebnfResultType::SUCCESS)
 			{
@@ -432,6 +450,13 @@ namespace DM14
 			
 			ebnf_parse_result.stack.Print();
 			stackList.push_back(ebnf_parse_result.stack);
+		}
+		
+		displayInfo(fName, -1, -1, "Doing the parsing ;)");
+		
+		//for(auto&& stack : stackList)
+		{
+			//(this->*stack.callback)();
 		}
 
 		// check for the main function 
@@ -453,7 +478,7 @@ namespace DM14
 			
 		mapcode mapCode(fName, getFunctions(), getIncludes(), false, distributedNodesCount, distributedVariablesCount);
 			
-		mapCode.ExternCodes = new Array<string>();
+		mapCode.ExternCodes = std::make_shared<Array<string>>();
 		*mapCode.ExternCodes = *ExternCodes;
 		mapCode.ExternCodes = ExternCodes;
 		mapCode.linkLibs = linkLibs;
@@ -473,22 +498,22 @@ namespace DM14
 	/** in includes folder , there is folders named after packages , 
 	 * and then cpps and hpps named after libraries , so when calling mapFunctions , 
 	 * pass package AND library , add the File including too , call parser on it */
-	Statement* Parser::parseIncludes() 
+	std::shared_ptr<Statement> Parser::parseIncludes() 
 	{	
-		ebnf.popToken();
-		ebnf.popToken();
+		activeStack().popToken();
+		activeStack().popToken();
 		string package = "";
 		string library = "";
 		includePath::sourceFileType includeType = includePath::sourceFileType::LIBRARY;
-		if(ebnf.getToken().type != "string" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))//tokens->at(ebnf.getIndex()).type != "datatype")
+		if(activeStack().getToken().type != "string" && activeStack().getToken().type != "identifier" && !DM14::types::isDataType(activeStack().getToken().value))//tokens->at(activeStack().getIndex()).type != "datatype")
 		{
-			displayError(fName, ebnf.getToken().lineNumber,ebnf.getToken().columnNumber,"Expected Package name and not " + ebnf.getToken().value );
+			displayError(fName, activeStack().getToken().lineNumber,activeStack().getToken().columnNumber,"Expected Package name and not " + activeStack().getToken().value );
 		}
 
-		if(ebnf.getToken().type == "string")
+		if(activeStack().getToken().type == "string")
 		{
 			
-			package = ebnf.getToken().value.substr(1,(ebnf.getToken().value.size() - 2 ));
+			package = activeStack().getToken().value.substr(1,(activeStack().getToken().value.size() - 2 ));
 			if(package.substr(package.size()-5) == ".m14")
 			{
 				includeType = includePath::sourceFileType::FILE_DM14;
@@ -505,29 +530,29 @@ namespace DM14
 		}
 		else
 		{
-			package = ebnf.getToken().value;
+			package = activeStack().getToken().value;
 			includeType = includePath::sourceFileType::LIBRARY;
-			ebnf.popToken();
-			if(ebnf.getToken().value == "use")
+			activeStack().popToken();
+			if(activeStack().getToken().value == "use")
 			{
 				RequireValue("use", "Expected \"Use\" and not ", true);
-				ebnf.popToken();
+				activeStack().popToken();
 				
-				if(ebnf.getToken().value != "*" && ebnf.getToken().type != "identifier" && !DM14::types::isDataType(ebnf.getToken().value))// tokens->at(ebnf.getIndex()).type != "datatype")
+				if(activeStack().getToken().value != "*" && activeStack().getToken().type != "identifier" && !DM14::types::isDataType(activeStack().getToken().value))// tokens->at(activeStack().getIndex()).type != "datatype")
 				{
-					displayError(fName, ebnf.getToken().lineNumber,ebnf.getToken().columnNumber,"Expected Package name");	
+					displayError(fName, activeStack().getToken().lineNumber,activeStack().getToken().columnNumber,"Expected Package name");	
 				}
 				
-				if(ebnf.getToken().value == "*" )
+				if(activeStack().getToken().value == "*" )
 				{
 					library = package;
 				}
 				else
 				{
-					library = ebnf.getToken().value;
+					library = activeStack().getToken().value;
 				}
 				
-				ebnf.popToken();
+				activeStack().popToken();
 			}
 			else
 			{
@@ -663,26 +688,26 @@ namespace DM14
 		return 0;
 	}
 
-	Statement* Parser::parseLink()
+	std::shared_ptr<Statement> Parser::parseLink()
 	{
-		Link* stmt = new Link();
+		std::shared_ptr<Link> stmt(new Link());
 		
-		ebnf.popToken();
-		if(ebnf.getToken().value == "slink")
+		activeStack().popToken();
+		if(activeStack().getToken().value == "slink")
 		{
 			stmt->Static = true;
 		}
 		
-		ebnf.popToken();
+		activeStack().popToken();
 			
-		if(ebnf.getToken().type != "string")
+		if(activeStack().getToken().type != "string")
 		{
 			RequireType("string", "expected library identifier and not : ", true);
 		}
 		
-		if(ebnf.getToken().value.size() > 2)
+		if(activeStack().getToken().value.size() > 2)
 		{
-			stmt->libs = ebnf.getToken().value.substr(1, ebnf.getToken().value.size()-2);
+			stmt->libs = activeStack().getToken().value.substr(1, activeStack().getToken().value.size()-2);
 		}
 		
 		linkLibs->push_back(stmt);
@@ -691,139 +716,140 @@ namespace DM14
 	}
 
 
-	Statement* Parser::parseReturn()
+	std::shared_ptr<Statement> Parser::parseReturn()
 	{
-		ebnf.popToken();
-		returnStatement* Statement = new returnStatement();
-		Statement->line = ebnf.getToken().lineNumber;
-		Statement->scope = scope;
+		activeStack().popToken();
+		std::shared_ptr<returnStatement> statement(new returnStatement());
+		statement->line = activeStack().getToken().lineNumber;
+		statement->scope = scope;
 		
 		if(!peekToken(";"))
 		{
 			//returnStatement->retValue = parseOpStatement(0, reachToken(";", false, true, true, true, false)-1, currentFunction.returnIDType, 0, returnStatement);
-			Statement->retValue = parseStatement("Statement");
+			statement->retValue = parseStatement("Statement");
 		}
 		else
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 			RequireValue(";","expected ; and not:", true);
 		}
 
-		return Statement;
+		return statement;
 	}
 
-	Statement* Parser::parseNOPStatement()
+	std::shared_ptr<Statement> Parser::parseNOPStatement()
 	{
-		ebnf.popToken();
-		NOPStatement* result = new NOPStatement;
-		result->line = ebnf.getToken().lineNumber;
+		activeStack().popToken();
+		std::shared_ptr<NOPStatement> result(new NOPStatement());
+		result->line = activeStack().getToken().lineNumber;
 		result->scope = scope;
 		result->scopeLevel = scope;
 		
 		return result;
 	};
 
-	Statement* Parser::parseMatrixIndex()
+	std::shared_ptr<Statement> Parser::parseMatrixIndex()
 	{
 		//@TODO: need to handle 2nd or multiple diemnsions , have to implement in the AST first then parseDeclraration and ParseOpStatement...
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("[", "Expected [ and not : ", true);
 		int from = 0;
 		int to = reachToken("]", false, true, false, true, true)-1;
-		Statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
-		result->line = ebnf.getToken().lineNumber;
-		ebnf.popToken();
+		std::shared_ptr<Statement> result = parseOpStatement(from, to, "-2", 0, currentStatement);
+
+		result->line = activeStack().getToken().lineNumber;
+		activeStack().popToken();
 		return result;
 	}
 
-	Statement* Parser::parseArrayIndex()
+	std::shared_ptr<Statement> Parser::parseArrayIndex()
 	{
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("[", "Expected [ and not : ", true);
 		int from = 0;
 		int to = reachToken("]", false, true, false, true, true)-1;
-		Statement* result = parseOpStatement(from, to, "-2", 0, currentStatement);
-		result->line = ebnf.getToken().lineNumber;
-		ebnf.popToken();
+		std::shared_ptr<Statement>  result = parseOpStatement(from, to, "-2", 0, currentStatement);
+		result->line = activeStack().getToken().lineNumber;
+		activeStack().popToken();
 		return result;
 	};
 
 
-	Statement* Parser::parseAddParent()
+	std::shared_ptr<Statement> Parser::parseAddParent()
 	{
-		parentAddStatement* ps = new parentAddStatement();
-		ebnf.nextIndex();
+		std::shared_ptr<parentAddStatement> ps(new parentAddStatement());
+		activeStack().nextIndex();
 		
-		if((tokens->at(ebnf.getIndex())).value == "(")
+		if((tokens->at(activeStack().getIndex())).value == "(")
 		{
-			int cindex = ebnf.getIndex();
+			int cindex = activeStack().getIndex();
 			ps->ip = parseOpStatement(cindex, reachToken(")", false, true, true, true, true ), "string", 0, ps);
 		}
 		else
 		{
-			ps->ip = parseOpStatement(ebnf.getIndex(), ebnf.getIndex(), "string", 0, ps);
+			ps->ip = parseOpStatement(activeStack().getIndex(), activeStack().getIndex(), "string", 0, ps);
 		}
 		
-		ebnf.nextIndex();
-		if((tokens->at(ebnf.getIndex())).value == "(")
+		activeStack().nextIndex();
+		if((tokens->at(activeStack().getIndex())).value == "(")
 		{
-			int cindex = ebnf.getIndex();
+			int cindex = activeStack().getIndex();
 			ps->socket = parseOpStatement(cindex, reachToken(")", false, true, true, true, true ), "int", 0, ps);
 		}
 		else
 		{
-			ps->socket = parseOpStatement(ebnf.getIndex(), ebnf.getIndex(), "int", 0, ps);
+			ps->socket = parseOpStatement(activeStack().getIndex(), activeStack().getIndex(), "int", 0, ps);
 		}
 		return ps;
 	};
 
-	Statement*	Parser::parseStatement(const std::string starting_rule, EBNF::parser_callback custom_callback)
+	std::shared_ptr<Statement>	Parser::parseStatement(const std::string starting_rule, EBNF::parser_callback custom_callback)
 	{
-		Statement* result = nullptr;
+		std::shared_ptr<Statement> result = nullptr;
 		increaseScope(result);
-		result = ebnf.parseStatement(result, starting_rule, custom_callback);
+		result = std::shared_ptr<Statement>(ebnf.parseStatement(result, starting_rule, custom_callback));
 		decreaseScope();
 		return result;
 	}
 	
-	Statement* Parser::parseSetNode()
+	std::shared_ptr<Statement> Parser::parseSetNode()
 	{
-		setNodeStatement* sn = new setNodeStatement();
+		std::shared_ptr<setNodeStatement> sn(new setNodeStatement());
 		//sn->node = 
 		return sn;
 	};
 
-	Statement* Parser::parseReset()
+	std::shared_ptr<Statement> Parser::parseReset()
 	{
-		resetStatement* rs = new resetStatement();
-		ebnf.popToken(); // reset
+		std::shared_ptr<resetStatement> rs(new resetStatement());
+		activeStack().popToken(); // reset
 		if(!peekToken(";"))
 		{
-			ebnf.popToken();
-			int cindex = ebnf.getIndex();
-			rs->count = parseOpStatement(cindex,(reachToken(";", true, true, true, false, false) - 1), getType(ebnf.getIndex()-1), 0, rs);
+			activeStack().popToken();
+			int cindex = activeStack().getIndex();
+			rs->count = parseOpStatement(cindex,(reachToken(";", true, true, true, false, false) - 1), getType(activeStack().getIndex()-1), 0, rs);
 		}
 		return rs;
 	};
 
-	Statement* Parser::parseDistribute()
+	std::shared_ptr<Statement> Parser::parseDistribute()
 	{
 		currentFunction.distributed = true;
 		
 		stringstream SS;
 		
-		SS << ebnf.getToken().lineNumber;
+		SS << activeStack().getToken().lineNumber;
 		currentFunction.functionNodes.push_back(currentFunction.name+SS.str());
 		SS.str("");
 		
 		//distStatement* distStatement = new distStatement();
-		distStatementTemp->line = ebnf.getToken().lineNumber;
+		distStatementTemp->line = activeStack().getToken().lineNumber;
 		distStatementTemp->scope = scope;
 		//*distStatement->variables = *distIdentifiers;
 		//fix105
 		distributedNodesCount++;
-		distStatement* stmt = distStatementTemp;
-		distStatementTemp = new distStatement();
+		std::shared_ptr<distStatement> stmt(distStatementTemp);
+		distStatementTemp = std::shared_ptr<distStatement>(new distStatement());
 		distributedScope++;
 		return stmt;
 	};
@@ -978,18 +1004,18 @@ namespace DM14
 		}
 		
 		// we already requested it before this Statement !
-		for(uint32_t i =0; i<currentStatement->distStatements.size(); i++)
+		for(uint32_t i =0; i<currentStatement->distStatements->size(); i++)
 		{
 			string listParentName;
 			
-			if(currentStatement->distStatements.at(i)->variable.parent)
+			if(currentStatement->distStatements->at(i)->variable.parent)
 			{
-				listParentName = currentStatement->distStatements.at(i)->variable.parent->name;
+				listParentName = currentStatement->distStatements->at(i)->variable.parent->name;
 			}
 			
-			if(currentStatement->distStatements.at(i)->variable.name == id.name &&
+			if(currentStatement->distStatements->at(i)->variable.name == id.name &&
 				listParentName== parentName &&
-				currentStatement->distStatements.at(i)->variable.scope <= id.scope)
+				currentStatement->distStatements->at(i)->variable.scope <= id.scope)
 				//&& !id.requestAddress)
 			{
 				if(!id.array)
@@ -1010,14 +1036,14 @@ namespace DM14
 				id2.type = datatype.second.memberVariables.at(i).returnType;
 				id2.arrayIndex = NULL;
 				id2.array = false;
-				id2.parent = &id;
+				id2.parent = std::shared_ptr<idInfo>(&id);
 				pushDependency(id2);
 			}
 			
 			return 0;
 		}
 		
-		distributingVariablesStatement* dvStatement = new distributingVariablesStatement();
+		std::shared_ptr<distributingVariablesStatement> dvStatement(new distributingVariablesStatement());
 		dvStatement->variable = id;
 		dvStatement->type = distributingVariablesStatement::DEPS;
 		
@@ -1064,7 +1090,7 @@ namespace DM14
 		
 		//cout << id.name << ":" << dvStatement->dependencyNode << endl;
 		//cout << "\n \n \n \n "<< endl;
-		currentStatement->distStatements.push_back(dvStatement);
+		currentStatement->distStatements->push_back(dvStatement);
 		dvList->push_back(dvStatement);
 		distStatementTemp->dependenciesVariables->push_back(id);
 		return 0;
@@ -1072,7 +1098,7 @@ namespace DM14
 
 
 
-	idInfo* Parser::getTopParent(idInfo* id)
+	std::shared_ptr<idInfo> Parser::getTopParent(std::shared_ptr<idInfo> id)
 	{
 		if(!id->parent)
 		{
@@ -1089,7 +1115,7 @@ namespace DM14
 		}
 		
 		
-		if(id.name == currentFunction.returnID || getTopParent(&id)->name == currentFunction.returnID)
+		if(id.name == currentFunction.returnID || getTopParent(std::shared_ptr<idInfo>(&id))->name == currentFunction.returnID)
 		{
 			return 1;
 		}
@@ -1155,11 +1181,11 @@ namespace DM14
 				}
 			}
 			
-			distributingVariablesStatement* dvStatement = new distributingVariablesStatement();
+			std::shared_ptr<distributingVariablesStatement> dvStatement(new distributingVariablesStatement());
 			dvStatement->variable = id;
 			dvStatement->type = distributingVariablesStatement::MODS;
 			
-			currentStatement->distStatements.push_back(dvStatement);
+			currentStatement->distStatements->push_back(dvStatement);
 			dvList->push_back(dvStatement);
 			
 			if(op == "++" || op == "--")
@@ -1223,22 +1249,22 @@ namespace DM14
 		return 0;
 	};
 
-	Statement* Parser::parseFunctionCall()
+	std::shared_ptr<Statement> Parser::parseFunctionCall()
 	{
-		Statement* result = parseFunctionCallInternal(true, "", "");
+		std::shared_ptr<Statement> result(parseFunctionCallInternal(true, "", ""));
 		return result;
 	}
 
-	Statement* Parser::parseFunctionCallInternal(bool terminated,const string& returnType, const string& classID)
+	std::shared_ptr<Statement> Parser::parseFunctionCallInternal(bool terminated,const string& returnType, const string& classID)
 	{
-		ebnf.popToken();
-		functionCall* funcCall = new functionCall; // for every comma , call parseOP
-		funcCall->line = ebnf.getToken().lineNumber;
+		activeStack().popToken();
+		std::shared_ptr<functionCall> funcCall(new functionCall); // for every comma , call parseOP
+		funcCall->line = activeStack().getToken().lineNumber;
 		funcCall->scope = scope;
-		funcCall->name = ebnf.getToken().value;
+		funcCall->name = activeStack().getToken().value;
 		
 		
-		if(isUserFunction(ebnf.getToken().value, true))
+		if(isUserFunction(activeStack().getToken().value, true))
 		{
 			funcCall->functionType = DM14::types::types::USERFUNCTION;
 		}
@@ -1247,31 +1273,31 @@ namespace DM14
 			funcCall->functionType = DM14::types::types::BUILTINFUNCTION;
 		}
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("(", "Expected \"(\" and not ", true);
 		
 		/*loop through parameters*/
 		Array<string>* parameters = new Array<string>();
 		if(peekToken(")"))
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 		}
 		else /** we have parameters ! */
 		{
 			currentStatement = funcCall;
 			while(!peekToken(")"))
 			{
-				Statement* parameter = parseStatement("full-expression-list");
+				std::shared_ptr<Statement> parameter = parseStatement("full-expression-list");
 				funcCall->absorbDistStatements(parameter);
 				funcCall->parameters->push_back(parameter);
 				parameters->push_back(parameter->type);
 				if(peekToken(","))
 				{
-					ebnf.popToken();
+					activeStack().popToken();
 				}
 			}
 
-			ebnf.popToken();
+			activeStack().popToken();
 		}
 		
 		bool error = true;
@@ -1299,7 +1325,7 @@ namespace DM14
 			}
 			if(error)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"1Parameters error for function call : " + funcCall->name);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"1Parameters error for function call : " + funcCall->name);
 			}
 			funcCall->type = currentFunction.returnIDType;
 		}
@@ -1316,11 +1342,11 @@ namespace DM14
 					cerr << "SIZE :" << parameters->size() << endl;
 					cerr << "Return type :" << returnType << endl;
 					
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"2Parameters error for function call : " + funcCall->name);
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"2Parameters error for function call : " + funcCall->name);
 				}
 				else
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"return type error [" + returnType + "] for function call : [" + funcCall->name + "] expected : " + getFunc(funcCall->name, classID).returnType);
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"return type error [" + returnType + "] for function call : [" + funcCall->name + "] expected : " + getFunc(funcCall->name, classID).returnType);
 				}
 			}
 			funcCall->type = getFunc(funcCall->name, parameters, returnType, classID).returnType;
@@ -1328,38 +1354,38 @@ namespace DM14
 		
 		if(terminated)
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 			RequireValue(";", "Expected ; and not ", true);
 		}
 		
 		return funcCall;
 	};
 
-	Statement* Parser::parseForloop()
+	std::shared_ptr<Statement> Parser::parseForloop()
 	{
-		ebnf.popToken();
+		activeStack().popToken();
 		
 		// for [decl;cond;stmt] {stmts}
-		forloop* floop = new forloop;
-		floop->line = ebnf.getToken().lineNumber;
+		std::shared_ptr<forloop> floop(new forloop);
+		floop->line = activeStack().getToken().lineNumber;
 		floop->scope = scope;
 		
 		increaseScope(floop);
 		
 		tmpScope = true; 
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("[", "Expected [ and not ", true);
 
 		if(!peekToken(";"))
 		{
 			//Statement* stmt =  parseDeclarationInternal(";");
-			Statement* stmt =  parseStatement("loop-expression-declarator");
+			std::shared_ptr<Statement> stmt = parseStatement("loop-expression-declarator");
 			cerr << "declarator :" << stmt << endl;
-			stmt->line = ebnf.getToken().lineNumber;
+			stmt->line = activeStack().getToken().lineNumber;
 			if(stmt->StatementType != dStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "Expected declaration Statement");
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "Expected declaration Statement");
 			}
 			
 			if(stmt->StatementType == dStatement)
@@ -1372,11 +1398,11 @@ namespace DM14
 		
 		if(!peekToken(";"))
 		{
-			Statement* stmt= parseStatement("loop-expression-condition");
-			stmt->line = ebnf.getToken().lineNumber;
+			std::shared_ptr<Statement> stmt= parseStatement("loop-expression-condition");
+			stmt->line = activeStack().getToken().lineNumber;
 			if(stmt->StatementType != oStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "Expected conditional Statement");
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "Expected conditional Statement");
 			}
 			
 			if(stmt->StatementType == oStatement)
@@ -1391,11 +1417,11 @@ namespace DM14
 		
 		if(!peekToken("]"))
 		{
-			Statement* stmt= parseStatement("loop-expression-step-list");
-			stmt->line = ebnf.getToken().lineNumber;
+			std::shared_ptr<Statement> stmt= parseStatement("loop-expression-step-list");
+			stmt->line = activeStack().getToken().lineNumber;
 			if(stmt->StatementType != oStatement && stmt->StatementType != eStatement)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "Expected operational Statement");
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "Expected operational Statement");
 			}
 			
 			if(stmt->StatementType == oStatement)
@@ -1407,37 +1433,38 @@ namespace DM14
 		}
 		
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("]", "Expected ] and not ", true);
 		
 		tmpScope = false;
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("{", "Expected { and not ", true);
 		
 
 		while(!peekToken("}"))
 		{
-			Statement* stmt = parseStatement("Statement");
+			std::shared_ptr<Statement> stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			floop->body->push_back(stmt);
 		}
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		decreaseScope();
 			
 		return floop;
 	};
 
-	int Parser::addStatementDistributingVariables(Statement* stmt)
+	int Parser::addStatementDistributingVariables(std::shared_ptr<Statement> stmt)
 	{
 		
 		for(uint32_t i=0; i < currentFunction.body->appendBeforeList.size(); i++)
 		{
-			//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-			if((termStatement*)((distributingVariablesStatement*)currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex != NULL)
+			
+			
+			if(std::static_pointer_cast<termStatement>(std::static_pointer_cast<distributingVariablesStatement>(currentFunction.body->appendBeforeList.at(i))->variable.arrayIndex) != NULL)
 			{
 				cerr << currentFunction.body->appendBeforeList.at(i) << endl << flush;
-				stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendBeforeList.at(i));
+				stmt->distStatements->push_back(std::static_pointer_cast<distributingVariablesStatement>(currentFunction.body->appendBeforeList.at(i)));
 				//currentFunction.body->append_after(dvStatement);
 				currentFunction.body->appendBeforeList.erase(currentFunction.body->appendBeforeList.begin()+i);
 				i--;
@@ -1445,10 +1472,9 @@ namespace DM14
 		}
 		for(uint32_t i=0; i < currentFunction.body->appendAfterList.size(); i++)
 		{
-			//if(((dddd*)currentFunction.body->appendAfterList.at(i)).at(0).arrayIndex != NULL)
-			if((termStatement*)((distributingVariablesStatement*)currentFunction.body->appendAfterList.at(i))->variable.arrayIndex != NULL)
+			if(std::static_pointer_cast<termStatement>(std::static_pointer_cast<distributingVariablesStatement>(currentFunction.body->appendAfterList.at(i))->variable.arrayIndex) != NULL)
 			{
-				stmt->distStatements.push_back((distributingVariablesStatement* )currentFunction.body->appendAfterList.at(i));
+				stmt->distStatements->push_back(std::static_pointer_cast<distributingVariablesStatement>(currentFunction.body->appendAfterList.at(i)));
 				//currentFunction.body->append_after(dvStatement);
 				currentFunction.body->appendAfterList.erase(currentFunction.body->appendAfterList.begin()+i);
 				i--;
@@ -1458,11 +1484,11 @@ namespace DM14
 		return 0;
 	}
 
-	Statement* Parser::parseFunction() // add functions prototypes to userFunctions Array too :)
+	std::shared_ptr<Statement> Parser::parseFunction() // add functions prototypes to userFunctions Array too :)
 	{
 		// always keep global ids
-		Array<idInfo>* tmpIdentifiers = identifiers;
-		identifiers			= new Array<idInfo>;
+		std::shared_ptr<Array<idInfo>> tmpIdentifiers = identifiers;
+		identifiers			= std::shared_ptr<Array<idInfo>>(new Array<idInfo>);
 		globalNoDist = true;
 		for(uint32_t i =0; i < tmpIdentifiers->size(); i++)
 		{
@@ -1471,10 +1497,10 @@ namespace DM14
 				identifiers->push_back(tmpIdentifiers->at(i));
 			}
 		}
-		delete tmpIdentifiers;
+		tmpIdentifiers.reset();
 
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireType("identifier", "Invalid function declaration", false);
 		
 		funcInfo Funcinfo;
@@ -1485,17 +1511,17 @@ namespace DM14
 		////checkToken(USERFUNCTION, "can not re-define a builtin function : ", true);
 		////checkToken(BUILTINFUNCTION, "Predefined function : ", true);
 		
-		Funcinfo.name = ebnf.getToken().value;
+		Funcinfo.name = activeStack().getToken().value;
 		Funcinfo.type = DM14::types::types::USERFUNCTION;
 		
-		currentFunction.name = ebnf.getToken().value;
+		currentFunction.name = activeStack().getToken().value;
 			
-		ebnf.popToken();
-		RequireValue("(", "Expected \"(\" and not "+ ebnf.getToken().value + " after function definition ", false);
+		activeStack().popToken();
+		RequireValue("(", "Expected \"(\" and not "+ activeStack().getToken().value + " after function definition ", false);
 
 		if(!peekToken("->"))
 		{
-			while(ebnf.getToken().value != "->")
+			while(activeStack().getToken().value != "->")
 			{
 				//TODO: FIX 102
 				// should make a Array of declaration Statements and add the Statements to it, for the compiler to parse them
@@ -1503,9 +1529,9 @@ namespace DM14
 				//declareStatement* stmt =(declareStatement*)parseDeclarationInternal("->");
 				//declareStatement* stmt =(declareStatement*)parseStatement("Statement");
 				
-				declareStatement* stmt =(declareStatement*)parseStatement("declaration-Statement", &Parser::parseDeclarationInternal);
+				std::shared_ptr<declareStatement> stmt = std::static_pointer_cast<declareStatement>(parseStatement("declaration-Statement", &Parser::parseDeclarationInternal));
 				
-				stmt->line = ebnf.getToken().lineNumber;
+				stmt->line = activeStack().getToken().lineNumber;
 				for(uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 				{
 					idInfo Id;
@@ -1514,52 +1540,52 @@ namespace DM14
 					Id.type =(stmt->identifiers->at(i)).type;
 					Id.type = stmt->type;
 					Id.scope = stmt->scope;
-					Id.index = ebnf.getIndex();
+					Id.index = activeStack().getIndex();
 					currentFunction.parameters->push_back(Id);
 					Funcinfo.parameters->push_back(pair<string,bool>(Id.type,stmt->value));
 				}
 				
 				if(peekToken(","))
 				{
-					ebnf.popToken();
+					activeStack().popToken();
 				}
 				else if(peekToken("->"))
 				{
-					ebnf.popToken();
+					activeStack().popToken();
 				}
 			}
 		}
 		else
 		{
-			ebnf.popToken(); // ->
+			activeStack().popToken(); // ->
 		}
 		
-		RequireValue("->", "Expected \"->\" and not "+ebnf.getToken().value + " after function definition ", false);
+		RequireValue("->", "Expected \"->\" and not "+activeStack().getToken().value + " after function definition ", false);
 		
 		if(peekToken(")"))
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 			currentFunction.returnIDType = "NIL";
 			currentFunction.returnID = "NIL";
 		}
 		else
 		{	
-			while(ebnf.getToken().value != ")")
+			while(activeStack().getToken().value != ")")
 			{
 				//declareStatement* stmt =(declareStatement*)parseDeclarationInternal();
-				declareStatement* stmt =(declareStatement*)parseStatement("declaration-Statement", &Parser::parseDeclarationInternal);
-				ebnf.popToken();
-				RequireValue(")", "Expected ) and not "+ebnf.getToken().value + " after function definition ", false);
-				stmt->line = ebnf.getToken().lineNumber;
+				std::shared_ptr<declareStatement> stmt = std::static_pointer_cast<declareStatement>(parseStatement("declaration-Statement", &Parser::parseDeclarationInternal));
+				activeStack().popToken();
+				RequireValue(")", "Expected ) and not "+activeStack().getToken().value + " after function definition ", false);
+				stmt->line = activeStack().getToken().lineNumber;
 				for(uint32_t i = 0; i < stmt->identifiers->size(); i++ )
 				{
-					stmt->line = ebnf.getToken().lineNumber;
+					stmt->line = activeStack().getToken().lineNumber;
 					currentFunction.returnIDType = stmt->type;
 					Funcinfo.returnType = stmt->type;
 					currentFunction.returnID = stmt->identifiers->at(0).name;
 					if(stmt->identifiers->size() > 1)
 					{
-						displayWarning(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Function : " + Funcinfo.name + " : more than one variable for return, only the first will be used");
+						displayWarning(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Function : " + Funcinfo.name + " : more than one variable for return, only the first will be used");
 						break;
 					}
 				}
@@ -1568,8 +1594,8 @@ namespace DM14
 		
 		globalNoDist = false;
 		// continue to body !
-		ebnf.popToken();
-		if(ebnf.getToken().value == ";")
+		activeStack().popToken();
+		if(activeStack().getToken().value == ";")
 		{
 			//check if it already exists ??
 			// different functions with same name should exist
@@ -1586,11 +1612,11 @@ namespace DM14
 						{
 							if(functionsInfo->at(i).protoType)
 							{
-								displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Pre-defined function prototype : " +Funcinfo.name);
+								displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Pre-defined function prototype : " +Funcinfo.name);
 							}
 							else // if(function prototype already exists)
 							{
-								displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Pre-defined function, no need for prototype : "+Funcinfo.name);
+								displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Pre-defined function, no need for prototype : "+Funcinfo.name);
 							}
 						}
 					}
@@ -1598,7 +1624,7 @@ namespace DM14
 			}
 			functionsInfo->push_back(Funcinfo);
 		}
-		else if(ebnf.getToken().value == "{")
+		else if(activeStack().getToken().value == "{")
 		{
 			globalNoDist = false;
 			Funcinfo.protoType = false;
@@ -1613,7 +1639,7 @@ namespace DM14
 					{
 						if(!functionsInfo->at(i).protoType)
 						{
-							displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Pre-defined function : "+Funcinfo.name);
+							displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Pre-defined function : "+Funcinfo.name);
 						}
 						else
 						{
@@ -1626,24 +1652,24 @@ namespace DM14
 				}
 			}
 					
-			Array<Statement*>* declarations = new Array<Statement*>();
+			std::shared_ptr<Array<std::shared_ptr<Statement>>> declarations(new Array<std::shared_ptr<Statement>>());
 			
-			//while(ebnf.popToken().value != "}")
+			//while(activeStack().popToken().value != "}")
 			while(!peekToken("}"))
 			{
-				Statement* stmt = parseStatement("Statement");
+				std::shared_ptr<Statement> stmt = parseStatement("Statement");
 
 				if(stmt == NULL)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"error parsing function : "+Funcinfo.name);
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"error parsing function : "+Funcinfo.name);
 				}
 
 				if(stmt->StatementType == dStatement)
 				{
-					if(((declareStatement*)stmt)->Initilazed && !((declareStatement*)stmt)->global)
+					if(std::static_pointer_cast<declareStatement>(stmt)->Initilazed && !std::static_pointer_cast<declareStatement>(stmt)->global)
 					{
-						declareStatement* decStatement =((declareStatement*)stmt);
-						Statement* value = decStatement->value;
+						std::shared_ptr<declareStatement> decStatement(std::static_pointer_cast<declareStatement>(stmt));
+						std::shared_ptr<Statement> value(decStatement->value);
 						decStatement->value = NULL;
 						//FIX1001 if function is distributed , else put it in pushModified(os->op, id); currentFunction.body
 						declarations->push_back(decStatement);
@@ -1651,12 +1677,12 @@ namespace DM14
 						for(uint32_t i=0 ; i < decStatement->identifiers->size(); i++)
 						{
 							//fix add type and scope ....
-							operationalStatement* os = new operationalStatement();
-							os->left = new termStatement(decStatement->identifiers->at(i).name);
+							std::shared_ptr<operationalStatement> os(new operationalStatement());
+							os->left = std::shared_ptr<Statement>(new termStatement(decStatement->identifiers->at(i).name));
 							os->op = "=";
 							os->right = value;
 							os->type = stmt->type;
-							os->scope =((declareStatement*)decStatement)->scope;
+							os->scope = std::static_pointer_cast<declareStatement>(decStatement)->scope;
 
 							idInfo id(decStatement->identifiers->at(i).name, os->scope, os->type, NULL);
 							id.distributedScope = distributedScope;
@@ -1674,9 +1700,9 @@ namespace DM14
 							functionStatementsCount++;
 						}
 						
-						Statement* stmt2 = currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size()));
+						std::shared_ptr<Statement> stmt2 (currentFunction.body->at(currentFunction.body->size()-(decStatement->identifiers->size())));
 						stmt2->distStatements = stmt->distStatements;
-						stmt->distStatements.clear();
+						stmt->distStatements->clear();
 					}
 					else
 					{
@@ -1721,7 +1747,7 @@ namespace DM14
 			
 			//TODO:fix what if , two initiated variables are pushed at the same place ?
 
-			termStatement* statement = new termStatement("DM14FUNCTIONBEGIN", "NIL" );
+			std::shared_ptr<termStatement> statement(new termStatement("DM14FUNCTIONBEGIN", "NIL" ));
 			statement->scope = scope;
 			//termStatement->scopeLevel = scopeLevel;
 			//termStatement->arrayIndex = aIndex;
@@ -1735,7 +1761,7 @@ namespace DM14
 			currentFunction.body = declarations;
 			functions->push_back(currentFunction);
 
-			ebnf.popToken();
+			activeStack().popToken();
 			RequireValue("}", "Expected } and not : ", true);
 		}
 		else
@@ -1747,15 +1773,15 @@ namespace DM14
 		currentFunction = ast_function();
 		decreaseScope();
 		
-		distModifiedGlobal	= new Array<idInfo>;
+		distModifiedGlobal	= std::shared_ptr<Array<idInfo>>(new Array<idInfo>);
 		//distIdentifiers	= new Array<idInfo>;
-		distStatementTemp	= new distStatement();
+		distStatementTemp	= std::shared_ptr<distStatement>(new distStatement());
 		modifiedVariablesList = Array < pair<idInfo,int> >();
 		//FIX only increment on if conditions, loops and case... ?
 		increaseScope(NULL);
 		distributedScope = 0;
 		functionStatementsCount = 0;
-		return NULL;
+		return nullptr;
 	};
 
 
@@ -1953,11 +1979,11 @@ namespace DM14
 
 
 	// should return a vector of all matching leafs ?
-	Statement* Parser::findTreeNode(Statement* opStatement, int StatementType) 
+	std::shared_ptr<Statement> Parser::findTreeNode(std::shared_ptr<Statement> opStatement, int StatementType) 
 	{
 		if(!opStatement)
 		{
-			return NULL;
+			return nullptr;
 		}
 		
 		if(opStatement->StatementType == StatementType)
@@ -1965,18 +1991,19 @@ namespace DM14
 			return opStatement;
 		}
 		
-		Statement* result = NULL;
+		std::shared_ptr<Statement> result = nullptr;
 		
 		if(opStatement->StatementType == oStatement)
 		{
-			if(((operationalStatement*)opStatement)->left)
+			
+			if(std::static_pointer_cast<operationalStatement>(opStatement)->left)
 			{
-				result = findTreeNode(((operationalStatement*)opStatement)->left, StatementType);
+				result = findTreeNode(std::static_pointer_cast<operationalStatement>(opStatement)->left, StatementType);
 			}
 				
-			if(!result &&((operationalStatement*)opStatement)->right)
+			if(!result && std::static_pointer_cast<operationalStatement>(opStatement)->right)
 			{
-				result = findTreeNode(((operationalStatement*)opStatement)->right, StatementType);
+				result = findTreeNode(std::static_pointer_cast<operationalStatement>(opStatement)->right, StatementType);
 			}
 		}
 		
@@ -1985,7 +2012,7 @@ namespace DM14
 
 
 
-	int Parser::searchVariables(Statement* opStatement, int depencyType, string op)
+	int32_t Parser::searchVariables(std::shared_ptr<Statement> opStatement, int depencyType, string op)
 	{
 		
 		//distributingVariablesStatement::DEPS
@@ -1996,7 +2023,8 @@ namespace DM14
 		
 		if(opStatement->StatementType == tStatement)
 		{
-			idInfo* id =((termStatement*)opStatement)->id;
+			
+			std::shared_ptr<idInfo> id = std::static_pointer_cast<termStatement>(opStatement)->id;
 			if(id)
 			{
 				if(depencyType == distributingVariablesStatement::MODS)
@@ -2014,25 +2042,25 @@ namespace DM14
 			
 		if(opStatement->StatementType == oStatement)
 		{
-			if(((operationalStatement*)opStatement)->left)
+			if(std::static_pointer_cast<operationalStatement>(opStatement)->left)
 			{
-				if(((operationalStatement*)opStatement)->op == "." ||((operationalStatement*)opStatement)->op == "::")
+				if(std::static_pointer_cast<operationalStatement>(opStatement)->op == "." || std::static_pointer_cast<operationalStatement>(opStatement)->op == "::")
 				{
-					if(((operationalStatement*)opStatement)->left->StatementType == oStatement)
+					if(std::static_pointer_cast<operationalStatement>(opStatement)->left->StatementType == oStatement)
 					{
-						Statement* leftLeft =((operationalStatement*)((operationalStatement*)opStatement)->left)->left;
+						std::shared_ptr<Statement> leftLeft = std::static_pointer_cast<operationalStatement>(std::static_pointer_cast<operationalStatement>(opStatement)->left)->left;
 						searchVariables(leftLeft, depencyType, op);
 					}
 				}
 				else
 				{
-					searchVariables(((operationalStatement*)opStatement)->left, depencyType, op);
+					searchVariables(std::static_pointer_cast<operationalStatement>(opStatement)->left, depencyType, op);
 				}
 			}
 				
-			if(((operationalStatement*)opStatement)->right)
+			if(std::static_pointer_cast<operationalStatement>(opStatement)->right)
 			{
-				searchVariables(((operationalStatement*)opStatement)->right, depencyType, op);
+				searchVariables(std::static_pointer_cast<operationalStatement>(opStatement)->right, depencyType, op);
 			}
 		}
 		
@@ -2040,17 +2068,17 @@ namespace DM14
 	}
 
 
-	Statement* Parser::parseExpressionStatement()
+	std::shared_ptr<Statement> Parser::parseExpressionStatement()
 	{
-		Statement* result = nullptr;
+		std::shared_ptr<Statement> result = nullptr;
 		
-		if(ebnf.working_tokens->at(ebnf.working_tokens->size()-1).value == ";")
+		if(activeStack().Tokens()->at(activeStack().Tokens()->size()-1).value == ";")
 		{
-			result = parseOpStatement(0, ebnf.working_tokens->size()-2, "-2", scope, parentStatement);
+			result = parseOpStatement(0, activeStack().Tokens()->size()-2, "-2", scope, parentStatement);
 		}
 		else
 		{
-			result = parseOpStatement(0, ebnf.working_tokens->size()-1, "-2", scope, parentStatement);
+			result = parseOpStatement(0, activeStack().Tokens()->size()-1, "-2", scope, parentStatement);
 		}
 		return result;
 	}
@@ -2062,44 +2090,44 @@ namespace DM14
 
 		if(stmtType == "NIL")
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Wrong type variable : " + ebnf.getToken().value);
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Wrong type variable : " + activeStack().getToken().value);
 		}
 		else if(stmtType == "-2")
 		{
-			if(isFunction(ebnf.getToken(0).value, true, classID)) /// function, set to it's return type
+			if(isFunction(activeStack().getToken(0).value, true, classID)) /// function, set to it's return type
 			{
-				type  = getFunc(ebnf.getToken(0).value, classID).returnType;
+				type  = getFunc(activeStack().getToken(0).value, classID).returnType;
 			}
-			else if(DM14::types::isDataType(ebnf.getToken(0).value)) /// if it is  datatype, use it as the Statement type
+			else if(DM14::types::isDataType(activeStack().getToken(0).value)) /// if it is  datatype, use it as the Statement type
 			{
-				type  = ebnf.getToken(0).value;
+				type  = activeStack().getToken(0).value;
 			}		
-			else if(ebnf.getToken(0).type == "identifier") // if identifier, then use it's type
+			else if(activeStack().getToken(0).type == "identifier") // if identifier, then use it's type
 			{
-				type  = findIDType(idInfo(ebnf.getToken(0).value, 0, "", NULL), classID);
+				type  = findIDType(idInfo(activeStack().getToken(0).value, 0, "", NULL), classID);
 			}
-			else if(DM14::types::isImmediate(ebnf.getToken(0)) ) /// use immediate type
+			else if(DM14::types::isImmediate(activeStack().getToken(0)) ) /// use immediate type
 			{
-				type  = ebnf.getToken(0).type;
+				type  = activeStack().getToken(0).type;
 			}
-			/*else if((DM14::types::isSingleOperator(ebnf.getToken(0).value) || ebnf.getToken(0).value == "@") && 0 < to)
+			/*else if((DM14::types::isSingleOperator(activeStack().getToken(0).value) || activeStack().getToken(0).value == "@") && 0 < to)
 			{
-				if(isImmediate(ebnf.getToken(0+1)))
+				if(isImmediate(activeStack().getToken(0+1)))
 				{
-					type  = ebnf.getToken(0+1).type;
+					type  = activeStack().getToken(0+1).type;
 				}
-				else if(ebnf.getToken(0+1).type == "identifier" )
+				else if(activeStack().getToken(0+1).type == "identifier" )
 				{
-					type  = findIDType(idInfo(ebnf.getToken(0+1).value, 0, "", NULL), classID);
+					type  = findIDType(idInfo(activeStack().getToken(0+1).value, 0, "", NULL), classID);
 				}
 				else
 				{
-					displayError(fName, ebnf.getToken(0).lineNumber,ebnf.getToken(0).columnNumber,"Did not expect "+ ebnf.getToken(0).value);
+					displayError(fName, activeStack().getToken(0).lineNumber,activeStack().getToken(0).columnNumber,"Did not expect "+ activeStack().getToken(0).value);
 				}
 			}
 			else
 			{
-				displayError(fName, ebnf.getToken(0).lineNumber, ebnf.getToken(0).columnNumber,"Did not expect "+ ebnf.getToken(0).value);
+				displayError(fName, activeStack().getToken(0).lineNumber, activeStack().getToken(0).columnNumber,"Did not expect "+ activeStack().getToken(0).value);
 			}*/
 		}
 		else
@@ -2110,7 +2138,7 @@ namespace DM14
 		return type;
 	}
 
-	bool Parser::restore(std::vector<token>* extract_temp_vector)
+	bool Parser::restore(std::shared_ptr<std::vector<token>> extract_temp_vector)
 	{
 		bool result = true;
 
@@ -2118,28 +2146,28 @@ namespace DM14
 		{
 			ebnf.pushToken(extract_temp_vector->at(i));
 		}
-		delete extract_temp_vector;
+		extract_temp_vector.reset();
 		return result;
 	}
 
-	std::vector<token>* Parser::extract(int32_t from, int32_t to)
+	std::shared_ptr<std::vector<token>> Parser::extract(int32_t from, int32_t to)
 	{
-		std::vector<token>*  extract_temp_vector = new std::vector<token>();
+		std::shared_ptr<std::vector<token>>  extract_temp_vector(new std::vector<token>());
 		for(uint32_t i = 0; i < from; i++)
 		{
-			extract_temp_vector->push_back(ebnf.popToken());
+			extract_temp_vector->push_back(activeStack().popToken());
 		}
 
-		for(uint32_t i = to+1, current_size = ebnf.working_tokens->size(); i < current_size; i++)
+		for(uint32_t i = to+1, current_size = activeStack().Tokens()->size(); i < current_size; i++)
 		{
-			extract_temp_vector->push_back(ebnf.popToken(to+1));
+			extract_temp_vector->push_back(activeStack().popToken(to+1));
 		}
 		return extract_temp_vector;
 	}
 
-	Statement* Parser::parseOpStatement(int32_t from, int32_t to, 
-										const string& stmtType, const int& scopeLevel, Statement* caller, 
-										idInfo* parent, const string& parentOp)
+	std::shared_ptr<Statement> Parser::parseOpStatement(int32_t from, int32_t to, 
+										const string& stmtType, const int& scopeLevel, std::shared_ptr<Statement> caller, 
+										std::shared_ptr<idInfo> parent, const string& parentOp)
 	{
 		int plevel =0; // precedence levels
 		
@@ -2155,11 +2183,11 @@ namespace DM14
 		// [ overall check for(s and )s
 		for(int32_t i= from; i <= to ; i++ )
 		{
-			if(ebnf.getToken(i).value == "(" )
+			if(activeStack().getToken(i).value == "(" )
 			{
 				++plevel;
 			}
-			else if(ebnf.getToken(i).value == ")" )
+			else if(activeStack().getToken(i).value == ")" )
 			{
 				--plevel;
 			}
@@ -2175,27 +2203,27 @@ namespace DM14
 		
 		if(plevel > 0 )
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber," missing \")\" ");
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber," missing \")\" ");
 		}
 		else if(plevel < 0 )
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber," missing \"(\" ");
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber," missing \"(\" ");
 		}
 		
 		// big(..) Statement
-		if(ebnf.getToken(from).value == "("  && ebnf.getToken(to).value == ")" && removeBigParenthes)
+		if(activeStack().getToken(from).value == "("  && activeStack().getToken(to).value == ")" && removeBigParenthes)
 		{
-			ebnf.popToken();
-			ebnf.working_tokens->remove(ebnf.working_tokens->size()-1);
+			activeStack().popToken();
+			activeStack().Tokens()->remove(activeStack().Tokens()->size()-1);
 			return parseOpStatement(0, to-2, stmtType, scopeLevel+1, caller);
 		}
 		// ]
 		
-		int origiIndex = ebnf.getIndex();
+		int origiIndex = activeStack().getIndex();
 		bool classMember = false;
 
-		operationalStatement* opStatement = new operationalStatement;
-		opStatement->line = ebnf.getToken().lineNumber;
+		std::shared_ptr<operationalStatement> opStatement(new operationalStatement);
+		opStatement->line = activeStack().getToken().lineNumber;
 		opStatement->scope = scope;
 		opStatement->scopeLevel = scopeLevel;
 		
@@ -2213,12 +2241,12 @@ namespace DM14
 		plevel= 0;
 		for(int32_t i = from; i <= to; i++ )
 		{
-			if(ebnf.getToken(i).value == "(")
+			if(activeStack().getToken(i).value == "(")
 			{
 				plevel++;
 				continue;
 			}
-			else if(ebnf.getToken(i).value == ")" )
+			else if(activeStack().getToken(i).value == ")" )
 			{
 				plevel--;
 				continue;
@@ -2226,13 +2254,13 @@ namespace DM14
 			
 			if(plevel == 0)
 			{				
-				if((ebnf.getToken(i).type == "operator") &&
-					!(ebnf.getToken(i).value == ")" || ebnf.getToken(i).value == "(" || ebnf.getToken(i).value == "["  || ebnf.getToken(i).value == "]"))
+				if((activeStack().getToken(i).type == "operator") &&
+					!(activeStack().getToken(i).value == ")" || activeStack().getToken(i).value == "(" || activeStack().getToken(i).value == "["  || activeStack().getToken(i).value == "]"))
 				{
-					opStatement->op = ebnf.getToken(i).value;
+					opStatement->op = activeStack().getToken(i).value;
 					if(i != from) /** not a prefix operator like ++x */
 					{
-						auto* temp = extract(from, i-1);
+						std::shared_ptr<std::vector<token>> temp = extract(from, i-1);
 						opStatement->left = parseOpStatement(from, i-1, stmtType, opStatement->scopeLevel, currentStatement, parent, opStatement->op);
 						opStatement->absorbDistStatements(opStatement->left);
 						restore(temp);
@@ -2249,30 +2277,30 @@ namespace DM14
 					}
 					from = 0;
 					
-					ebnf.popToken(); /** pop the op token */
+					activeStack().popToken(); /** pop the op token */
 			
-					idInfo* id = NULL;
+					std::shared_ptr<idInfo> id = nullptr;
 					// should we loop inside to get the term ?
 					
-					Statement* res = findTreeNode(opStatement->left, tStatement);
+					std::shared_ptr<Statement> res = findTreeNode(opStatement->left, tStatement);
 					
 					if(res)
 					{
-						id  =((termStatement*)res)->id;
+						id  = std::static_pointer_cast<termStatement>(res)->id;
 					}
 
 					if(opStatement->op == "." ||  opStatement->op == "::" )
 					{
 						if(!id)
 						{
-							displayError(fName, ebnf.getToken(i).lineNumber, ebnf.getToken(i).columnNumber,"false class member !");
+							displayError(fName, activeStack().getToken(i).lineNumber, activeStack().getToken(i).columnNumber,"false class member !");
 							
 						}
 						else
 						{
 							if(i == to && to > 0)
 							{
-								displayError(fName, ebnf.getToken(i).lineNumber, ebnf.getToken(i).columnNumber,"incomplete data member access at " +  ebnf.getToken(i).value);
+								displayError(fName, activeStack().getToken(i).lineNumber, activeStack().getToken(i).columnNumber,"incomplete data member access at " +  activeStack().getToken(i).value);
 							}
 
 							opStatement->right = parseOpStatement(from, to, "-2", opStatement->scopeLevel, currentStatement, id);
@@ -2287,11 +2315,11 @@ namespace DM14
 							//TODO: make sure :: is used onl with static enumns/variables ?
 							if(DM14::types::isDataType(classID) && opStatement->op != "::")
 							{
-								Statement* staticFunction = findTreeNode(opStatement->right, fCall);
+								std::shared_ptr<Statement> staticFunction = findTreeNode(opStatement->right, fCall);
 								if(staticFunction != nullptr)
 								{	
 									
-									auto fInfoResult = DM14::types::getClassMemberFunction(classID, (*(functionCall*)staticFunction));
+									auto fInfoResult = DM14::types::getClassMemberFunction(classID, *std::static_pointer_cast<functionCall>(staticFunction));
 									//TODO
 									if(fInfoResult.first == true)
 									{
@@ -2303,16 +2331,16 @@ namespace DM14
 									}
 									else
 									{
-										displayError(fName, ebnf.getToken(i).lineNumber, ebnf.getToken(i).columnNumber,"class " + classID + " has no member static function " 
- + (*(functionCall*)staticFunction).name);
+										displayError(fName, activeStack().getToken(i).lineNumber, activeStack().getToken(i).columnNumber,"class " + classID + " has no member static function " 
+ + std::static_pointer_cast<functionCall>(staticFunction)->name);
 									}
 								}
 								else
 								{
-									Statement* staticVariable = findTreeNode(opStatement->right, tStatement);
+									std::shared_ptr<Statement> staticVariable = findTreeNode(opStatement->right, tStatement);
 									if(staticVariable != nullptr)
 									{
-										auto vInfoResult = DM14::types::getClassMemberFunction(classID, (*(functionCall*)staticVariable));
+										auto vInfoResult = DM14::types::getClassMemberFunction(classID, *std::static_pointer_cast<functionCall>(staticVariable));
 										if(vInfoResult.first == true)
 										{
 											
@@ -2323,12 +2351,12 @@ namespace DM14
 										}
 										else
 										{
-											displayError(fName, ebnf.getToken(i).lineNumber, ebnf.getToken(i).columnNumber,"class " + classID + " has no member static variable " + (*(functionCall*)staticVariable).name);
+											displayError(fName, activeStack().getToken(i).lineNumber, activeStack().getToken(i).columnNumber,"class " + classID + " has no member static variable " + std::static_pointer_cast<functionCall>(staticVariable)->name);
 										}
 									}
 									else
 									{
-										displayError(fName, ebnf.getToken(i).lineNumber, ebnf.getToken(i).columnNumber,"parsing error, should not be here !");
+										displayError(fName, activeStack().getToken(i).lineNumber, activeStack().getToken(i).columnNumber,"parsing error, should not be here !");
 									}
 								}
 							}
@@ -2370,7 +2398,7 @@ namespace DM14
 						
 						if(!opStatement->right)
 						{
-							displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Missing right operand");
+							displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Missing right operand");
 						}
 						
 						//FIXME:
@@ -2385,7 +2413,7 @@ namespace DM14
 						{
 							if(opStatement->left)
 							cerr << "left type :" << opStatement->left->type << endl;
-							displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
+							displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
 						}
 						
 						searchVariables(opStatement->left, distributingVariablesStatement::MODS, opStatement->op);
@@ -2395,7 +2423,7 @@ namespace DM14
 					{
 						if(!DM14::types::typeHasOperator(opStatement->op, opStatement->type) &&(opStatement->op != "@") )
 						{
-							displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
+							displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"type \"" +opStatement->type + "\" does not support operator " + opStatement->op);
 						}
 						searchVariables(opStatement->left, distributingVariablesStatement::MODS, opStatement->op);
 					}
@@ -2405,17 +2433,17 @@ namespace DM14
 						{
 							//construct node address Statement
 							// should we loop inside to get the term ?
-							Statement* res = findTreeNode(opStatement->right, tStatement);
+							std::shared_ptr<Statement> res = findTreeNode(opStatement->right, tStatement);
 					
-							idInfo* rightId = NULL;
+							std::shared_ptr<idInfo> rightId = nullptr;
 								
 							if(res)
 							{
-								rightId  =((termStatement*)res)->id;
+								rightId  =std::static_pointer_cast<termStatement>(res)->id;
 								int isDistributed = findIDInfo(*rightId, DISTRIBUTED);
 								if(!isDistributed)
 								{
-									displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,ebnf.getToken().value + " : can not use @ operator with a non-distributed variable");
+									displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,activeStack().getToken().value + " : can not use @ operator with a non-distributed variable");
 									//displayError("can not use @ operator with a non-distributed variable");
 								}
 							}
@@ -2439,30 +2467,30 @@ namespace DM14
 								
 								if(opStatement->right->StatementType == oStatement)
 								{
-									operationalStatement* stmt =(operationalStatement*) opStatement->right;
+									std::shared_ptr<operationalStatement> stmt = std::static_pointer_cast<operationalStatement>(opStatement->right);
 									searchVariables(opStatement->left, distributingVariablesStatement::MODS, stmt->op);
 									searchVariables(opStatement->left, distributingVariablesStatement::DEPS);
 									opStatement->op  = stmt->op;
 									stmt->op = "";
-									delete stmt->left;
-									stmt->left = NULL;
+									stmt->left.reset();
+									stmt->left = nullptr;
 								}				
 								else if(opStatement->right->StatementType == tStatement)
 								{
-									delete opStatement->right;
-									opStatement->right = NULL;
+									opStatement->right.reset();
+									opStatement->right = nullptr;
 									opStatement->op  = "";
 								}					
 
 								if((parentOp != "=" && parentOp != "+=" && parentOp != "-=" && parentOp != "*=" && parentOp != "/=" && parentOp != "++" && parentOp != "--" && parentOp != "@") || opStatement->op == "")
 								{
-									idInfo* leftId = NULL;
+									std::shared_ptr<idInfo> leftId = nullptr;
 									// should we loop inside to get the term ?
-									Statement* res = findTreeNode(opStatement->left, tStatement);
+									std::shared_ptr<Statement> res = findTreeNode(opStatement->left, tStatement);
 						
 									if(res)
 									{
-										leftId  =((termStatement*)res)->id;
+										leftId  =std::static_pointer_cast<termStatement>(res)->id;
 										pushDependency(*leftId);
 									}
 									else
@@ -2475,13 +2503,13 @@ namespace DM14
 							{
 								// remove ny depedency of this the variable as we only need its address and 
 								// we don't access the variable ittself !
-								for(uint32_t l =0; l < currentStatement->distStatements.size(); l++)
+								for(uint32_t l =0; l < currentStatement->distStatements->size(); l++)
 								{
-									if(currentStatement->distStatements.at(l)->type == distributingVariablesStatement::DEPS)
+									if(currentStatement->distStatements->at(l)->type == distributingVariablesStatement::DEPS)
 									{
-										 if(currentStatement->distStatements.at(l)->variable.name == rightId->name)
+										 if(currentStatement->distStatements->at(l)->variable.name == rightId->name)
 										 {
-											 currentStatement->distStatements.remove(l);
+											 currentStatement->distStatements->remove(l);
 											 break;
 										 }
 									}
@@ -2519,10 +2547,10 @@ namespace DM14
 		
 
 
-		if(ebnf.getToken(0).value.size() == 0)// consumed all tokens !
+		if(activeStack().getToken(0).value.size() == 0)// consumed all tokens !
 		{
 			cerr << "from :" << from << " to:" << to << endl;
-			displayError(fName, ebnf.getToken(0).lineNumber, ebnf.getToken(0).columnNumber,"Internal parser error@@@ !");
+			displayError(fName, activeStack().getToken(0).lineNumber, activeStack().getToken(0).columnNumber,"Internal parser error@@@ !");
 			return opStatement;
 		}
 
@@ -2532,17 +2560,17 @@ namespace DM14
 		//if(type.size() && !opStatement->type.size())
 		if(type == "")
 		{
-			displayError(fName, ebnf.getToken(0).lineNumber, ebnf.getToken(0).columnNumber,"unable to determine Statement type "+ ebnf.getToken(0).value);
+			displayError(fName, activeStack().getToken(0).lineNumber, activeStack().getToken(0).columnNumber,"unable to determine Statement type "+ activeStack().getToken(0).value);
 		}
 
 		if(stmtType!="-2" && stmtType != type)
 		{
-			displayError(fName, ebnf.getToken(0).lineNumber, ebnf.getToken(0).columnNumber,"types mismatch ! "+ ebnf.getToken(0).value);
+			displayError(fName, activeStack().getToken(0).lineNumber, activeStack().getToken(0).columnNumber,"types mismatch ! "+ activeStack().getToken(0).value);
 		}
 
 		opStatement->type = type;
 
-		if(to == -1 || ebnf.getToken(0).value.size() == 0)// consumed all tokens !
+		if(to == -1 || activeStack().getToken(0).value.size() == 0)// consumed all tokens !
 		{
 			return opStatement;
 		}
@@ -2557,15 +2585,15 @@ namespace DM14
 		
 		// [ find first term, function, variable or immediate ...
 		
-		Statement* aIndex = NULL;
+		std::shared_ptr<Statement> aIndex = nullptr;
 		// if identifier , then it might be variable or user/builtin function
-		if(ebnf.getToken(from).type == "identifier" ||  DM14::types::isDataType(ebnf.getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
+		if(activeStack().getToken(from).type == "identifier" ||  DM14::types::isDataType(activeStack().getToken().value) )//(tokens->at(currentIndex)).type == "datatype")
 		{
 			// function !
-			if(isBuiltinFunction(ebnf.getToken(from).value) || isUserFunction(ebnf.getToken(from).value, true) 
-				||(parent && DM14::types::classHasMemberFunction(classID, ebnf.getToken(from).value)))
+			if(isBuiltinFunction(activeStack().getToken(from).value) || isUserFunction(activeStack().getToken(from).value, true) 
+				||(parent && DM14::types::classHasMemberFunction(classID, activeStack().getToken(from).value)))
 			{
-				Statement* stmt = NULL;
+				std::shared_ptr<Statement> stmt = nullptr;
 				if(parent)
 				{
 					if(opStatement->type != classID)
@@ -2575,7 +2603,7 @@ namespace DM14
 					else
 					{
 						stmt = parseFunctionCallInternal(false, "", classID);
-						stmt->type = DM14::types::classMemberFunctionType(classID, ebnf.getToken(from).value);
+						stmt->type = DM14::types::classMemberFunctionType(classID, activeStack().getToken(from).value);
 					}
 				}
 				else
@@ -2583,45 +2611,44 @@ namespace DM14
 					stmt = parseFunctionCallInternal(false, opStatement->type);
 				}
 				stmt->distStatements = opStatement->distStatements;
-				delete opStatement;
 				return stmt;
 			}
 			// variable !
 			else
 			{
-				ebnf.popToken();
-				string variableName = ebnf.getToken().value;
+				activeStack().popToken();
+				string variableName = activeStack().getToken().value;
 				
 				if(DM14::types::isDataType(variableName))
 				{
-					displayInfo(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "FIX");
+					displayInfo(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "FIX");
 				}
 				else if(parent && !DM14::types::classHasMemberVariable(classID, variableName))
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"class " + classID + " has no member : " + variableName);
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"class " + classID + " has no member : " + variableName);
 				}
 				else if(parent && DM14::types::classHasMemberVariable(classID, variableName))
 				{
 					if(DM14::types::getClassMemberVariable(classID, variableName).second.classifier != DM14::types::CLASSIFIER::PUBLIC)
 					{
-						displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
+						displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,variableName + " is a private class member variable of class type : " + classID);
 					}
 				}
 				else if(findIDType(idInfo(variableName, 0, "", NULL)) == "NIL" && !parent)
 				{
 					if(peekToken(0).value == "(")
 					{
-						displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Un-defined function : " + variableName);
+						displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Un-defined function : " + variableName);
 					}
 					else
 					{
-						displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Un-defined variable : " + variableName);
+						displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Un-defined variable : " + variableName);
 					}
 				}
 
 				//classMember = isClass(opStatement->type);
 				classMember = DM14::types::isClass(classID);
-				termStatement* statement = new termStatement(variableName, opStatement->type );
+				std::shared_ptr<termStatement> statement(new termStatement(variableName, opStatement->type));
 				
 				if(findIDType(idInfo(variableName, 0, "", NULL)) != "NIL")
 				{
@@ -2632,11 +2659,11 @@ namespace DM14
 				statement->identifier = true;
 				statement->size = findIDInfo(idInfo(variableName , 0, "", NULL), ARRAYSIZE);
 
-				if(ebnf.getToken(0).value == "[")
+				if(activeStack().getToken(0).value == "[")
 				{
 					if(!findIDInfo(idInfo(variableName , 0, "", NULL), ARRAY))
 					{
-						displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
+						displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, variableName + " is not an array, invalid use of indexing");
 					}
 					//termStatement->arrayIndex = parseConditionalExpression(currentStatement);
 					//termStatement->arrayIndex = parseStatement("expression-list");
@@ -2644,10 +2671,10 @@ namespace DM14
 					aIndex = statement->arrayIndex;
 				}
 								
-				ebnf.setIndex(origiIndex);
+				activeStack().setIndex(origiIndex);
 
 				//idInfo* id = new idInfo(termStatement->term, opStatement->scope, opStatement->type, aIndex);
-				idInfo* id = new idInfo(statement->term, opStatement->scope, statement->type , aIndex);
+				std::shared_ptr<idInfo> id(new idInfo(statement->term, opStatement->scope, statement->type , aIndex));
 				id->distributedScope = distributedScope;
 				if(parent)
 				{
@@ -2703,38 +2730,35 @@ namespace DM14
 				{
 					statement->distStatements = opStatement->distStatements;
 				}
-				delete opStatement;
 				return statement;
 			}
 		}
-		else if(DM14::types::isImmediate(ebnf.getToken(from)))
+		else if(DM14::types::isImmediate(activeStack().getToken(from)))
 		{
-			if(!DM14::types::hasTypeValue(opStatement->type, ebnf.getToken(from).type))
+			if(!DM14::types::hasTypeValue(opStatement->type, activeStack().getToken(from).type))
 			{
-				displayError(fName, ebnf.getToken(from).lineNumber, ebnf.getToken(from).columnNumber,"wrong immediate type : " + ebnf.getToken(from).value);
+				displayError(fName, activeStack().getToken(from).lineNumber, activeStack().getToken(from).columnNumber,"wrong immediate type : " + activeStack().getToken(from).value);
 			}
 
-			ebnf.popToken();
+			activeStack().popToken();
 			
-			termStatement* statement = new termStatement(ebnf.getToken().value, opStatement->type);
-			statement->line = ebnf.getToken().lineNumber;
+			std::shared_ptr<termStatement> statement(new termStatement(activeStack().getToken().value, opStatement->type));
+			statement->line = activeStack().getToken().lineNumber;
 			statement->scope = scope;
 			statement->scopeLevel = scopeLevel;
 			statement->identifier = false;
 			statement->type = opStatement->type;
-			delete opStatement;
 			return statement;
 		}
 		else
 		{
-			displayError(fName, ebnf.getToken(from).lineNumber, ebnf.getToken(from).columnNumber,"Un-known Variable or Function : " + ebnf.getToken(from).value);
+			displayError(fName, activeStack().getToken(from).lineNumber, activeStack().getToken(from).columnNumber,"Un-known Variable or Function : " + activeStack().getToken(from).value);
 		}
 		
 		// ]
 		
-		delete opStatement;
-		displayError(fName, ebnf.getToken(from).lineNumber, ebnf.getToken(from).columnNumber,"returning null Statement ?!!");
-		return NULL;
+		displayError(fName, activeStack().getToken(from).lineNumber, activeStack().getToken(from).columnNumber,"returning null Statement ?!!");
+		return nullptr;
 	};
 
 	funcInfo Parser::getFunc(const string& funcID, const string& classID)
@@ -2900,27 +2924,27 @@ namespace DM14
 	};
 
 
-	mapcode::mapcode(const string& mname, Array<ast_function>* const mfunctions, 
+	mapcode::mapcode(const string& mname, std::shared_ptr<Array<ast_function>> const mfunctions, 
 					 const Array<includePath>& mincludes, const bool& header,
 					 const int& nodesC, const int& variablesCount)
 	{
 		mapcode();
 		fileName = mname;
-		functions = new Array<ast_function>();
-		*functions = *mfunctions;
+
+		functions = mfunctions;
 		includes = mincludes;
 		Header = header;
 		nodesCount = nodesC;
 		dVariablesCount = variablesCount;
-		linkLibs = new Array<Statement*>();
-		ExternCodes = new Array<string>();
+		linkLibs = std::shared_ptr<Array<std::shared_ptr<Statement>>>();
+		ExternCodes = std::shared_ptr<Array<string>>();
 	};
 
 	mapcode::mapcode()
 	{
-		functions =	new	Array<ast_function>;
+		functions =	std::shared_ptr<Array<ast_function>>();
 		Header = false;
-		ExternCodes = new Array<string>();
+		ExternCodes = std::shared_ptr<Array<string>>();
 	};
 
 	mapcode::~mapcode()
@@ -2933,17 +2957,17 @@ namespace DM14
 		return includes;
 	};
 
-	Array<ast_function>* Parser::getFunctions()
+	std::shared_ptr<Array<ast_function>> Parser::getFunctions()
 	{
 		return functions;
 	};
 
-	Array<mapcode>* Parser::getMapCodes()
+	std::shared_ptr<Array<mapcode>> Parser::getMapCodes()
 	{
 		return mapCodes;
 	};
 
-	Array<string>* Parser::getExternCodes()
+	std::shared_ptr<Array<string>> Parser::getExternCodes()
 	{
 		return ExternCodes;
 	}
@@ -2954,7 +2978,7 @@ namespace DM14
 		return fileName;
 	};
 
-	Array<ast_function>* mapcode::getFunctions()
+	std::shared_ptr<Array<ast_function>> mapcode::getFunctions()
 	{
 		return functions;
 	};
@@ -3009,7 +3033,7 @@ namespace DM14
 		return set;
 	};
 
-	int Parser::increaseScope(Statement* stmt)
+	int Parser::increaseScope(std::shared_ptr<Statement> stmt)
 	{
 		if(stmt)
 		{
@@ -3025,19 +3049,19 @@ namespace DM14
 	}
 
 
-	Statement* Parser::parseThread()
+	std::shared_ptr<Statement> Parser::parseThread()
 	{
-		ebnf.popToken(); //thread
-		threadStatement* thread = new threadStatement();
+		activeStack().popToken(); //thread
+		std::shared_ptr<threadStatement> thread(new threadStatement());
 		currentStatement = thread;
 
 		stringstream SS;
-		SS << ebnf.getToken().columnNumber << ebnf.getToken().lineNumber;	// Number of character on the current line
+		SS << activeStack().getToken().columnNumber << activeStack().getToken().lineNumber;	// Number of character on the current line
 		thread->Identifier = SS.str();
 		
 		if(parentStatement &&(parentStatement->StatementType ==  fLoop || parentStatement->StatementType == wLoop))
 		{
-			displayWarning(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Thread call inside a loop ! careful ");
+			displayWarning(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Thread call inside a loop ! careful ");
 		}
 		//@TODO: fix checking the parameters to be global only
 		
@@ -3048,13 +3072,13 @@ namespace DM14
 			
 			if(getToken(1).value == ".")
 			{
-				parent = ebnf.getToken(0).value;
+				parent = activeStack().getToken(0).value;
 			}
 			
 			
 			if(tokens->at(i).type == "identifier" && findID(tokens->at(i).value, parent).name.size() && !findIDInfo(idInfo((tokens->at(i)).value, 0, "", NULL), GLOBAL))
 			{
-				displayError(fName, ebnf.getToken(0).lineNumber, ebnf.getToken(0).columnNumber,"Only global variables are allowed to be passed to a thread call ! , " + ebnf.getToken(0).value + " is not global");
+				displayError(fName, activeStack().getToken(0).lineNumber, activeStack().getToken(0).columnNumber,"Only global variables are allowed to be passed to a thread call ! , " + activeStack().getToken(0).value + " is not global");
 			}
 		}
 
@@ -3090,84 +3114,84 @@ namespace DM14
 	}
 
 
-	Statement* Parser::parseIf()
+	std::shared_ptr<Statement> Parser::parseIf()
 	{
 		// if [ cond ] { Statements } else {}
-		ebnf.popToken(); //if	
-		IF* If = new IF;
-		If->line = ebnf.getToken().lineNumber;
+		activeStack().popToken(); //if	
+		std::shared_ptr<IF> If(new IF);
+		If->line = activeStack().getToken().lineNumber;
 		If->scope = scope;
 		
 		increaseScope(If);
 
 		tmpScope = true;
-		ebnf.popToken(); //[
+		activeStack().popToken(); //[
 		currentStatement = If;
 		
 		If->condition = parseStatement("expression-list");
 		
 		tmpScope = false;
-		ebnf.popToken(); //]
+		activeStack().popToken(); //]
 		
 		addStatementDistributingVariables(If);	
 		
-		ebnf.popToken(); // {
+		activeStack().popToken(); // {
 		RequireValue("{", "Expected { and not : ", true);
 
 
-		//while(ebnf.getToken().value != "}")
+		//while(activeStack().getToken().value != "}")
 		while(!peekToken("}"))
 		{
-			Statement* stmt = parseStatement("Statement");
+			std::shared_ptr<Statement> stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			If->body->push_back(stmt);
 		}
-		ebnf.popToken(); // }
+		activeStack().popToken(); // }
 
 		while(peekToken("else"))
 		{
-			ebnf.popToken(); //else
+			activeStack().popToken(); //else
 			if(peekToken("if"))
 			{
-				ebnf.popToken(); //if
+				activeStack().popToken(); //if
 				
-				IF* elseIf = new IF;
-				elseIf->line = ebnf.getToken().lineNumber;
+				std::shared_ptr<IF> elseIf(new IF);
+				elseIf->line = activeStack().getToken().lineNumber;
 				elseIf->scope = scope;
 
 				tmpScope = true;
-				ebnf.popToken(); //[
+				activeStack().popToken(); //[
 				currentStatement = elseIf;
 				elseIf->condition = parseStatement("expression-list");
 				tmpScope = false;
-				ebnf.popToken(); //]
+				activeStack().popToken(); //]
 				
-				ebnf.popToken(); // {
+				activeStack().popToken(); // {
 				RequireValue("{", "Expected { and not : ", true);
 				
 				while(!peekToken("}"))
 				{
-					Statement* stmt = parseStatement("Statement");
+					std::shared_ptr<Statement> stmt = parseStatement("Statement");
 					addStatementDistributingVariables(stmt);
 					elseIf->body->push_back(stmt);
 					
 				}
-				ebnf.popToken(); //}
+				activeStack().popToken(); //}
 				If->elseIF->push_back(elseIf);
 			}
 			else
 			{
-				ebnf.popToken(); // {
+				activeStack().popToken(); // {
 				RequireValue("{", "Expected { and not : ", true);
 				
 				while(!peekToken("}"))
 				{
-					Statement* stmt = parseStatement("Statement");
+					std::shared_ptr<Statement> stmt = parseStatement("Statement");
 					addStatementDistributingVariables(stmt);
 					If->ELSE->push_back(stmt);
 					
 				}
-				ebnf.popToken(); // }
+				activeStack().popToken(); // }
 			}
 			//nextIndex();
 		}
@@ -3176,22 +3200,22 @@ namespace DM14
 		return If;
 	};
 
-	Statement* Parser::parseStruct()
+	std::shared_ptr<Statement> Parser::parseStruct()
 	{
-		ebnf.popToken(); //struct
+		activeStack().popToken(); //struct
 		
 		DatatypeBase Struct;
 		//Struct.templateNames = templateNames;
 		
-		ebnf.popToken(); // id
-		Struct.setID(ebnf.getToken().value);
+		activeStack().popToken(); // id
+		Struct.setID(activeStack().getToken().value);
 		
-		ebnf.popToken();
+		activeStack().popToken();
 		RequireValue("{", "Expected { and not : ", true);
 
 		while(!peekToken("}"))
 		{
-			declareStatement* stmt =(declareStatement*)parseStatement("Statement");
+			std::shared_ptr<declareStatement> stmt = std::static_pointer_cast<declareStatement>(parseStatement("Statement"));
 			//declareStatement* stmt =(declareStatement*)parseDeclaration();
 			//extract members ....	
 			for(uint32_t i = 0; i < stmt->identifiers->size(); i++)
@@ -3203,10 +3227,10 @@ namespace DM14
 				finfo.name = stmt->identifiers->at(i).name;
 				Struct.memberVariables.push_back(finfo);
 			}
-			//ebnf.popToken();
+			//activeStack().popToken();
 		}
 		
-		ebnf.popToken();	
+		activeStack().popToken();	
 		RequireValue("}", "Expected } and not : ", true);
 
 		Struct.addOperator("=");
@@ -3219,19 +3243,19 @@ namespace DM14
 		
 		//return new NOPStatement;
 		//return nullptr;
-		return(Statement*)this;
+		return nullptr;
 	}
 
-	Statement* Parser::parseExtern()
+	std::shared_ptr<Statement> Parser::parseExtern()
 	{
-		ebnf.popToken();
-		EXTERN* externStatement = new EXTERN;
-		externStatement->line = ebnf.getToken().lineNumber;
+		activeStack().popToken();
+		std::shared_ptr<EXTERN> externStatement(new EXTERN);
+		externStatement->line = activeStack().getToken().lineNumber;
 		externStatement->scope = scope;
 		
-		int from = ebnf.getIndex()+1;
+		int from = activeStack().getIndex()+1;
 		reachToken("endextern", false, true, true, true, true);
-		int to = ebnf.getIndex()-1;
+		int to = activeStack().getIndex()-1;
 		
 		for(int32_t i= from; i <= to; i++)
 		{
@@ -3252,7 +3276,7 @@ namespace DM14
 
 
 
-	int Parser::extractSplitStatements(Array<Statement*>* array, Array<Statement*>* splitStatements)
+	int Parser::extractSplitStatements(std::shared_ptr<Array<std::shared_ptr<Statement>>> array, std::shared_ptr<Array<std::shared_ptr<Statement>>> splitStatements)
 	{
 		while(splitStatements->size())
 		{
@@ -3262,46 +3286,46 @@ namespace DM14
 		return array->size();
 	}
 
-	Statement* Parser::parseWhile()
+	std::shared_ptr<Statement> Parser::parseWhile()
 	{
-		ebnf.popToken(); //while
-		whileloop* While = new whileloop;
-		While->line = ebnf.getToken().lineNumber;
+		activeStack().popToken(); //while
+		std::shared_ptr<whileloop> While(new whileloop);
+		While->line = activeStack().getToken().lineNumber;
 		While->scope = scope;
 		
 		increaseScope(While);
 		
 		tmpScope = true;
-		ebnf.popToken(); //[
+		activeStack().popToken(); //[
 		currentStatement = While;
 		While->condition = parseStatement("expression-list");
 		tmpScope = false;
-		ebnf.popToken(); //]
+		activeStack().popToken(); //]
 		
 		addStatementDistributingVariables(While);
 		
 		
-		ebnf.popToken(); // {
+		activeStack().popToken(); // {
 		RequireValue("{", "Expected { and not : ", true);
 
 		while(!peekToken("}"))
 		{
-			Statement* stmt = parseStatement("Statement");
+			std::shared_ptr<Statement> stmt = parseStatement("Statement");
 			addStatementDistributingVariables(stmt);
 			While->body->push_back(stmt);
 			
 		}
-		ebnf.popToken(); // }
+		activeStack().popToken(); // }
 		
 		decreaseScope();
 		
 		return While;
 	};
 
-	Statement* Parser::parseCase()
+	std::shared_ptr<Statement> Parser::parseCase()
 	{
-		CASE* Case = new CASE;
-		Case->line =(tokens->at(ebnf.getIndex())).lineNumber;
+		std::shared_ptr<CASE> Case(new CASE);
+		Case->line =(tokens->at(activeStack().getIndex())).lineNumber;
 		Case->scope = scope;	
 		
 		increaseScope(Case);
@@ -3318,24 +3342,24 @@ namespace DM14
 		{
 			//nextIndex();
 			tmpScope = true;
-			Statement* CCondition = NULL;
+			std::shared_ptr<Statement> CCondition = nullptr;
 			//CCondition = parseConditionalExpression(CCondition);
 			currentStatement = CCondition;
 			CCondition = parseStatement("expression-list");
 			tmpScope = false;
 			
-			if(tokens->at(ebnf.getIndex()).value == "}")
+			if(tokens->at(activeStack().getIndex()).value == "}")
 			{
-				ebnf.setIndex(ebnf.getIndex()-1);
+				activeStack().setIndex(activeStack().getIndex()-1);
 				break;
 			}
 			//check if it peek of current ???
-			while(tokens->at(ebnf.getIndex()).value != "}" && tokens->at(ebnf.getIndex()).value != "[")
+			while(tokens->at(activeStack().getIndex()).value != "}" && tokens->at(activeStack().getIndex()).value != "[")
 			{
 				Case->Body[CCondition].push_back(parseStatement("Statement"));
 				if(!peekToken("}") && !peekToken("["))
 				{
-					ebnf.nextIndex();
+					activeStack().nextIndex();
 				}
 				else
 				{
@@ -3345,7 +3369,7 @@ namespace DM14
 			}
 		}
 		
-		ebnf.nextIndex();
+		activeStack().nextIndex();
 		RequireValue("}", "Expected } and not : ", true);
 		
 		decreaseScope();
@@ -3353,24 +3377,24 @@ namespace DM14
 		return Case;
 	};
 
-	int Parser::reachToken(	const string& Char, const bool& sameLine,  const bool& reportError, 
+	int32_t Parser::reachToken(	const string& Char, const bool& sameLine,  const bool& reportError, 
 							const bool& actual, const bool& beforeEOF, const bool& scopeLevel) // loop till find the specified char
 	{
-		int line = ebnf.getToken().lineNumber;
-		int plevel = 1;
-		string firstValue = ebnf.getToken().value; // for scopeLevel
+		int32_t line = activeStack().getToken().lineNumber;
+		int32_t plevel = 1;
+		string firstValue = activeStack().getToken().value; // for scopeLevel
 		
 		if(actual)
 		{
-			while(ebnf.popToken().value.size())
+			while(activeStack().popToken().value.size())
 			{
 				if(sameLine)
 				{
-					if(ebnf.getToken().lineNumber != line )
+					if(activeStack().getToken().lineNumber != line )
 					{
 						if(reportError)
 						{
-							displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Missing " + Char);
+							displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Missing " + Char);
 						}
 						else
 						{
@@ -3381,17 +3405,17 @@ namespace DM14
 				
 				if(scopeLevel)
 				{
-					if(ebnf.getToken().value == Char)
+					if(activeStack().getToken().value == Char)
 					{
 						plevel--;
 					}
-					else if(ebnf.getToken().value == firstValue)
+					else if(activeStack().getToken().value == firstValue)
 					{
 						plevel++;
 					}
 				}
 				
-				if((beforeEOF && ebnf.getToken().value == ";") || ebnf.getToken().value == Char)
+				if((beforeEOF && activeStack().getToken().value == ";") || activeStack().getToken().value == Char)
 				{
 					if(scopeLevel )
 					{
@@ -3409,11 +3433,11 @@ namespace DM14
 				}
 				
 				//if((unsigned) *working_tokens_index == working_tokens->size())
-				if((unsigned) 0 == ebnf.working_tokens->size())
+				if((unsigned) 0 == activeStack().Tokens()->size())
 				{
 					if(reportError)
 					{
-						displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Missing " + Char);
+						displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Missing " + Char);
 					}
 				}
 			}
@@ -3421,15 +3445,15 @@ namespace DM14
 		else
 		{
 			int iterator = 0;
-			while((unsigned) iterator < ebnf.working_tokens->size())
+			while((unsigned) iterator < activeStack().Tokens()->size())
 			{
 				if(sameLine)
 				{
-					if(ebnf.getToken(iterator).lineNumber != line)
+					if(activeStack().getToken(iterator).lineNumber != line)
 					{
 						if(reportError)
 						{
-							displayError(fName, ebnf.getToken(iterator).lineNumber, ebnf.getToken(iterator).columnNumber,"Missing " + Char);
+							displayError(fName, activeStack().getToken(iterator).lineNumber, activeStack().getToken(iterator).columnNumber,"Missing " + Char);
 						}
 						else
 						{
@@ -3441,26 +3465,26 @@ namespace DM14
 				
 				if(scopeLevel)
 				{
-					if(ebnf.getToken().value == Char)
+					if(activeStack().getToken().value == Char)
 					{
 						plevel--;
 					}
-					else if(ebnf.getToken().value == firstValue)
+					else if(activeStack().getToken().value == firstValue)
 					{
 						plevel++;
 					}
 				}
 				
-				if((beforeEOF && ebnf.getToken().value == ";") || ebnf.getToken(iterator).value == Char)
+				if((beforeEOF && activeStack().getToken().value == ";") || activeStack().getToken(iterator).value == Char)
 				{
 					return iterator;
 				}
 				
-				if((unsigned) iterator == ebnf.working_tokens->size()-1)
+				if((unsigned) iterator == activeStack().Tokens()->size()-1)
 				{
 					if(reportError)
 					{
-						displayError(fName, ebnf.getToken(iterator).lineNumber, ebnf.getToken(iterator).columnNumber,"Missing " + Char);
+						displayError(fName, activeStack().getToken(iterator).lineNumber, activeStack().getToken(iterator).columnNumber,"Missing " + Char);
 					}
 				}
 				
@@ -3472,11 +3496,11 @@ namespace DM14
 
 	token Parser::peekToken(const int& pos)
 	{
-		if(ebnf.working_tokens->size())
+		if(activeStack().Tokens()->size())
 		{
-			if((unsigned) pos < ebnf.working_tokens->size())
+			if((unsigned) pos < activeStack().Tokens()->size())
 			{
-				return ebnf.working_tokens->at(pos);
+				return activeStack().Tokens()->at(pos);
 			}
 		}
 		return token();
@@ -3488,9 +3512,9 @@ namespace DM14
 	 */
 	bool Parser::peekToken(const string& str)
 	{
-		if(ebnf.working_tokens->size())
+		if(activeStack().Tokens()->size())
 		{
-			if(ebnf.working_tokens->at(0).value == str)
+			if(activeStack().Tokens()->at(0).value == str)
 			{
 				return true;
 			}
@@ -3500,21 +3524,21 @@ namespace DM14
 
 	string Parser::getType(const int& Index)
 	{
-		if(isIdentifier(ebnf.getToken().value))
+		if(isIdentifier(activeStack().getToken().value))
 		{
-			return findIDType(idInfo(ebnf.getToken().value, 0, "", NULL));
+			return findIDType(idInfo(activeStack().getToken().value, 0, "", NULL));
 		}
-		else if(DM14::types::isImmediate(ebnf.getToken()))
+		else if(DM14::types::isImmediate(activeStack().getToken()))
 		{
-			return ebnf.getToken().type;
+			return activeStack().getToken().type;
 		}
-		else if(isFunction(ebnf.getToken().value, true))
+		else if(isFunction(activeStack().getToken().value, true))
 		{
-			return getFunc(ebnf.getToken().value).returnType;
+			return getFunc(activeStack().getToken().value).returnType;
 		}
 		else
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"can not get type of : " + ebnf.getToken().value);
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"can not get type of : " + activeStack().getToken().value);
 		}
 		return "NIL";
 	};
@@ -3525,21 +3549,21 @@ namespace DM14
 		
 		if(type == DM14::types::types::Function)
 		{
-			if(isBuiltinFunction(ebnf.getToken().value )  || isUserFunction(ebnf.getToken().value, true) )
+			if(isBuiltinFunction(activeStack().getToken().value )  || isUserFunction(activeStack().getToken().value, true) )
 			{
 				rError = true;
 			}
 		}
 		else if(type == DM14::types::types::USERFUNCTION)
 		{
-			if(isUserFunction(ebnf.getToken().value, true) )
+			if(isUserFunction(activeStack().getToken().value, true) )
 			{
 				rError = true;
 			}
 		}
 		else if(type == DM14::types::types::BUILTINFUNCTION)
 		{
-			if(isBuiltinFunction(ebnf.getToken().value ) )
+			if(isBuiltinFunction(activeStack().getToken().value ) )
 			{
 				rError = true;
 			}
@@ -3547,7 +3571,7 @@ namespace DM14
 		
 		if(rError)
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error + ebnf.getToken().value);
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error + activeStack().getToken().value);
 		}
 		return rError;
 	};
@@ -3555,14 +3579,14 @@ namespace DM14
 	bool Parser::checkToken(string value, string error, bool addtoken)
 	{
 		bool rError = false;
-		if(ebnf.getToken().value == value)
+		if(activeStack().getToken().value == value)
 		{
 			rError = true;
 		}
 		
 		if(rError)
 		{
-			displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error + ebnf.getToken().value);
+			displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error + activeStack().getToken().value);
 		}
 		return rError;
 	};
@@ -3572,7 +3596,7 @@ namespace DM14
 	{
 		bool rError = false;
 		
-		if(ebnf.getToken().type != type)
+		if(activeStack().getToken().type != type)
 		{
 			rError = true;
 		}
@@ -3581,11 +3605,11 @@ namespace DM14
 		{
 			if(addtoken)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error + ebnf.getToken().value);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error + activeStack().getToken().value);
 			}
 			else
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error);
 			}
 		}
 		return rError;
@@ -3595,7 +3619,7 @@ namespace DM14
 	{
 		bool rError = false;
 		
-		if(ebnf.getToken().value != value)
+		if(activeStack().getToken().value != value)
 		{
 			rError = true;
 		}
@@ -3604,11 +3628,11 @@ namespace DM14
 		{
 			if(addtoken)
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error + ebnf.getToken().value);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error + activeStack().getToken().value);
 			}
 			else
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,error);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,error);
 			}
 		}
 		return rError;
@@ -3644,7 +3668,7 @@ namespace DM14
 		}
 
 		//displayInfo(" Scanning  ... [" + fullLibraryName + "]");
-		DM14::scanner* scner = new DM14::scanner(fullLibraryName);
+		std::shared_ptr<DM14::scanner> scner(new DM14::scanner(fullLibraryName));
 		
 		if(!scner->isReady())
 		{
@@ -3658,7 +3682,7 @@ namespace DM14
 		
 		displayInfo(" Parsing   ... [" + fullLibraryName + "]");
 		
-		Array<token>* mapTokens = scner->getTokens();
+		std::shared_ptr<Array<token>> mapTokens = scner->getTokens();
 
 		Array<string> templateNames;
 		
@@ -3740,12 +3764,11 @@ namespace DM14
 			}
 		}
 		
-		delete scner;
 		return 0;
 	};
 
 
-	long Parser::parseCClass(DM14::scanner* scner, uint32_t start, const Array<string>& templateNames)
+	long Parser::parseCClass(std::shared_ptr<DM14::scanner> scner, uint32_t start, const Array<string>& templateNames)
 	{
 		DatatypeBase CClass;
 		CClass.templateNames = templateNames;
@@ -3755,7 +3778,7 @@ namespace DM14
 		bool TYPEDEF = false;
 		bool protoType  = true;
 		bool forwardDecelation = false;
-		Array<token>* mapTokens = scner->getTokens();
+		std::shared_ptr<Array<token>> mapTokens = scner->getTokens();
 		
 		if(mapTokens->at(start).value == "typedef")
 		{
@@ -3908,10 +3931,10 @@ namespace DM14
 
 
 
-	funcInfo Parser::parseCFunction(DM14::scanner* scner, uint32_t start, const DatatypeBase& parentClass)
+	funcInfo Parser::parseCFunction(std::shared_ptr<DM14::scanner> scner, uint32_t start, const DatatypeBase& parentClass)
 	{
 		funcInfo funcinfo;
-		Array<token>* mapTokens = scner->getTokens();
+		std::shared_ptr<Array<token>> mapTokens = scner->getTokens();
 		
 		//cout << " tempalte : " << parentClass.templateName << endl;
 		bool destructor = false;
@@ -4394,20 +4417,20 @@ namespace DM14
 		return idInfo();
 	}
 	
-	Statement* Parser::parseDeclaration()
+	std::shared_ptr<Statement> Parser::parseDeclaration()
 	{
-		Statement* result = parseDeclarationInternal();
-		ebnf.popToken();
+		std::shared_ptr<Statement> result = parseDeclarationInternal();
+		activeStack().popToken();
 		RequireValue(";", "Expected ; and not ", true);
 		return result;
 	}
 
 
-	Statement* Parser::parseDeclarationInternal()
+	std::shared_ptr<Statement> Parser::parseDeclarationInternal()
 	{
-		ebnf.popToken();
-		declareStatement* decStatement = new declareStatement;
-		decStatement->line = ebnf.getToken().lineNumber;
+		activeStack().popToken();
+		std::shared_ptr<declareStatement> decStatement(new declareStatement);
+		decStatement->line = activeStack().getToken().lineNumber;
 		decStatement->scope = scope;
 		
 		if(scope == 0)
@@ -4421,84 +4444,84 @@ namespace DM14
 
 		decStatement->tmpScope = tmpScope;
 
-		Array<idInfo>* tempIdentifiers = new Array<idInfo>;
+		std::shared_ptr<Array<idInfo>> tempIdentifiers(new Array<idInfo>);
 
 		while(true)
 		{
 			checkToken(DM14::types::types::Function, "this is a function name ! :  ", true);
 			RequireType("identifier", "Expected \"Identifier\" and not ", true);
 			
-			if(findIDInfo(idInfo(ebnf.getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
+			if(findIDInfo(idInfo(activeStack().getToken().value, 0, "", NULL),SCOPE) == decStatement->scope)
 			{
-				if(findIDInfo(idInfo(ebnf.getToken().value, 0, "", NULL),TMPSCOPE))
+				if(findIDInfo(idInfo(activeStack().getToken().value, 0, "", NULL),TMPSCOPE))
 				{
-					displayWarning(fName, ebnf.getToken().lineNumber,ebnf.getToken().columnNumber,"Pre-defined variable in different scope :  " + ebnf.getToken().value);
+					displayWarning(fName, activeStack().getToken().lineNumber,activeStack().getToken().columnNumber,"Pre-defined variable in different scope :  " + activeStack().getToken().value);
 				}
 				else if(!tmpScope)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Pre-defineddd variable :  " + ebnf.getToken().value);
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Pre-defineddd variable :  " + activeStack().getToken().value);
 				}
 			}
-			else if(findIDInfo(idInfo(ebnf.getToken().value, 0, "", NULL),GLOBAL))
+			else if(findIDInfo(idInfo(activeStack().getToken().value, 0, "", NULL),GLOBAL))
 			{
-				displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"Pre-defined Global variable :  " + ebnf.getToken().value);
+				displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"Pre-defined Global variable :  " + activeStack().getToken().value);
 			}
 			
-			tempIdentifiers->push_back(idInfo(ebnf.getToken().value, 0, "", NULL));	
-			decStatement->identifiers->push_back(idInfo(ebnf.getToken().value, 0, "", NULL)) ;
-			//cerr << "ID : " << ebnf.getToken().value << endl;
+			tempIdentifiers->push_back(idInfo(activeStack().getToken().value, 0, "", NULL));	
+			decStatement->identifiers->push_back(idInfo(activeStack().getToken().value, 0, "", NULL)) ;
+			//cerr << "ID : " << activeStack().getToken().value << endl;
 			if(!decStatement->tmpScope)
 			{
 				distributedVariablesCount++;
 			}
 			
-			ebnf.popToken();
+			activeStack().popToken();
 			
-			if(ebnf.getToken().value != "," )
+			if(activeStack().getToken().value != "," )
 			{
 				break;
 			}
 			
-			ebnf.popToken();
+			activeStack().popToken();
 		}
 		
 		bool distributed = true;
 		
 		while(true)
 		{
-			if(ebnf.getToken().value == "noblock" )
+			if(activeStack().getToken().value == "noblock" )
 			{
 				decStatement->noblock = true;
 			}
-			else if(ebnf.getToken().value == "recurrent" )
+			else if(activeStack().getToken().value == "recurrent" )
 			{
 				decStatement->recurrent=true;
 			}
-			else if(ebnf.getToken().value == "backprop" )
+			else if(activeStack().getToken().value == "backprop" )
 			{
 				decStatement->backProp=true;
 			}
-			else if(ebnf.getToken().value == "nodist" )
+			else if(activeStack().getToken().value == "nodist" )
 			{
 				if(decStatement->recurrent)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "nodist variable can not be recurrent !");
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "nodist variable can not be recurrent !");
 				}
 				
-				////displayWarning(fName,(tokens->at(ebnf.getIndex())).lineNumber,(tokens->at(ebnf.getIndex())).columnNumber, "Warning, nodist variable");
+				////displayWarning(fName,(tokens->at(activeStack().getIndex())).lineNumber,(tokens->at(activeStack().getIndex())).columnNumber, "Warning, nodist variable");
 				distributed = false;
 				decStatement->distributed = false;
 			}
-			else if(ebnf.getToken().value == "channel" )
+			else if(activeStack().getToken().value == "channel" )
 			{
 				if(decStatement->recurrent || !distributed || decStatement->backProp)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber, "channel variable is not pure !?");
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber, "channel variable is not pure !?");
 				}
 
 				decStatement->channel = true;
 			}
-			else if(ebnf.getToken().value == "global" )
+			else if(activeStack().getToken().value == "global" )
 			{
 				decStatement->global = true;
 			}
@@ -4507,16 +4530,16 @@ namespace DM14
 				break;
 			}
 			
-			ebnf.popToken();
+			activeStack().popToken();
 		}
 		
 		
-		if(!DM14::types::isDataType(ebnf.getToken().value))
+		if(!DM14::types::isDataType(activeStack().getToken().value))
 		{
 			RequireType("datatype", "Expected \"Data type\" and not ", true);
 		}
 		
-		decStatement->type = ebnf.getToken().value;
+		decStatement->type = activeStack().getToken().value;
 		decStatement->classtype = DM14::types::isClass(decStatement->type);
 		decStatement->array = false;
 			
@@ -4525,17 +4548,17 @@ namespace DM14
 		/** array index */
 		if(peekToken("["))
 		{
-			ebnf.popToken(); // [
+			activeStack().popToken(); // [
 			decStatement->array = true;
-			ebnf.popToken();
+			activeStack().popToken();
 			//@TODO: only int can be array ?
-			if(ebnf.getToken().type == "int")
+			if(activeStack().getToken().type == "int")
 			{
 				stringstream SS;
-				SS << ebnf.getToken().value;
+				SS << activeStack().getToken().value;
 				SS >> decStatement->size;
 				distributedVariablesCount += decStatement->size;
-				ebnf.popToken();
+				activeStack().popToken();
 				RequireValue("]", "Expected ] and not ", true);		
 			}
 			else
@@ -4548,16 +4571,16 @@ namespace DM14
 			/** second array index == a matrix */
 			if(peekToken("["))
 			{
-				ebnf.popToken();
+				activeStack().popToken();
 				decStatement->array = true;
-				ebnf.popToken();
-				if(ebnf.getToken().type == "int")
+				activeStack().popToken();
+				if(activeStack().getToken().type == "int")
 				{
 					stringstream SS;
-					SS << ebnf.getToken().value;
+					SS << activeStack().getToken().value;
 					SS >> decStatement->size;
 					distributedVariablesCount += decStatement->size;
-					ebnf.popToken();
+					activeStack().popToken();
 					RequireValue("]", "Expected ] and not ", true);		
 				}
 				else
@@ -4565,7 +4588,7 @@ namespace DM14
 					decStatement->size = 0;
 					RequireValue("]", "Expected ] and not ", true);
 				}
-				ebnf.popToken();
+				activeStack().popToken();
 			}
 		}
 
@@ -4573,38 +4596,38 @@ namespace DM14
 		
 		if(peekToken("("))
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 			int to = reachToken(")", true, true, false, false, true);
 			//decStatement->value = parseOpStatement(*working_tokens_index, to-1, decStatement->type, 0, decStatement);
 			decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
 			reachToken(")", true, true, true, false, true);
-			//ebnf.popToken();
+			//activeStack().popToken();
 			//RequireValue(terminal, "Expected " + terminal + " and not ", true);
 			decStatement->Initilazed = true;
 		}
 		else if(peekToken("="))
 		{
-			ebnf.popToken();
+			activeStack().popToken();
 			/* TODO: FIX: fix the array list initialization or atleast review */
 			if(peekToken("{"))
 			{
-				ebnf.popToken();
+				activeStack().popToken();
 				
 				if(!decStatement->array)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"This variable is not an array");
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"This variable is not an array");
 				}
 				
 				int plevel = 1;
 				//int from = *working_tokens_index+1;
 				int from = 1;
-				while(ebnf.popToken().value.size())
+				while(activeStack().popToken().value.size())
 				{
-					if(ebnf.getToken().value == "(")
+					if(activeStack().getToken().value == "(")
 					{
 						plevel++;
 					}
-					else if(ebnf.getToken().value == ")" || ebnf.getToken().value == "}")
+					else if(activeStack().getToken().value == ")" || activeStack().getToken().value == "}")
 					{
 						plevel--;
 						if(plevel ==0)
@@ -4618,7 +4641,7 @@ namespace DM14
 							break;
 						}
 					}
-					else if(ebnf.getToken().value == ",")
+					else if(activeStack().getToken().value == ",")
 					{
 						if(plevel==1)
 						{		
@@ -4636,7 +4659,7 @@ namespace DM14
 				
 				if(decStatement->values.size() >(uint32_t) decStatement->size && decStatement->size !=  0)
 				{
-					displayError(fName, ebnf.getToken().lineNumber, ebnf.getToken().columnNumber,"too many initilizations");
+					displayError(fName, activeStack().getToken().lineNumber, activeStack().getToken().columnNumber,"too many initilizations");
 				}
 				
 				if(decStatement->size == 0)
@@ -4649,17 +4672,17 @@ namespace DM14
 				{
 					for(uint32_t i =0; i < decStatement->values.size(); i++)
 					{
-						termStatement* statement = new termStatement(decStatement->identifiers->at(k).name, decStatement->type);
+						std::shared_ptr<termStatement> statement(new termStatement(decStatement->identifiers->at(k).name, decStatement->type));
 						statement->scope = scope;
 						
 						SS << i;
-						termStatement* arrayIndex = new termStatement(SS.str(), decStatement->type);
+						std::shared_ptr<termStatement> arrayIndex(new termStatement(SS.str(), decStatement->type));
 						arrayIndex->scope = scope;
 						
 						statement->arrayIndex = arrayIndex;
 						//termStatement->identifier = true;
 						
-						operationalStatement* os = new operationalStatement();
+						std::shared_ptr<operationalStatement> os(new operationalStatement());
 						os->left = statement;
 						os->op = "=";
 						os->right = decStatement->values.at(i);
@@ -4681,7 +4704,7 @@ namespace DM14
 							id.global = decStatement->global;
 							id.global = decStatement->shared;
 							id.type = decStatement->type;
-							Statement* origiCurrentStatement = currentStatement;
+							std::shared_ptr<Statement> origiCurrentStatement = currentStatement;
 							currentStatement = os;
 							pushModified("=", id);
 							currentStatement = origiCurrentStatement;
@@ -4705,12 +4728,12 @@ namespace DM14
 				//decStatement->value = parseOpStatement(0, to-1, decStatement->type, 0, decStatement);
 				
 				decStatement->value = parseStatement("expression-list", &Parser::parseExpressionStatement);
-				for(auto* Statement : decStatement->value->distStatements)
+				for(auto _statement : *decStatement->value->distStatements)
 				{
-					decStatement->distStatements.push_back(Statement);
+					decStatement->distStatements->push_back(_statement);
 				}
 
-				decStatement->value->distStatements.clear();
+				decStatement->value->distStatements->clear();
 
 				if(decStatement->value->type != decStatement->type)
 				{
@@ -4725,24 +4748,24 @@ namespace DM14
 				{
 					for(uint32_t k =0; k < decStatement->identifiers->size(); k++)
 					{
-						termStatement* statement = new termStatement(decStatement->identifiers->at(k).name, decStatement->type);
+						std::shared_ptr<termStatement> statement(new termStatement(decStatement->identifiers->at(k).name, decStatement->type));
 						statement->scope = scope;
 						
-						operationalStatement* os = new operationalStatement();
+						std::shared_ptr<operationalStatement> os(new operationalStatement());
 						os->left = statement;
 						os->op = "=";
 						os->right = decStatement->value;
 						os->type = decStatement->type;
 						os->scope = scope;
 						//globalDefinitions.push_back(os);
-						decStatement->splitStatements.push_back(os);
+						decStatement->splitStatements->push_back(os);
 						////currentFunction.body->push_back(os);
 					}
 					
-					if(decStatement->splitStatements.size())
+					if(decStatement->splitStatements->size())
 					{
-						decStatement->splitStatements.at(0)->distStatements = decStatement->distStatements;
-						decStatement->distStatements.clear();
+						decStatement->splitStatements->at(0)->distStatements = decStatement->distStatements;
+						decStatement->distStatements->clear();
 					}
 					decStatement->value = NULL;
 				}
@@ -4751,7 +4774,7 @@ namespace DM14
 		}
 		else
 		{
-			//cerr << "VAL :" << ebnf.getToken().value.size() << endl;
+			//cerr << "VAL :" << activeStack().getToken().value.size() << endl;
 			//RequireValue(terminal, "Expected " + terminal + " and not ", true);
 			decStatement->Initilazed = false;
 			decStatement->value = NULL;
@@ -4763,7 +4786,7 @@ namespace DM14
 		for(uint32_t i = 0; i < tempIdentifiers->size(); i++)
 		{
 			SS << i;
-			termStatement* arrayIndex = new termStatement(SS.str(), decStatement->type);
+			std::shared_ptr<termStatement> arrayIndex(new termStatement(SS.str(), decStatement->type));
 			arrayIndex->scope = scope;
 			
 			idInfo idinfo(tempIdentifiers->at(i).name, decStatement->scope, decStatement->type, arrayIndex);
@@ -4793,7 +4816,7 @@ namespace DM14
 					{
 						idInfo id = idInfo(datatypes.at(i).memberVariables.at(k).name, decStatement->scope, datatypes.at(i).memberVariables.at(k).returnType, NULL);
 						/*FIX: bad ?! */
-						idInfo* parentID = new idInfo();
+						std::shared_ptr<idInfo> parentID(new idInfo());
 						*parentID = idinfo;
 						id.parent = parentID;
 						id.tmpScope = idinfo.tmpScope;
@@ -4821,6 +4844,76 @@ namespace DM14
 		
 		return decStatement;
 	};
+	
+	
+	
+	EBNF::callstack_t& Parser::activeStack()
+	{
+		return m_activeStack;
+	}
+
+	void Parser::setActiveStack(EBNF::callstack_t& stack)
+	{
+		m_activeStack = stack;
+	}
+	
+	/*Statement* parseStatement(Statement* output, const std::string starting_rule, parser_callback custom_callback)
+	{
+		Statement* retStmt = output;
+		
+		
+		int32_t *temp_input_tokens_index_ptr = input_tokens_index;
+		int32_t temp_input_tokens_index = 0;
+		input_tokens_index = &temp_input_tokens_index;
+		Array<token>* output_tokens = new Array<token>();
+		int32_t working_tokens_size_before = working_tokens->size();
+		
+		rule_groups_depth = 0;
+	
+		ebnfResult result = parseEBNF(working_tokens, starting_rule, output_tokens);
+		
+		token errorToken = getToken(0);
+		
+		if(custom_callback != nullptr)
+		{
+			Array<token>* current_working_tokens = working_tokens;
+			working_tokens = output_tokens;
+			auto output_size = output_tokens->size();
+			retStmt =(prser->*custom_callback)();
+			working_tokens = current_working_tokens;
+			for(; output_tokens->size() > 0;)
+			{
+				output_tokens->remove(0);
+			}
+
+			for(; output_size > 0;)
+			{
+				output_size--;
+				popToken();
+			}
+		}
+		else
+		{
+			//retStmt = result.second;
+			//FIXME
+			retStmt = nullptr;
+			for(uint32_t i =0; i < temp_input_tokens_index; i++)
+			{
+				popToken();
+			}
+		}
+
+		delete output_tokens;
+		input_tokens_index = temp_input_tokens_index_ptr;
+		
+		if(output == nullptr)
+		{
+			//displayError(prser->fName, errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
+			displayError("prser->fName", errorToken.lineNumber, errorToken.columnNumber,"Invalid Statement or grammar rule has no callback : " + starting_rule + " at token : " + errorToken.value);
+		}
+
+		return retStmt;
+	};*/
 	
 	
 	
