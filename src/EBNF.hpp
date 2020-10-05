@@ -294,7 +294,7 @@ namespace DM14
 				EBNF()
 				{
 					index = 0;
-					working_tokens = &tokens_stack;
+					working_tokens = tokens_stack;
 					input_tokens_index = &index;
 				};
 				
@@ -345,7 +345,7 @@ namespace DM14
 				ebnfResult parse(std::string start_map_index)
 				{
 					rule_groups_depth = 0;
-					ebnfResult result = parseEBNF(tokens, start_map_index, &tokens_stack);
+					ebnfResult result = parseEBNF(tokens, start_map_index, tokens_stack);
 					if(result.status == ebnfResultType::SUCCESS)
 					{
 						/*while(callStack.size())
@@ -562,7 +562,7 @@ namespace DM14
 					int32_t *temp_input_tokens_index_ptr = input_tokens_index;
 					int32_t temp_input_tokens_index = 0;
 					input_tokens_index = &temp_input_tokens_index;
-					Array<token>* output_tokens = new Array<token>();
+					std::shared_ptr<Array<token>> output_tokens(new Array<token>());
 					int32_t working_tokens_size_before = working_tokens->size();
 					
 					rule_groups_depth = 0;
@@ -573,7 +573,7 @@ namespace DM14
 					
 					if(custom_callback != nullptr)
 					{
-						Array<token>* current_working_tokens = working_tokens;
+						std::shared_ptr<Array<token>> current_working_tokens = working_tokens;
 						working_tokens = output_tokens;
 						auto output_size = output_tokens->size();
 						retStmt =(prser->*custom_callback)();
@@ -600,7 +600,7 @@ namespace DM14
 						}
 					}
 
-					delete output_tokens;
+					output_tokens.reset();
 					input_tokens_index = temp_input_tokens_index_ptr;
 					
 					if(output == nullptr)
@@ -671,16 +671,16 @@ namespace DM14
 				
 				EBNF_map_t 		grammar;
 				parser_depth 	old_depth;
-				Array<token>*	tokens;
-				Array<token>* working_tokens = nullptr;
-				Array<token>* input_tokens = nullptr;
+				std::shared_ptr<Array<token>>	tokens;
+				std::shared_ptr<Array<token>> working_tokens = nullptr;
+				std::shared_ptr<Array<token>> input_tokens = nullptr;
 				
 			private:
 			
 				/**
 				 * @details This function takes a set of input tokens, and a start map key, and a pointer to the output tokens vector
 				 */
-				ebnfResult parseEBNF(Array<token>* input_tokens, std::string start_map_index, Array<token>* output_tokens, parser_callback callback = nullptr)
+				ebnfResult parseEBNF(std::shared_ptr<Array<token>> input_tokens, std::string start_map_index, std::shared_ptr<Array<token>> output_tokens, parser_callback callback = nullptr)
 				{
 					//cerr << "inside parseEBF : " << start_map_index << " :" <<  *input_tokens_index << endl;
 					if(!grammar[start_map_index].size())
@@ -689,9 +689,9 @@ namespace DM14
 						exit(1);
 					}
 
-					Array<token>* current_working_tokens = working_tokens;
+					std::shared_ptr<Array<token>> current_working_tokens = working_tokens;
 					working_tokens = output_tokens;
-					Array<token>* current_input_tokens = this->input_tokens;
+					std::shared_ptr<Array<token>> current_input_tokens = this->input_tokens;
 					
 					this->input_tokens = input_tokens;
 					
@@ -1025,7 +1025,7 @@ namespace DM14
 				uint32_t rule_groups_depth = 0; 	/** counter of the current ebnf group level inside parseEBNF */
 				uint32_t max_rule_groups_depth = 2; 	/** maximum level of the ebnf groups depth */
 				int32_t *input_tokens_index = nullptr;
-				Array<token> tokens_stack;
+				std::shared_ptr<Array<token>> tokens_stack = std::shared_ptr<Array<token>>(new Array<token>());
 				
 				int32_t 			index = 0;
 				token current_token; 				/** current poped token */

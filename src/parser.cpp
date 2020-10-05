@@ -55,7 +55,7 @@ namespace DM14
 			displayError(filename, 0,0,"Internal parser error !!!, no tokens , maybe empty source file ?");
 		}
 		tokens = gtokens;	
-		ebnf.tokens				=	gtokens.get();
+		ebnf.tokens				=	gtokens;
 		fName				=	filename;
 		
 		functions			=	std::make_shared<Array<ast_function>>();
@@ -71,7 +71,7 @@ namespace DM14
 		tmpScope = false;
 		globalNoDist = false;
 		
-		ebnf.input_tokens = tokens.get();
+		ebnf.input_tokens = tokens;
 		
 		dvList				=	std::make_shared<Array<std::shared_ptr<distributingVariablesStatement>>>();
 		linkLibs			=	std::make_shared<Array<std::shared_ptr<Statement>>>();
