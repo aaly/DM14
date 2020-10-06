@@ -1,9 +1,13 @@
 # DM14
 the Distributed M14 programming language
 
+### Introduction
+
+This is a novel distributed programming language that I wrote during my bachelor, while the syntax is always the same, the compiler has went through many refactoring and still is.
+
 ### Examples
 
-The doc directory has a set of "working" examples 
+The examples directory has a set of "working" examples 
 
 #### Factorial RPC like
 
