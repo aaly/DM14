@@ -47,4 +47,5 @@ factorial (n int  -> nFactorial float)
 ```
 # References
 
-https://www.researchgate.net/publication/329183467_Distributed_coastal_erosion_management_using_image_processing_and_Node_Oriented_Programming
+Master's Thesis : https://www.researchgate.net/publication/329183467_Distributed_coastal_erosion_management_using_image_processing_and_Node_Oriented_Programming
+Master's Presentation : https://www.researchgate.net/publication/329183467_Distributed_coastal_erosion_management_using_image_processing_and_Node_Oriented_Programming
