@@ -1,5 +1,5 @@
-export CC=clang
-export CXX=clang++
+export CC=gcc
+export CXX=g++
 
 rm -rf build
 mkdir build

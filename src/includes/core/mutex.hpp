@@ -1,12 +1,12 @@
 #ifndef MUTEXLOCK_HPP
 #define MUTEXLOCK_HPP
 
-#include <linux/futex.h>
 #include <pthread.h>
+//#include <linux/futex.h>
+#include <sys/time.h>
 #include <semaphore.h>
 #include <sys/time.h>
 
-#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
