@@ -7,25 +7,24 @@
 #ifndef STRING_HPP
 #define STRING_HPP
 
-#include <string>
 #include <sstream>
+#include <string>
 
 using namespace std;
 
-//some string operationgs !
+// some string operationgs !
 
-int		str_size(const string&);
-char	str_at(const string&, const unsigned int&);
-bool	str_isEmpty(const string&);
-string	str_sub(const string&, const int&, const int&);
+int str_size(const string &);
+char str_at(const string &, const unsigned int &);
+bool str_isEmpty(const string &);
+string str_sub(const string &, const int &, const int &);
 
-string	numberToStr(int);
-string  floatToStr(float);
-int		strToNumber(const string&);
-float	strToFloat(const string&);
+string numberToStr(int);
+string floatToStr(float);
+int strToNumber(const string &);
+float strToFloat(const string &);
 
-
-string	getToken(const string&, const char&, const int&);
-int		tokenCount(const string&, const char&);
+string getToken(const string &, const char &, const int &);
+int tokenCount(const string &, const char &);
 
 #endif // STRING_HPP

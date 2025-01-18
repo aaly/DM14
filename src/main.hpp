@@ -4,16 +4,16 @@
 //
 // See file "license" for bsd license
 
-#include <iostream>
-#include "scanner.hpp"
-#include "parser.hpp"
-#include "compiler.hpp"
-#include "common.hpp"
 #include "DatatypeBase.hpp"
+#include "common.hpp"
+#include "compiler.hpp"
+#include "parser.hpp"
+#include "scanner.hpp"
+#include <iostream>
 
 using namespace std;
 
-//static float Version;
-//static string	headersPath;
-//static string gccPath;
-//static string mapspath;
+// static float Version;
+// static string	headersPath;
+// static string gccPath;
+// static string mapspath;

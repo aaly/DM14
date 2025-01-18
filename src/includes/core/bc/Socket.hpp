@@ -3,52 +3,49 @@
 
 #include <iostream>
 #include <sstream>
-#include <string> 
+#include <string>
 
 #ifdef WIN32
-	#include <winsock.h>         // For socket(), connect(), send(), and recv()
-	typedef int socklen_t;
-	typedef char raw_type;       // Type used for raw data on this platform
-	static bool initialized = false;
+#include <winsock.h> // For socket(), connect(), send(), and recv()
+typedef int socklen_t;
+typedef char raw_type; // Type used for raw data on this platform
+static bool initialized = false;
 #else
-	#include <sys/types.h>       // For data types
-	#include <sys/socket.h>      // For socket(), connect(), send(), and recv()
-	#include <netdb.h>           // For gethostbyname()
-	#include <arpa/inet.h>       // For inet_addr()
-	#include <unistd.h>          // For close()
-	#include <netinet/in.h>      // For sockaddr_in
-	#include <netinet/tcp.h>		// for TCP_NODELAY
-	typedef void raw_type;       // Type used for raw data on this platform
-	#include <exception>         // For exception class
-	#include <string.h>
-	#include <math.h>
-	#include <stdlib.h>
-	#include <fcntl.h>
-	#include <sys/select.h>
-	#include <sys/time.h>
-	#include <stdio.h>
-	#include <netinet/tcp.h>
-	#include <linux/sockios.h>
-	#include <sys/ioctl.h>
-	#include <errno.h>             // For errno
-	#include <signal.h>
+#include <arpa/inet.h>   // For inet_addr()
+#include <netdb.h>       // For gethostbyname()
+#include <netinet/in.h>  // For sockaddr_in
+#include <netinet/tcp.h> // for TCP_NODELAY
+#include <sys/socket.h>  // For socket(), connect(), send(), and recv()
+#include <sys/types.h>   // For data types
+#include <unistd.h>      // For close()
+typedef void raw_type; // Type used for raw data on this platform
+#include <errno.h>       // For errno
+#include <exception>     // For exception class
+#include <fcntl.h>
+#include <linux/sockios.h>
+#include <math.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #endif
 
-
 /* We want the .gnu.warning.SYMBOL section to be unallocated.  */
-#define __make_section_unallocated(section_string)    \
-  __asm__ (".section " section_string "\n\t.previous");
+#define __make_section_unallocated(section_string)                             \
+  __asm__(".section " section_string "\n\t.previous");
 
 /* When a reference to SYMBOL is encountered, the linker will emit a
    warning message MSG.  */
-#define silent_warning(symbol) \
-  __make_section_unallocated (".gnu.warning." #symbol) 
+#define silent_warning(symbol)                                                 \
+  __make_section_unallocated(".gnu.warning." #symbol)
 
-silent_warning(gethostbyname)
-silent_warning(getservbyname)
+silent_warning(gethostbyname) silent_warning(getservbyname)
 
-
-using namespace std;
+    using namespace std;
 
 /**
  *   Signals a problem with the execution of a socket call.
@@ -75,39 +72,33 @@ public:
   const char *what() const throw();
 
 private:
-  string userMessage;  // Exception message
+  string userMessage; // Exception message
 };
 
-
-
 void signal_callback_handler(int signum);
-
-
-
-
 
 /**
  *   Base class representing basic communication endpoint
  */
 class Socket {
-	public:
-		Socket();
-		Socket(int type, int protocol);
-		Socket(int sockDesc);
-		//Socket(const Socket &sock);
-		void operator=(const Socket &sock);
-  
-		/**
-		*   Close and deallocate this socket
-		*/
-		~Socket();
-		
-		/**
-		*   Get the local address
-		*   @return local address of socket
-		*   @exception SocketException thrown if fetch fails
-		*/
-		string getLocalAddress();
+public:
+  Socket();
+  Socket(int type, int protocol);
+  Socket(int sockDesc);
+  // Socket(const Socket &sock);
+  void operator=(const Socket &sock);
+
+  /**
+   *   Close and deallocate this socket
+   */
+  ~Socket();
+
+  /**
+   *   Get the local address
+   *   @return local address of socket
+   *   @exception SocketException thrown if fetch fails
+   */
+  string getLocalAddress();
 
   /**
    *   Get the local port
@@ -126,13 +117,14 @@ class Socket {
 
   /**
    *   Set the local port to the specified port and the local address
-   *   to the specified address.  If you omit the port, a random port 
+   *   to the specified address.  If you omit the port, a random port
    *   will be selected.
    *   @param localAddress local address
    *   @param localPort local port
    *   @exception SocketException thrown if setting local port or address fails
    */
-  int setLocalAddressAndPort(const string &localAddress, unsigned short localPort = 0);
+  int setLocalAddressAndPort(const string &localAddress,
+                             unsigned short localPort = 0);
 
   /**
    *   If WinSock, unload the WinSock DLLs; otherwise do nothing.  We ignore
@@ -140,7 +132,7 @@ class Socket {
    *   completeness.  If you are running on Windows and you are concerned
    *   about DLL resource consumption, call this after you are done with all
    *   Socket instances.  If you execute this on Windows while some instance of
-   *   Socket exists, you are toast.  For portability of client code, this is 
+   *   Socket exists, you are toast.  For portability of client code, this is
    *   an empty function on non-Windows platforms so you can always include it.
    *   @param buffer buffer to receive the data
    *   @param bufferLen maximum number of bytes to read into buffer
@@ -157,7 +149,6 @@ class Socket {
    */
   static unsigned short resolveService(const string &service,
                                        const string &protocol = "tcp");
-                                       
 
   /**
    *   Establish a socket connection with the given foreign
@@ -201,38 +192,31 @@ class Socket {
    *   @exception SocketException thrown if unable to fetch foreign port
    */
   unsigned short getForeignPort();
-  
-  int setNonBlocking ( const bool b );
-  
-  const Socket& operator << ( const std::string& ) const;
-  const Socket& operator >> ( std::string& ) const;
-  
-	static string numberToStr(unsigned int number);
-	static  int strToNumber(const string& str);
-	bool connected();
-	bool isReadyToRead(int _socketHandle, const long &_lWaitTimeMicroseconds);
-	bool enableNagle(bool);
-	
-	int Error;
-	int getSocketDescriptor();
-	int Close();
-	int Shutdown();
+
+  int setNonBlocking(const bool b);
+
+  const Socket &operator<<(const std::string &) const;
+  const Socket &operator>>(std::string &) const;
+
+  static string numberToStr(unsigned int number);
+  static int strToNumber(const string &str);
+  bool connected();
+  bool isReadyToRead(int _socketHandle, const long &_lWaitTimeMicroseconds);
+  bool enableNagle(bool);
+
+  int Error;
+  int getSocketDescriptor();
+  int Close();
+  int Shutdown();
+
 public:
   // Prevent the user from trying to use value semantics on this object
-  //Socket(const Socket &sock);
-  //void operator=(const Socket &sock);
+  // Socket(const Socket &sock);
+  // void operator=(const Socket &sock);
 
 protected:
-  int sockDesc;              // Socket descriptor
+  int sockDesc; // Socket descriptor
 };
-
-
-
-
-
-
-
-
 
 /**
  *   UDP socket for communication with other UDP sockets
@@ -252,41 +236,36 @@ public:
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create UDP socket
    */
-  UDPSocket(const string &foreignAddress, unsigned short foreignPort) 
-      throw(SocketException);
+  UDPSocket(const string &foreignAddress,
+            unsigned short foreignPort) throw(SocketException);
 
   /**
    *   Construct a UDP socket for use with a server, accepting connections
    *   on the specified port on the interface specified by the given address
    *   @param localAddress local interface (address) of server socket
    *   @param localPort local port of server socket
-   *   @param queueLen maximum queue length for outstanding 
+   *   @param queueLen maximum queue length for outstanding
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create UDP server socket
    */
   UDPSocket(const string &localAddress, unsigned short localPort,
-      int queueLen = 5) throw(SocketException);
+            int queueLen = 5) throw(SocketException);
 
   /**
    *   Blocks until a new connection is established on this socket or error
    *   @return new connection socket
-   *   @exception SocketException thrown if attempt to accept a new connection fails
+   *   @exception SocketException thrown if attempt to accept a new connection
+   * fails
    */
-  UDPSocket* accept();
+  UDPSocket *accept();
 
-	int listen(int queueLen);
-	
-	int setopts();
-	
+  int listen(int queueLen);
+
+  int setopts();
+
 private:
   UDPSocket(int newConnSD);
 };
-
-
-
-
-
-
 
 /**
  *   TCP socket for communication with other TCP sockets
@@ -306,46 +285,42 @@ public:
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create TCP socket
    */
-  TCPSocket(const string &foreignAddress, unsigned short foreignPort) 
-      throw(SocketException);
+  TCPSocket(const string &foreignAddress,
+            unsigned short foreignPort) throw(SocketException);
 
   /**
    *   Construct a TCP socket for use with a server, accepting connections
    *   on the specified port on the interface specified by the given address
    *   @param localAddress local interface (address) of server socket
    *   @param localPort local port of server socket
-   *   @param queueLen maximum queue length for outstanding 
+   *   @param queueLen maximum queue length for outstanding
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create TCP server socket
    */
   TCPSocket(const string &localAddress, unsigned short localPort,
-      int queueLen) throw(SocketException);
+            int queueLen) throw(SocketException);
 
   /**
    *   Blocks until a new connection is established on this socket or error
    *   @return new connection socket
-   *   @exception SocketException thrown if attempt to accept a new connection fails
+   *   @exception SocketException thrown if attempt to accept a new connection
+   * fails
    */
-   
+
   TCPSocket(int newConnSD);
-  TCPSocket* accept();
+  TCPSocket *accept();
 
-	int listen(int queueLen);
-	
-	int setopts();
-	
+  int listen(int queueLen);
+
+  int setopts();
+
 private:
-
-  
-  
 };
 
-
-class MessageTCPSocket : public TCPSocket
-{
-	public:
-	
-		MessageTCPSocket() throw(SocketException);;
+class MessageTCPSocket : public TCPSocket {
+public:
+  MessageTCPSocket() throw(SocketException);
+  ;
   /**
    *   Construct a TCP socket with a connection to the given foreign address
    *   and port
@@ -353,37 +328,36 @@ class MessageTCPSocket : public TCPSocket
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create TCP socket
    */
-  MessageTCPSocket(const string &foreignAddress, unsigned short foreignPort) 
-      throw(SocketException);
+  MessageTCPSocket(const string &foreignAddress,
+                   unsigned short foreignPort) throw(SocketException);
 
   /**
    *   Construct a TCP socket for use with a server, accepting connections
    *   on the specified port on the interface specified by the given address
    *   @param localAddress local interface (address) of server socket
    *   @param localPort local port of server socket
-   *   @param queueLen maximum queue length for outstanding 
+   *   @param queueLen maximum queue length for outstanding
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create TCP server socket
    */
   MessageTCPSocket(const string &localAddress, unsigned short localPort,
-      int queueLen = 5) throw(SocketException);
-      
-      MessageTCPSocket(int newConnSD);
-      
-		string recvMessage();
-		int sendMessage(const string&);
-		MessageTCPSocket *accept();
-		int setopts();
-		int flush();
-		int enableBufferSend(bool);
-	private:
-		int		currentMessageLength;
-		unsigned int		originalMessageLength;
-		string	buffer;
-		string	sendBuffer;
-		bool	bufferSend;
-		
-};
+                   int queueLen = 5) throw(SocketException);
 
+  MessageTCPSocket(int newConnSD);
+
+  string recvMessage();
+  int sendMessage(const string &);
+  MessageTCPSocket *accept();
+  int setopts();
+  int flush();
+  int enableBufferSend(bool);
+
+private:
+  int currentMessageLength;
+  unsigned int originalMessageLength;
+  string buffer;
+  string sendBuffer;
+  bool bufferSend;
+};
 
 #endif //__SOCKETPP

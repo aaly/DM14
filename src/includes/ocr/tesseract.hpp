@@ -7,28 +7,28 @@
 #ifndef TESSERACT_HPP
 #define TESSERACT_HPP
 
-#include <tesseract/baseapi.h>
-#include <leptonica/allheaders.h>
 #include <iostream>
+#include <leptonica/allheaders.h>
 #include <string>
+#include <tesseract/baseapi.h>
 
-//using namespace std;
+// using namespace std;
 
-using  std::cout;
-using  std::cerr;
-using  std::endl;
+using std::cerr;
+using std::cout;
+using std::endl;
 
-typedef tesseract::TessBaseAPI  TBAPI;
+typedef tesseract::TessBaseAPI TBAPI;
 
-class Tesseract
-{
-	public:
-		Tesseract();
-		~Tesseract();
-		string	readImage(const string&);
-		int		setLanguage(const string&);
-	private:
-		TBAPI* api;
+class Tesseract {
+public:
+  Tesseract();
+  ~Tesseract();
+  string readImage(const string &);
+  int setLanguage(const string &);
+
+private:
+  TBAPI *api;
 };
 
 #endif // TESSERACT_HPP

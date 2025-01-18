@@ -10,10 +10,9 @@
 @copyright        See file "license" for bsd license
 */
 
-
-#include <string>
 #include <core/Node.hpp>
+#include <string>
 
-int setArgs(int argc, char* argv[], Node& n, std::string& mainParameters);
+int setArgs(int argc, char *argv[], Node &n, std::string &mainParameters);
 
 #endif /** DM14_HELPER_HPP */

@@ -11,14 +11,14 @@
 #include <stdlib.h>
 #include <sys/inotify.h>
 
-class FileTools
-{
-	public:
-		int		addWatch(char*);
-		int		removeWatch(int);
-		bool	hasChanged(int);
-	private:
-		int fd;
+class FileTools {
+public:
+  int addWatch(char *);
+  int removeWatch(int);
+  bool hasChanged(int);
+
+private:
+  int fd;
 };
 
 #endif // FILEWATCH_HPP

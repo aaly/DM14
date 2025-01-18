@@ -5,27 +5,25 @@
 // Part of Mission14 programming language
 //
 // See file "license" for license
-#include <iostream>
-#include <string>
 #include <cmath>
+#include <iostream>
 #include <stdlib.h>
+#include <string>
 
 using namespace std;
 
-double Cos(const double&);
-double Sin(const double&);
-double Tan(const double&);
+double Cos(const double &);
+double Sin(const double &);
+double Tan(const double &);
 
-double Power (const double&, const double&);
+double Power(const double &, const double &);
 
-double Square (const double&);
+double Square(const double &);
 float Sqrtf(float x);
 
-int	Random();
-int	randomSeed(int&);
+int Random();
+int randomSeed(int &);
 
-
-
-int Absoulte(const int& j);
-float FAbsoulte(const float& j);
+int Absoulte(const int &j);
+float FAbsoulte(const float &j);
 #endif

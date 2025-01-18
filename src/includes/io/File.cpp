@@ -6,49 +6,33 @@
 
 #include "File.hpp"
 
+File::File() {
 
-File::File()
-{
-	
 };
 
-File::File(const std::string& path)
-{
-	open(path);
+File::File(const std::string &path) { open(path); };
+
+File::~File() {
+
 };
 
-File::~File()
-{
-	
+int File::open(const std::string &path) {
+  fileStream.open(path.c_str(),
+                  std::fstream::in | std::fstream::out | std::fstream::app);
+  return fileStream.is_open();
 };
 
-int File::open(const std::string& path)
-{
-	fileStream.open(path.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
-	return fileStream.is_open();
+int File::close() {
+  fileStream.close();
+  return fileStream.is_open();
 };
 
-int File::close()
-{
-	fileStream.close();
-	return fileStream.is_open();
+std::string File::readLine() {
+  std::string buffer;
+  getline(fileStream, buffer);
+  return buffer;
 };
 
-std::string File::readLine()
-{
-	std::string buffer;
-	getline(fileStream, buffer);
-	return buffer;
-};
+int File::writeLine(std::string &line) { return 0; };
 
-int File::writeLine(std::string& line)
-{
-	return 0;
-};
-
-bool File::isOpen()
-{
-	return fileStream.is_open();
-};
-
-
+bool File::isOpen() { return fileStream.is_open(); };

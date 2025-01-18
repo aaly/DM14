@@ -7,39 +7,36 @@
 #ifndef FILEWATCH_HPP
 #define FILEWATCH_HPP
 
-
-#include <unistd.h>
+#include "Array.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/inotify.h>
-#include "Array.hpp"
-//#inclide <string>
+#include <unistd.h>
+// #inclide <string>
 
 #define EVENT_SIZE (sizeof(struct inotify_event))
-#define BUF_LEN    (1024 * (EVENT_SIZE + 16))
+#define BUF_LEN (1024 * (EVENT_SIZE + 16))
 
-typedef Array<struct inotify_event*> AA;
+typedef Array<struct inotify_event *> AA;
 
-class fileWatcher
-{
-	public:
-		fileWatcher();
-		~fileWatcher();
-		bool	isReady();
-		string	getNext();
-		//int		addWatch(const string&, int access = IN_CREATE | IN_DELETE | IN_MODIFY);
-		int		addWatch(const string&, int access = IN_CLOSE_WRITE | IN_MOVED_TO);
-		bool 	Update(int waitUsec = 0);
-		int		removeWatch(const string&);
-		bool	hasChanged(int);
-		bool	hasChanged(const string&);
-		
-	private:
-		int fd;
-		AA eventsQueue;
-		int		Init();
+class fileWatcher {
+public:
+  fileWatcher();
+  ~fileWatcher();
+  bool isReady();
+  string getNext();
+  // int		addWatch(const string&, int access = IN_CREATE |
+  // IN_DELETE | IN_MODIFY);
+  int addWatch(const string &, int access = IN_CLOSE_WRITE | IN_MOVED_TO);
+  bool Update(int waitUsec = 0);
+  int removeWatch(const string &);
+  bool hasChanged(int);
+  bool hasChanged(const string &);
+
+private:
+  int fd;
+  AA eventsQueue;
+  int Init();
 };
 
 #endif // FILEWATCH_HPP
-
-           
