@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 
-int setArgs(int argc, char *argv[], Node &n, std::string &mainParameters) {
+int setArgs(int argc, char *argv[], Node &n, const std::string& mainParameters) {
   for (int i = 1; i < argc; i++) {
     int switchType = 0;
     std::string S = argv[i];

@@ -114,7 +114,7 @@ public:
     }
   }
 
-  bool selectRule(const std::string &rule) {
+  bool selectRule(const std::string& rule) {
     bool result = false;
     for (auto nested_stack : *nested_stacks) {
       if (nested_stack.rule == rule) {
@@ -260,7 +260,7 @@ public:
    * @details get the depth of a specific rule starting from a specific start
    * rule
    */
-  uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start) {
+  uint32_t getLevelOfEBNFRule(const std::string& rule, const std::string& start) {
     int32_t result = 0;
     for (uint32_t i = 0; i < grammar[start].size(); i++) {
       grammar_rule_t current_rule = grammar[start].at(i);
@@ -396,7 +396,7 @@ public:
   const int32_t getIndex() { return index; };
 
   std::shared_ptr<Statement> parseStatement(std::shared_ptr<Statement> output,
-                                            const std::string starting_rule,
+                                            const std::string& starting_rule,
                                             parser_callback custom_callback) {
     std::shared_ptr<Statement> retStmt = output;
 

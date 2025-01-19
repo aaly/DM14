@@ -198,13 +198,13 @@ public:
 
   int setNonBlocking(const bool b);
 
-  const Socket &operator<<(const std::string &) const;
-  const Socket &operator>>(std::string &) const;
+  const Socket &operator<<(const std::string&) const;
+  const Socket &operator>>(std::string&) const;
 
   static string numberToStr(unsigned int number);
-  static int strToNumber(const string &str);
+  static int strToNumber(const string& str);
   bool connected();
-  bool isReadyToRead(int _socketHandle, const long &_lWaitTimeMicroseconds);
+  bool isReadyToRead(int _socketHandle, const long& _lWaitTimeMicroseconds);
   bool enableNagle(bool);
 
   int Error;
@@ -239,8 +239,8 @@ public:
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create UDP socket
    */
-  UDPSocket(const string &foreignAddress,
-            const string &foreignPort) throw(SocketException);
+  UDPSocket(const string& foreignAddress,
+            const string& foreignPort) throw(SocketException);
 
   /**
    *   Construct a UDP socket for use with a server, accepting connections
@@ -251,7 +251,7 @@ public:
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create UDP server socket
    */
-  UDPSocket(const string &localAddress, const string &localPort,
+  UDPSocket(const string& localAddress, const string& localPort,
             int queueLen = 5) throw(SocketException);
 
   /**
@@ -288,8 +288,8 @@ public:
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create TCP socket
    */
-  TCPSocket(const string &foreignAddress,
-            const string &foreignPort) throw(SocketException);
+  TCPSocket(const string& foreignAddress,
+            const string& foreignPort) throw(SocketException);
 
   /**
    *   Construct a TCP socket for use with a server, accepting connections
@@ -300,7 +300,7 @@ public:
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create TCP server socket
    */
-  TCPSocket(const string &localAddress, const string &localPort,
+  TCPSocket(const string& localAddress, const string& localPort,
             int queueLen) throw(SocketException);
 
   /**
@@ -331,8 +331,8 @@ public:
    *   @param foreignPort foreign port
    *   @exception SocketException thrown if unable to create TCP socket
    */
-  MessageTCPSocket(const string &foreignAddress,
-                   const string &foreignPort) throw(SocketException);
+  MessageTCPSocket(const string& foreignAddress,
+                   const string& foreignPort) throw(SocketException);
 
   /**
    *   Construct a TCP socket for use with a server, accepting connections
@@ -343,13 +343,13 @@ public:
    *                   connection requests (default 5)
    *   @exception SocketException thrown if unable to create TCP server socket
    */
-  MessageTCPSocket(const string &localAddress, const string &localPort,
+  MessageTCPSocket(const string& localAddress, const string& localPort,
                    int queueLen = 5) throw(SocketException);
 
   MessageTCPSocket(int newConnSD);
 
   string recvMessage();
-  int sendMessage(const string &);
+  int sendMessage(const string&);
   MessageTCPSocket *accept();
   int setopts();
   int flush();

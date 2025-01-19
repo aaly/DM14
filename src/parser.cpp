@@ -950,7 +950,7 @@ std::shared_ptr<Statement> Parser::parseAddParent() {
 };
 
 std::shared_ptr<Statement>
-Parser::parseStatement(const std::string starting_rule,
+Parser::parseStatement(const std::string& starting_rule,
                        EBNF::parser_callback custom_callback) {
   std::shared_ptr<Statement> result = nullptr;
   increaseScope(result);
@@ -2097,8 +2097,8 @@ std::shared_ptr<Statement> Parser::parseExpressionStatement() {
   return result;
 }
 
-std::string Parser::getOpStatementType(std::string stmtType,
-                                       const std::string &classID) {
+std::string Parser::getOpStatementType(const std::string& stmtType,
+                                       const std::string& classID) {
   std::string type;
 
   if (stmtType == "NIL") {
@@ -4633,7 +4633,7 @@ EBNF::callstack_t &Parser::activeStack() { return m_activeStack; }
 
 void Parser::setActiveStack(EBNF::callstack_t &stack) { m_activeStack = stack; }
 
-/*Statement* parseStatement(Statement* output, const std::string starting_rule,
+/*Statement* parseStatement(Statement* output, const std::string& starting_rule,
 parser_callback custom_callback)
 {
         Statement* retStmt = output;

@@ -35,7 +35,7 @@ public:
 
   includePath() {}
 
-  includePath(const std::string &package, const std::string &library,
+  includePath(const std::string& package, const std::string& library,
               const includePath::sourceFileType includeType) {
     this->package = package;
     this->library = library;
@@ -135,7 +135,7 @@ public:
   int32_t parseIncludesInsider(const string &, const string &,
                                const includePath::sourceFileType);
   std::shared_ptr<Statement>
-  parseStatement(const std::string starting_rule,
+  parseStatement(const std::string& starting_rule,
                  EBNF::parser_callback custom_callback = nullptr);
   // string 						getDataType(const
   // string&);
@@ -145,8 +145,8 @@ public:
                      const bool &, const bool &);
   bool peekToken(const string &);
   token peekToken(const int32_t &);
-  std::string getOpStatementType(std::string stmtType,
-                                 const std::string &classID);
+  std::string getOpStatementType(const std::string& stmtType,
+                                 const std::string& classID);
 
   int32_t extractSplitStatements(
       std::shared_ptr<Array<std::shared_ptr<Statement>>> array,
@@ -231,7 +231,7 @@ private:
   Array<DatatypeBase> mapcodeDatatypes;
 
   std::shared_ptr<Statement> parseReturn();
-  uint32_t getLevelOfEBNFRule(const std::string rule, const std::string start);
+  uint32_t getLevelOfEBNFRule(const std::string& rule, const std::string& start);
 
   std::shared_ptr<idInfo> getTopParent(std::shared_ptr<idInfo>);
   std::shared_ptr<Array<idInfo>> identifiers;

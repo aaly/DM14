@@ -195,7 +195,7 @@ public:
 
   int setNonBlocking(const bool b);
 
-  const Socket &operator<<(const std::string &) const;
+  const Socket &operator<<(const std::string& ) const;
   const Socket &operator>>(std::string &) const;
 
   static string numberToStr(unsigned int number);

@@ -26,11 +26,11 @@ public:
   compiler(std::shared_ptr<Array<mapcode>> const);
   ~compiler();
 
-  int setVersion(const double &);
-  uint32_t addIncludePath(const std::string &path);
-  int setgccPath(const std::string &);
-  int write(const std::string &);
-  int writeLine(const std::string &);
+  int setVersion(const double&);
+  uint32_t addIncludePath(const std::string& path);
+  int setgccPath(const std::string&);
+  int write(const std::string&);
+  int writeLine(const std::string&);
   int compile();
   int compileIncludes();
   int compileDistributeNodes();
@@ -55,18 +55,18 @@ public:
   int compileResetStatement(std::shared_ptr<Statement>);
   int compileParentAddStatement(std::shared_ptr<Statement>);
   int compileSetNodeStatement(std::shared_ptr<Statement>);
-  int compileDistributedVariable(const idInfo &, const bool = false);
-  int compileNodeSelector(ast_function &);
+  int compileDistributedVariable(const idInfo&, const bool = false);
+  int compileNodeSelector(ast_function&);
   int compileExtern(std::shared_ptr<Statement>);
   int compileThread(std::shared_ptr<Statement>);
-  int compileAddVector(std::shared_ptr<Statement>, const idInfo &,
+  int compileAddVector(std::shared_ptr<Statement>, const idInfo&,
                        const bool = false);
-  bool setcompileStatic(const bool &);
+  bool setcompileStatic(const bool&);
   bool isCompilingMain();
 
   string generateDistributedVariableName(std::shared_ptr<idInfo> id);
 
-  int writeDepedency(idInfo &, int);
+  int writeDepedency(idInfo&, int);
   void printStatement(std::shared_ptr<Statement> stmt, int indent);
 
   static bool compareIncludes(DM14::includePath include1,

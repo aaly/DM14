@@ -10,13 +10,13 @@ File::File() {
 
 };
 
-File::File(const std::string &path) { open(path); };
+File::File(const std::string& path) { open(path); };
 
 File::~File() {
 
 };
 
-int File::open(const std::string &path) {
+int File::open(const std::string& path) {
   fileStream.open(path.c_str(),
                   std::fstream::in | std::fstream::out | std::fstream::app);
   return fileStream.is_open();
@@ -33,6 +33,6 @@ std::string File::readLine() {
   return buffer;
 };
 
-int File::writeLine(std::string &line) { return 0; };
+int File::writeLineconst (std::string &line) { return 0; };
 
 bool File::isOpen() { return fileStream.is_open(); };

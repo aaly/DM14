@@ -12,7 +12,7 @@ public:
     }
   }
 
-  std::string geOptionValue(const std::string &option) {
+  std::string geOptionValue(const std::string& option) {
     std::string result("");
 
     for (unsigned int i = 0; i < parameters.size(); i++) {
@@ -28,7 +28,7 @@ public:
     return result;
   }
 
-  bool hasParameterOption(const std::string &option) const {
+  bool hasParameterOption(const std::string& option) const {
     return std::find(this->parameters.begin(), this->parameters.end(),
                      option) != this->parameters.end();
   }
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   string fname;
   std::vector<std::string> includePaths;
   while (pHandler.hasParameterOption("-I") == true) {
-    const std::string &includePath = pHandler.geOptionValue("-I");
+    const std::string& includePath = pHandler.geOptionValue("-I");
 
     if (!includePath.empty()) {
       displayInfo(" adding   ... [" + includePath + "]");

@@ -14,12 +14,12 @@ typedef std::fstream FStream;
 class File {
 public:
   File();
-  File(const std::string &path);
+  File(const std::string& path);
   ~File();
-  int open(const std::string &path);
+  int open(const std::string& path);
   int close();
   std::string readLine();
-  int writeLine(std::string &line);
+  int writeLine(const std::string& line);
   bool isOpen();
 
 private:

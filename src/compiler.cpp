@@ -63,7 +63,7 @@ compiler::~compiler() {
 }*/
 
 void compiler::printStatement(std::shared_ptr<Statement> stmt, int indent) {
-  if (stmt != nullptr && stmt->StatementType == oStatement) {
+  if (stmt != nullptr&& stmt->StatementType == oStatement) {
     if (std::static_pointer_cast<operationalStatement>(stmt)->left) {
       printStatement(std::static_pointer_cast<operationalStatement>(stmt)->left,
                      indent + 4);
@@ -87,32 +87,32 @@ void compiler::printStatement(std::shared_ptr<Statement> stmt, int indent) {
           std::static_pointer_cast<operationalStatement>(stmt)->right,
           indent + 4);
     }
-  } else if (stmt != nullptr && stmt->StatementType == tStatement) {
+  } else if (stmt != nullptr&& stmt->StatementType == tStatement) {
     std::cout << std::static_pointer_cast<termStatement>(stmt)->term << "\n ";
   }
 }
 
-bool compiler::setcompileStatic(const bool &Static) {
+bool compiler::setcompileStatic(const bool&Static) {
   compileStatic = Static;
   return compileStatic;
 };
 
-int compiler::setVersion(const double &version) {
+int compiler::setVersion(const double& version) {
   Version = version;
   return 0;
 };
 
-uint32_t compiler::addIncludePath(const std::string &path) {
+uint32_t compiler::addIncludePath(const std::string& path) {
   includePaths.push_back(path);
   return includePaths.size();
 }
 
-int compiler::setgccPath(const std::string &gccpath) {
+int compiler::setgccPath(const std::string& gccpath) {
   gccPath = gccpath;
   return 0;
 };
 
-int compiler::write(const std::string &output) {
+int compiler::write(const std::string& output) {
   if (outStream) {
     *outStream << output << flush;
   } else {
@@ -122,7 +122,7 @@ int compiler::write(const std::string &output) {
   return 0;
 };
 
-int compiler::writeLine(const std::string &output) {
+int compiler::writeLine(const std::string& output) {
   if (outStream) {
     *outStream << output << std::endl << std::flush;
   } else {
@@ -136,7 +136,7 @@ int compiler::writeLine(const std::string &output) {
 /*bool compiler::compareIncludes(DM14::includePath include1, DM14::includePath
 include2)
 {
-        if(include1.package == include2.package &&
+        if(include1.package == include2.package&&
                 include1.library == include2.library)
                 {
                         return true;
@@ -144,7 +144,7 @@ include2)
                 return false;
 }*/
 
-void cleanIncludes(std::vector<DM14::includePath> &v) {
+void cleanIncludes(std::vector<DM14::includePath>& v) {
   auto end = v.end();
   for (auto it = v.begin(); it != end; ++it) {
     end = std::remove(it + 1, end, *it);
@@ -648,7 +648,7 @@ int compiler::compileFunction() {
   return 0;
 };
 
-int compiler::compileNodeSelector(ast_function &fun) {
+int compiler::compileNodeSelector(ast_function&fun) {
   writeLine("switch(Distributed.nodeNumber)");
   writeLine("{");
   std::stringstream SS;
@@ -846,7 +846,7 @@ int compiler::compileDecStatement(std::shared_ptr<Statement> stmt) {
 };
 
 int compiler::compileAddVector(std::shared_ptr<Statement> stmt,
-                               const idInfo &id, const bool global) {
+                               const idInfo& id, const bool global) {
   std::shared_ptr<declareStatement> decStatement =
       std::static_pointer_cast<declareStatement>(stmt);
 
@@ -1322,7 +1322,7 @@ string compiler::generateDistributedVariableName(std::shared_ptr<idInfo> id) {
   return name;
 };
 
-int compiler::compileDistributedVariable(const idInfo &id, const bool global) {
+int compiler::compileDistributedVariable(const idInfo& id, const bool global) {
   if ((mapCodes->at(index)).isHeader() && !global) {
     return 1;
   }
@@ -1630,7 +1630,7 @@ int compiler::compileDistributingVariables(std::shared_ptr<Statement> stmt) {
   return 0;
 };
 
-int compiler::writeDepedency(idInfo &id, int node) {
+int compiler::writeDepedency(idInfo& id, int node) {
   if (node == -1) {
     return 1;
   }
@@ -1638,11 +1638,11 @@ int compiler::writeDepedency(idInfo &id, int node) {
   std::stringstream SS;
 
   write("Distributed.need<");
-  if (id.array && (id.arrayIndex == nullptr)) {
+  if (id.array&& (id.arrayIndex == nullptr)) {
     write(" Array< ");
   }
   write(id.type);
-  if (id.array && (id.arrayIndex == nullptr)) {
+  if (id.array&& (id.arrayIndex == nullptr)) {
     write(" > ");
   }
   write(">(");
@@ -1666,14 +1666,14 @@ int compiler::writeDepedency(idInfo &id, int node) {
   if (id.arrayIndex != nullptr) {
     compileInsider(id.arrayIndex);
   } else {
-    if (id.parent && id.parent->arrayIndex) {
+    if (id.parent&& id.parent->arrayIndex) {
       compileInsider(id.parent->arrayIndex);
     } else {
       write("-1");
     }
   }
   write(",");
-  if (!id.array && !id.pointer) {
+  if (!id.array&& !id.pointer) {
     write("false");
   } else {
     write("true");
@@ -1691,12 +1691,12 @@ int compiler::writeDepedency(idInfo &id, int node) {
 
   write("," + SS.str() + ",");
 
-  // if(!id.array && ! id.pointer)
+  // if(!id.array&& ! id.pointer)
   {
     write("&");
   }
 
-  if (id.parent && id.parent->name.size()) {
+  if (id.parent&& id.parent->name.size()) {
     write(id.parent->name);
 
     if (id.parent->arrayIndex) {
